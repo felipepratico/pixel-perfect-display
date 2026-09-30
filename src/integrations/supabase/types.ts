@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      titulos: {
+        Row: {
+          cliente: string
+          cnpj: string
+          created_at: string
+          custo_boleto: number
+          francisco_pct: number
+          id: string
+          mensal_real: number
+          mensal_site: number
+          mes_ano: string
+          situacao: string
+          status_assinatura: string
+          telefone: string
+          tipo_cobranca: string
+          updated_at: string
+          user_id: string
+          vencimento: number
+        }
+        Insert: {
+          cliente: string
+          cnpj?: string
+          created_at?: string
+          custo_boleto?: number
+          francisco_pct?: number
+          id?: string
+          mensal_real?: number
+          mensal_site?: number
+          mes_ano?: string
+          situacao?: string
+          status_assinatura?: string
+          telefone?: string
+          tipo_cobranca?: string
+          updated_at?: string
+          user_id: string
+          vencimento?: number
+        }
+        Update: {
+          cliente?: string
+          cnpj?: string
+          created_at?: string
+          custo_boleto?: number
+          francisco_pct?: number
+          id?: string
+          mensal_real?: number
+          mensal_site?: number
+          mes_ano?: string
+          situacao?: string
+          status_assinatura?: string
+          telefone?: string
+          tipo_cobranca?: string
+          updated_at?: string
+          user_id?: string
+          vencimento?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
