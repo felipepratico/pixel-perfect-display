@@ -95,7 +95,7 @@ function normalizePercent(value: unknown): number {
 
 export function rowsToTitulos(rows: SheetRow[], mapping: Mapping, mesAno: string): TituloInput[] {
   return rows
-    .map((row) => {
+    .map((row): TituloInput | null => {
       const cliente = String(pick(row, mapping.cliente) ?? "")
         .toUpperCase()
         .trim();
