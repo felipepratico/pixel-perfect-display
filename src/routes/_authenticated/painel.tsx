@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CloudCheck, Download, Loader2, LogOut, Plus, Repeat, Trash2, Upload, CalendarPlus } from "lucide-react";
+import { CloudCheck, Download, FileText, Loader2, LogOut, MessageCircle, Plus, Printer, Repeat, Trash2, Upload, CalendarPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,6 +14,9 @@ import { AssinaturasDialog } from "@/components/fincontrol/assinaturas-dialog";
 import { RecorrenciaDialog } from "@/components/fincontrol/recorrencia-dialog";
 import { WhatsAppDialog } from "@/components/fincontrol/whatsapp-dialog";
 import { ImportDialog } from "@/components/fincontrol/import-dialog";
+import { RelatorioDialog } from "@/components/fincontrol/relatorio-dialog";
+import { CobrancaLoteDialog } from "@/components/fincontrol/cobranca-lote-dialog";
+import { AreaImpressao } from "@/components/fincontrol/impressao";
 import { useTitulos, useTituloMutations } from "@/lib/use-titulos";
 import { calcularTotais } from "@/lib/totais";
 import { computeRow, isActiveSubscription, shiftMesAno, type Titulo, type TituloInput } from "@/lib/fincontrol";
@@ -52,6 +55,19 @@ function Painel() {
   const [assOpen, setAssOpen] = useState(false);
   const [recOpen, setRecOpen] = useState(false);
   const [impOpen, setImpOpen] = useState(false);
+  const [relOpen, setRelOpen] = useState(false);
+  const [relCliente, setRelCliente] = useState<string | null>(null);
+  const [loteOpen, setLoteOpen] = useState(false);
+  const [impressao, setImpressao] = useState<{ titulos: Titulo[]; subtitulo: string } | null>(null);
+
+  function imprimir(lista: Titulo[], subtitulo: string) {
+    if (!lista.length) {
+      toast.info("Nada para imprimir com os filtros atuais.");
+      return;
+    }
+    setImpressao({ titulos: lista, subtitulo });
+    setTimeout(() => window.print(), 120);
+  }
 
   const mesesDisponiveis = useMemo(
     () => [...new Set(todos.map((t) => t.mes_ano).filter(Boolean))].sort(),
@@ -123,6 +139,8 @@ function Painel() {
             <Button size="sm" variant="secondary" onClick={() => setRecOpen(true)}><CalendarPlus className="size-4" />Gerar meses</Button>
             <Button size="sm" variant="secondary" onClick={() => setImpOpen(true)}><Upload className="size-4" />Importar</Button>
             <Button size="sm" variant="secondary" onClick={() => exportTitulos(filtrados)}><Download className="size-4" />Exportar</Button>
+            <Button size="sm" variant="secondary" onClick={() => { setRelCliente(null); setRelOpen(true); }}><FileText className="size-4" />Relatórios</Button>
+            <Button size="sm" variant="secondary" onClick={() => imprimir(filtrados, `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`)}><Printer className="size-4" />Imprimir</Button>
             <Button size="sm" variant="ghost" onClick={async () => { await supabase.auth.signOut(); void navigate({ to: "/auth" }); }}><LogOut className="size-4" /></Button>
           </div>
         </div>
@@ -141,6 +159,8 @@ function Painel() {
                 <span className="font-semibold">{ids.length} selecionado(s)</span>
                 <Button size="sm" variant="outline" onClick={() => patchMany.mutate({ ids, values: { situacao: "PAGO" } }, { onError: erro })}>Marcar pago</Button>
                 <Button size="sm" variant="outline" onClick={() => patchMany.mutate({ ids, values: { situacao: "ABERTO" } }, { onError: erro })}>Marcar aberto</Button>
+                <Button size="sm" variant="outline" className="border-brand/30 bg-brand-soft text-brand hover:bg-brand-soft" onClick={() => setLoteOpen(true)}><MessageCircle className="size-4" />Cobrar no WhatsApp</Button>
+                <Button size="sm" variant="outline" onClick={() => imprimir(filtrados.filter((t) => selecionados.has(t.id)), "Selecionados — agrupado por vencimento")}><Printer className="size-4" />Imprimir seleção</Button>
                 <Button size="sm" variant="destructive" onClick={() => {
                   if (!confirm(`Excluir ${ids.length} lançamento(s)?`)) return;
                   removeMany.mutate(ids, { onSuccess: () => setSelecionados(new Set()), onError: erro });
@@ -155,6 +175,7 @@ function Painel() {
               onToggleTodos={(m) => setSelecionados(m ? new Set(filtrados.map((t) => t.id)) : new Set())}
               onEditar={(t) => { setEditando(t); setTituloOpen(true); }}
               onWhatsApp={setWhats}
+              onRelatorio={(t) => { setRelCliente(t.cliente); setRelOpen(true); }}
               onAlternarSituacao={(t) => patchMany.mutate({ ids: [t.id], values: { situacao: t.situacao === "PAGO" ? "ABERTO" : "PAGO" } }, { onError: erro })}
               onExcluir={(t) => { if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro }); }}
             />
@@ -172,6 +193,9 @@ function Painel() {
           onSuccess: (n) => { toast.success(`${n} lançamentos importados.`); setImpOpen(false); },
           onError: erro,
         })} />
+      <RelatorioDialog open={relOpen} titulos={todos} clienteInicial={relCliente} onOpenChange={setRelOpen} onImprimir={imprimir} />
+      <CobrancaLoteDialog open={loteOpen} titulos={filtrados.filter((t) => selecionados.has(t.id))} onOpenChange={setLoteOpen} />
+      {impressao ? <AreaImpressao titulos={impressao.titulos} subtitulo={impressao.subtitulo} /> : null}
     </div>
   );
 }
