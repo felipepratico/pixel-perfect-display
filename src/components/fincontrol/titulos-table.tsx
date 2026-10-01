@@ -1,4 +1,12 @@
-import { CircleCheck, Clock, FolderOpen, MessageCircle, Pencil, Trash2 } from "lucide-react";
+import {
+  CircleCheck,
+  Clock,
+  FileText,
+  FolderOpen,
+  MessageCircle,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +21,7 @@ export function TitulosTable({
   onToggleTodos,
   onEditar,
   onWhatsApp,
+  onRelatorio,
   onAlternarSituacao,
   onExcluir,
 }: {
@@ -23,6 +32,7 @@ export function TitulosTable({
   onToggleTodos: (marcar: boolean) => void;
   onEditar: (titulo: Titulo) => void;
   onWhatsApp: (titulo: Titulo) => void;
+  onRelatorio: (titulo: Titulo) => void;
   onAlternarSituacao: (titulo: Titulo) => void;
   onExcluir: (titulo: Titulo) => void;
 }) {
