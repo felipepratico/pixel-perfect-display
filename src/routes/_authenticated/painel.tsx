@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CloudCheck, Download, Loader2, LogOut, Plus, Repeat, Trash2, Upload, CalendarPlus } from "lucide-react";
+import { CloudCheck, Download, FileText, Loader2, LogOut, MessageCircle, Plus, Printer, Repeat, Trash2, Upload, CalendarPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,6 +14,9 @@ import { AssinaturasDialog } from "@/components/fincontrol/assinaturas-dialog";
 import { RecorrenciaDialog } from "@/components/fincontrol/recorrencia-dialog";
 import { WhatsAppDialog } from "@/components/fincontrol/whatsapp-dialog";
 import { ImportDialog } from "@/components/fincontrol/import-dialog";
+import { RelatorioDialog } from "@/components/fincontrol/relatorio-dialog";
+import { CobrancaLoteDialog } from "@/components/fincontrol/cobranca-lote-dialog";
+import { AreaImpressao } from "@/components/fincontrol/impressao";
 import { useTitulos, useTituloMutations } from "@/lib/use-titulos";
 import { calcularTotais } from "@/lib/totais";
 import { computeRow, isActiveSubscription, shiftMesAno, type Titulo, type TituloInput } from "@/lib/fincontrol";
