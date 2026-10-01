@@ -4,6 +4,7 @@ export type StatusAssinatura = "ATIVO" | "CANCELADO";
 
 export type Titulo = {
   id: string;
+  cliente_id: string | null;
   cliente: string;
   cnpj: string;
   telefone: string;
@@ -16,9 +17,13 @@ export type Titulo = {
   tipo_cobranca: TipoCobranca;
   status_assinatura: StatusAssinatura;
   situacao: Situacao;
+  deleted_at: string | null;
+  efi_status: string;
+  efi_link_pagamento: string;
+  efi_linha_digitavel: string;
 };
 
-export type TituloInput = Omit<Titulo, "id">;
+export type TituloInput = Omit<Titulo, "id" | "deleted_at" | "efi_status" | "efi_link_pagamento" | "efi_linha_digitavel">;
 
 /** Accepts "R$ 1.234,56", "1234.56", 1234.56, "10%" and returns a number. */
 export function parseNumber(value: unknown): number {
@@ -115,12 +120,16 @@ export function whatsappMessage(t: Titulo): string {
     `Passando para lembrar referente à mensalidade/assinatura do site:\n` +
     `📌 *Valor:* ${formatCurrency(mensalSite)}\n` +
     `📅 *Vencimento:* Dia ${t.vencimento} (${t.mes_ano || "mês atual"})\n` +
-    `Status: *${t.situacao}*\n\n` +
+    `Status: *${t.situacao}*\n` +
+    (t.efi_link_pagamento ? `🔗 *Boleto/Pix:* ${t.efi_link_pagamento}\n` : "") +
+    (t.efi_linha_digitavel ? `🔢 *Linha digitável:* ${t.efi_linha_digitavel}\n` : "") +
+    `\n` +
     `Qualquer dúvida estamos à disposição! Obrigado.`
   );
 }
 
 export const emptyTitulo = (): TituloInput => ({
+  cliente_id: null,
   cliente: "",
   cnpj: "",
   telefone: "",

@@ -46,7 +46,8 @@ function ClientesPage() {
   const erro = (error: unknown) => toast.error(error instanceof Error ? error.message : "Não foi possível concluir.");
 
   function salvar(values: ClienteInput, id?: string) {
-    saveCliente.mutate({ id, values }, { onSuccess: () => { toast.success("Cliente salvo."); setOpen(false); }, onError: erro });
+    const payload = id ? { id, values } : { values };
+    saveCliente.mutate(payload, { onSuccess: () => { toast.success("Cliente salvo."); setOpen(false); }, onError: erro });
   }
 
   return <div className="min-h-screen bg-background"><AppHeader /><main className="mx-auto max-w-7xl space-y-6 px-4 py-6">

@@ -29,6 +29,12 @@ export type Cliente = {
   cnpj: string;
   email: string;
   telefone: string;
+  endereco: string;
+  numero_endereco: string;
+  bairro: string;
+  cep: string;
+  cidade: string;
+  uf: string;
   plano: Plano;
   valor_base: number;
   quantidade_computadores: number;
@@ -65,6 +71,12 @@ export const emptyCliente = (): ClienteInput => ({
   cnpj: "",
   email: "",
   telefone: "",
+  endereco: "",
+  numero_endereco: "",
+  bairro: "",
+  cep: "",
+  cidade: "",
+  uf: "",
   plano: "BÁSICO",
   valor_base: 80,
   quantidade_computadores: 1,

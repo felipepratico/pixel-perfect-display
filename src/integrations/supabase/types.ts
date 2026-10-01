@@ -105,16 +105,21 @@ export type Database = {
       }
       clientes: {
         Row: {
+          bairro: string
+          cep: string
           chave_pix: string
+          cidade: string
           cnpj: string
           created_at: string
           data_ultima_atualizacao: string | null
           deleted_at: string | null
           email: string
+          endereco: string
           grupo_id: string | null
           id: string
           modulos: string[]
           nome_fantasia: string
+          numero_endereco: string
           observacoes: string
           plano: string
           quantidade_computadores: number
@@ -123,6 +128,7 @@ export type Database = {
           status: string
           telefone: string
           tipo_certificado: string
+          uf: string
           ultimo_backup: string | null
           updated_at: string
           user_id: string
@@ -133,16 +139,21 @@ export type Database = {
           versao_instalada: string
         }
         Insert: {
+          bairro?: string
+          cep?: string
           chave_pix?: string
+          cidade?: string
           cnpj?: string
           created_at?: string
           data_ultima_atualizacao?: string | null
           deleted_at?: string | null
           email?: string
+          endereco?: string
           grupo_id?: string | null
           id?: string
           modulos?: string[]
           nome_fantasia?: string
+          numero_endereco?: string
           observacoes?: string
           plano?: string
           quantidade_computadores?: number
@@ -151,6 +162,7 @@ export type Database = {
           status?: string
           telefone?: string
           tipo_certificado?: string
+          uf?: string
           ultimo_backup?: string | null
           updated_at?: string
           user_id: string
@@ -161,16 +173,21 @@ export type Database = {
           versao_instalada?: string
         }
         Update: {
+          bairro?: string
+          cep?: string
           chave_pix?: string
+          cidade?: string
           cnpj?: string
           created_at?: string
           data_ultima_atualizacao?: string | null
           deleted_at?: string | null
           email?: string
+          endereco?: string
           grupo_id?: string | null
           id?: string
           modulos?: string[]
           nome_fantasia?: string
+          numero_endereco?: string
           observacoes?: string
           plano?: string
           quantidade_computadores?: number
@@ -179,6 +196,7 @@ export type Database = {
           status?: string
           telefone?: string
           tipo_certificado?: string
+          uf?: string
           ultimo_backup?: string | null
           updated_at?: string
           user_id?: string
