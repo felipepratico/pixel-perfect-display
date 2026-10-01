@@ -175,6 +175,7 @@ function Painel() {
               onToggleTodos={(m) => setSelecionados(m ? new Set(filtrados.map((t) => t.id)) : new Set())}
               onEditar={(t) => { setEditando(t); setTituloOpen(true); }}
               onWhatsApp={setWhats}
+              onRelatorio={(t) => { setRelCliente(t.cliente); setRelOpen(true); }}
               onAlternarSituacao={(t) => patchMany.mutate({ ids: [t.id], values: { situacao: t.situacao === "PAGO" ? "ABERTO" : "PAGO" } }, { onError: erro })}
               onExcluir={(t) => { if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro }); }}
             />
@@ -192,6 +193,9 @@ function Painel() {
           onSuccess: (n) => { toast.success(`${n} lançamentos importados.`); setImpOpen(false); },
           onError: erro,
         })} />
+      <RelatorioDialog open={relOpen} titulos={todos} clienteInicial={relCliente} onOpenChange={setRelOpen} onImprimir={imprimir} />
+      <CobrancaLoteDialog open={loteOpen} titulos={filtrados.filter((t) => selecionados.has(t.id))} onOpenChange={setLoteOpen} />
+      {impressao ? <AreaImpressao titulos={impressao.titulos} subtitulo={impressao.subtitulo} /> : null}
     </div>
   );
 }
