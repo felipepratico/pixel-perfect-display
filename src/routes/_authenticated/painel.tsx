@@ -55,6 +55,19 @@ function Painel() {
   const [assOpen, setAssOpen] = useState(false);
   const [recOpen, setRecOpen] = useState(false);
   const [impOpen, setImpOpen] = useState(false);
+  const [relOpen, setRelOpen] = useState(false);
+  const [relCliente, setRelCliente] = useState<string | null>(null);
+  const [loteOpen, setLoteOpen] = useState(false);
+  const [impressao, setImpressao] = useState<{ titulos: Titulo[]; subtitulo: string } | null>(null);
+
+  function imprimir(lista: Titulo[], subtitulo: string) {
+    if (!lista.length) {
+      toast.info("Nada para imprimir com os filtros atuais.");
+      return;
+    }
+    setImpressao({ titulos: lista, subtitulo });
+    setTimeout(() => window.print(), 120);
+  }
 
   const mesesDisponiveis = useMemo(
     () => [...new Set(todos.map((t) => t.mes_ano).filter(Boolean))].sort(),
