@@ -139,6 +139,8 @@ function Painel() {
             <Button size="sm" variant="secondary" onClick={() => setRecOpen(true)}><CalendarPlus className="size-4" />Gerar meses</Button>
             <Button size="sm" variant="secondary" onClick={() => setImpOpen(true)}><Upload className="size-4" />Importar</Button>
             <Button size="sm" variant="secondary" onClick={() => exportTitulos(filtrados)}><Download className="size-4" />Exportar</Button>
+            <Button size="sm" variant="secondary" onClick={() => { setRelCliente(null); setRelOpen(true); }}><FileText className="size-4" />Relatórios</Button>
+            <Button size="sm" variant="secondary" onClick={() => imprimir(filtrados, `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`)}><Printer className="size-4" />Imprimir</Button>
             <Button size="sm" variant="ghost" onClick={async () => { await supabase.auth.signOut(); void navigate({ to: "/auth" }); }}><LogOut className="size-4" /></Button>
           </div>
         </div>
@@ -157,6 +159,8 @@ function Painel() {
                 <span className="font-semibold">{ids.length} selecionado(s)</span>
                 <Button size="sm" variant="outline" onClick={() => patchMany.mutate({ ids, values: { situacao: "PAGO" } }, { onError: erro })}>Marcar pago</Button>
                 <Button size="sm" variant="outline" onClick={() => patchMany.mutate({ ids, values: { situacao: "ABERTO" } }, { onError: erro })}>Marcar aberto</Button>
+                <Button size="sm" variant="outline" className="border-brand/30 bg-brand-soft text-brand hover:bg-brand-soft" onClick={() => setLoteOpen(true)}><MessageCircle className="size-4" />Cobrar no WhatsApp</Button>
+                <Button size="sm" variant="outline" onClick={() => imprimir(filtrados.filter((t) => selecionados.has(t.id)), "Selecionados — agrupado por vencimento")}><Printer className="size-4" />Imprimir seleção</Button>
                 <Button size="sm" variant="destructive" onClick={() => {
                   if (!confirm(`Excluir ${ids.length} lançamento(s)?`)) return;
                   removeMany.mutate(ids, { onSuccess: () => setSelecionados(new Set()), onError: erro });
