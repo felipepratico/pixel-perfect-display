@@ -74,6 +74,12 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
             <Field label="CNPJ / CPF"><Input value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} /></Field>
             <Field label="WhatsApp"><Input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} /></Field>
             <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
+            <Field label="Endereço" className="lg:col-span-2"><Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} /></Field>
+            <Field label="Número"><Input value={form.numero_endereco} onChange={(e) => update("numero_endereco", e.target.value)} /></Field>
+            <Field label="Bairro"><Input value={form.bairro} onChange={(e) => update("bairro", e.target.value)} /></Field>
+            <Field label="CEP"><Input value={form.cep} onChange={(e) => update("cep", e.target.value)} /></Field>
+            <Field label="Cidade"><Input value={form.cidade} onChange={(e) => update("cidade", e.target.value)} /></Field>
+            <Field label="UF"><Input maxLength={2} value={form.uf} onChange={(e) => update("uf", e.target.value.toUpperCase())} /></Field>
             <Field label="Grupo empresarial"><select className={selectClass} value={form.grupo_id ?? ""} onChange={(e) => update("grupo_id", e.target.value || null)}><option value="">Sem grupo</option>{grupos.map((grupo) => <option key={grupo.id} value={grupo.id}>{grupo.nome}</option>)}</select></Field>
             <Field label="Novo grupo"><div className="flex gap-2"><Input value={novoGrupo} onChange={(e) => setNovoGrupo(e.target.value)} /><Button type="button" variant="outline" onClick={criarGrupo}>Criar</Button></div></Field>
             <Field label="Status"><select className={selectClass} value={form.status} onChange={(e) => update("status", e.target.value as ClienteInput["status"])}><option value="ATIVO">ATIVO</option><option value="INATIVO">INATIVO</option></select></Field>
