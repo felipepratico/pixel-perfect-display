@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep customer records as the source of contract and operational data; financial titles reference customers so history remains stable.
+- Keep Efí credentials and API calls server-side; browser code only invokes authenticated server functions.
