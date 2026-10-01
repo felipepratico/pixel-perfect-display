@@ -131,13 +131,24 @@ export function TitulosTable({
                     <div className="flex items-center justify-center gap-1">
                       <Button
                         type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="size-7 text-brand"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1 border-brand/30 bg-brand-soft px-2 text-[10px] font-bold text-brand hover:bg-brand-soft"
                         title="Cobrar no WhatsApp"
                         onClick={() => onWhatsApp(titulo)}
                       >
                         <MessageCircle className="size-3.5" />
+                        Cobrar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="size-7"
+                        title="Relatório do cliente"
+                        onClick={() => onRelatorio(titulo)}
+                      >
+                        <FileText className="size-3.5" />
                       </Button>
                       <Button
                         type="button"
