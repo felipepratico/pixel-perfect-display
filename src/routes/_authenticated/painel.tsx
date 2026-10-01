@@ -80,7 +80,7 @@ function Painel() {
   const totais = useMemo(() => calcularTotais(filtrados, todos), [filtrados, todos]);
 
   function onSave(values: TituloInput, id?: string) {
-    saveTitulo.mutate({ id, values }, {
+    saveTitulo.mutate(id ? { id, values } : { values }, {
       onSuccess: () => { toast.success("Lançamento salvo."); setTituloOpen(false); },
       onError: erro,
     });
