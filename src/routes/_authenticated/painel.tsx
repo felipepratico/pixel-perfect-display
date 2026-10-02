@@ -112,7 +112,14 @@ function Painel() {
       if (!mes) continue;
       for (const t of base.values()) {
         if (existentes.has(`${t.cliente}|${mes}`)) continue;
-        const { id: _id, ...rest } = t;
+        const {
+          id: _id,
+          deleted_at: _deletedAt,
+          efi_status: _efiStatus,
+          efi_link_pagamento: _efiLink,
+          efi_linha_digitavel: _efiLinha,
+          ...rest
+        } = t;
         rows.push({ ...rest, mes_ano: mes, situacao: "ABERTO" });
       }
     }
