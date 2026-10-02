@@ -3,7 +3,8 @@ import { ChartPie, Globe, Receipt, Repeat, UserRoundCog, Wallet } from "lucide-r
 import { formatCurrency } from "@/lib/fincontrol";
 import type { Totais } from "@/lib/totais";
 
-export function KpiCards({ totais }: { totais: Totais }) {
+export function KpiCards({ totais, valoresVisiveis }: { totais: Totais; valoresVisiveis: boolean }) {
+  const moeda = (valor: number) => (valoresVisiveis ? formatCurrency(valor) : "R$ ••••••");
   const pctFelipe =
     totais.mensalSite > 0 ? ((totais.lucroFelipe / totais.mensalSite) * 100).toFixed(1) : "0";
   const pagosPct = totais.quantidade > 0 ? (totais.pagos / totais.quantidade) * 100 : 0;
@@ -14,16 +15,16 @@ export function KpiCards({ totais }: { totais: Totais }) {
         label="Mensal site total"
         icon={<Globe className="size-4" />}
         iconClass="bg-info-soft text-info"
-        value={formatCurrency(totais.mensalSite)}
+        value={moeda(totais.mensalSite)}
         hint={`${totais.quantidade} lançamentos`}
       />
       <Card
         label="Lucro Felipe (líquido)"
         icon={<Wallet className="size-4" />}
         iconClass="bg-brand text-brand-foreground"
-        value={formatCurrency(totais.lucroFelipe)}
+        value={moeda(totais.lucroFelipe)}
         valueClass="text-brand"
-        hint={`${pctFelipe}% do total`}
+        hint={valoresVisiveis ? `${pctFelipe}% do total` : "Percentual oculto"}
         hintClass="text-brand"
         className="border-brand-border bg-brand-soft/40"
       />
@@ -31,7 +32,7 @@ export function KpiCards({ totais }: { totais: Totais }) {
         label="Lucro Francisco"
         icon={<UserRoundCog className="size-4" />}
         iconClass="bg-partner-soft text-partner"
-        value={formatCurrency(totais.lucroFrancisco)}
+        value={moeda(totais.lucroFrancisco)}
         valueClass="text-partner"
         hint="Comissão repassada"
         className="border-partner-border"
@@ -40,8 +41,8 @@ export function KpiCards({ totais }: { totais: Totais }) {
         label="Custos (Blt x Fra)"
         icon={<Receipt className="size-4" />}
         iconClass="bg-warning-soft text-warning"
-        value={formatCurrency(totais.custoBltFra)}
-        hint={`Boletos: ${formatCurrency(totais.custoBoleto)}`}
+        value={moeda(totais.custoBltFra)}
+        hint={valoresVisiveis ? `Boletos: ${formatCurrency(totais.custoBoleto)}` : "Boletos: R$ ••••••"}
       />
       <Card
         label="MRR (assinaturas)"
@@ -49,7 +50,7 @@ export function KpiCards({ totais }: { totais: Totais }) {
         iconClass="bg-partner-soft text-partner"
         value={`${totais.assinaturasAtivas} ativas`}
         valueClass="text-partner"
-        hint={`${formatCurrency(totais.mrr)} /mês`}
+        hint={`${moeda(totais.mrr)} /mês`}
         hintClass="text-partner font-semibold"
         className="border-partner-border"
       />

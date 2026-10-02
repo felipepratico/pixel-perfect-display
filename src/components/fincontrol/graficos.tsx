@@ -1,4 +1,4 @@
-import { ChartPie } from "lucide-react";
+import { ChartPie, EyeOff } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -15,7 +15,15 @@ import {
 import { computeRow, formatCurrency, type Titulo } from "@/lib/fincontrol";
 import type { Totais } from "@/lib/totais";
 
-export function Graficos({ titulos, totais }: { titulos: Titulo[]; totais: Totais }) {
+export function Graficos({
+  titulos,
+  totais,
+  valoresVisiveis,
+}: {
+  titulos: Titulo[];
+  totais: Totais;
+  valoresVisiveis: boolean;
+}) {
   const top = [...titulos]
     .map((titulo) => {
       const calc = computeRow(titulo);
@@ -34,6 +42,18 @@ export function Graficos({ titulos, totais }: { titulos: Titulo[]; totais: Totai
     { name: "PAGO", value: totais.pagos, color: "var(--brand)" },
     { name: "ABERTO", value: totais.abertos, color: "var(--warning)" },
   ].filter((item) => item.value > 0);
+
+  if (!valoresVisiveis) {
+    return (
+      <div className="card-panel flex min-h-48 items-center justify-center p-6 text-center">
+        <div className="space-y-2 text-muted-foreground">
+          <EyeOff className="mx-auto size-6" />
+          <p className="text-sm font-bold text-foreground">Gráficos financeiros ocultos</p>
+          <p className="text-xs">Use “Mostrar valores” para visualizar os gráficos.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

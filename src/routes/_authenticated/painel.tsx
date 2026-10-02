@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CloudCheck, Download, FileText, Loader2, LogOut, MessageCircle, Plus, Printer, Repeat, Trash2, Upload, CalendarPlus } from "lucide-react";
+import { CloudCheck, Download, Eye, EyeOff, FileText, Filter, Loader2, LogOut, MessageCircle, Plus, Printer, Repeat, Trash2, Upload, CalendarPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -58,6 +58,7 @@ function Painel() {
   const [relOpen, setRelOpen] = useState(false);
   const [relCliente, setRelCliente] = useState<string | null>(null);
   const [loteOpen, setLoteOpen] = useState(false);
+  const [valoresVisiveis, setValoresVisiveis] = useState(false);
   const [impressao, setImpressao] = useState<{ titulos: Titulo[]; subtitulo: string } | null>(null);
 
   function imprimir(lista: Titulo[], subtitulo: string) {
@@ -93,7 +94,17 @@ function Painel() {
     });
   }, [todos, filtros]);
 
-  const totais = useMemo(() => calcularTotais(filtrados, todos), [filtrados, todos]);
+  const filtroAplicado =
+    filtros.busca.trim().length > 0 ||
+    filtros.status !== "all" ||
+    filtros.mesAno !== "all" ||
+    filtros.vencimento !== "all";
+  const clientesVisiveis = filtroAplicado ? filtrados : [];
+
+  const totais = useMemo(
+    () => calcularTotais(clientesVisiveis, todos),
+    [clientesVisiveis, todos],
+  );
 
   function onSave(values: TituloInput, id?: string) {
     saveTitulo.mutate(id ? { id, values } : { values }, {
@@ -141,13 +152,22 @@ function Painel() {
             <span className="font-extrabold">FinControl Cloud</span>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant={valoresVisiveis ? "default" : "secondary"}
+              onClick={() => setValoresVisiveis((visivel) => !visivel)}
+              aria-pressed={valoresVisiveis}
+            >
+              {valoresVisiveis ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {valoresVisiveis ? "Ocultar valores" : "Mostrar valores"}
+            </Button>
             <Button size="sm" onClick={() => { setEditando(null); setTituloOpen(true); }}><Plus className="size-4" />Lançamento</Button>
             <Button size="sm" variant="secondary" onClick={() => setAssOpen(true)}><Repeat className="size-4" />Assinaturas</Button>
             <Button size="sm" variant="secondary" onClick={() => setRecOpen(true)}><CalendarPlus className="size-4" />Gerar meses</Button>
             <Button size="sm" variant="secondary" onClick={() => setImpOpen(true)}><Upload className="size-4" />Importar</Button>
-            <Button size="sm" variant="secondary" onClick={() => exportTitulos(filtrados)}><Download className="size-4" />Exportar</Button>
+            <Button size="sm" variant="secondary" disabled={!filtroAplicado || !valoresVisiveis} onClick={() => exportTitulos(clientesVisiveis)}><Download className="size-4" />Exportar</Button>
             <Button size="sm" variant="secondary" onClick={() => { setRelCliente(null); setRelOpen(true); }}><FileText className="size-4" />Relatórios</Button>
-            <Button size="sm" variant="secondary" onClick={() => imprimir(filtrados, `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`)}><Printer className="size-4" />Imprimir</Button>
+            <Button size="sm" variant="secondary" disabled={!filtroAplicado || !valoresVisiveis} onClick={() => imprimir(clientesVisiveis, `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`)}><Printer className="size-4" />Imprimir</Button>
             <Button size="sm" variant="ghost" onClick={async () => { await supabase.auth.signOut(); void navigate({ to: "/auth" }); }}><LogOut className="size-4" /></Button>
           </div>
         </div>
@@ -158,34 +178,45 @@ function Painel() {
           <div className="flex justify-center py-20"><Loader2 className="size-6 animate-spin" /></div>
         ) : (
           <>
-            <KpiCards totais={totais} />
-            <Graficos titulos={filtrados} totais={totais} />
             <Filtros state={filtros} onChange={(n) => setFiltros((s) => ({ ...s, ...n }))} mesesDisponiveis={mesesDisponiveis} />
+            <KpiCards totais={totais} valoresVisiveis={valoresVisiveis} />
+            <Graficos titulos={clientesVisiveis} totais={totais} valoresVisiveis={valoresVisiveis} />
             {ids.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3 text-sm">
                 <span className="font-semibold">{ids.length} selecionado(s)</span>
                 <Button size="sm" variant="outline" onClick={() => patchMany.mutate({ ids, values: { situacao: "PAGO" } }, { onError: erro })}>Marcar pago</Button>
                 <Button size="sm" variant="outline" onClick={() => patchMany.mutate({ ids, values: { situacao: "ABERTO" } }, { onError: erro })}>Marcar aberto</Button>
                 <Button size="sm" variant="outline" className="border-brand/30 bg-brand-soft text-brand hover:bg-brand-soft" onClick={() => setLoteOpen(true)}><MessageCircle className="size-4" />Cobrar no WhatsApp</Button>
-                <Button size="sm" variant="outline" onClick={() => imprimir(filtrados.filter((t) => selecionados.has(t.id)), "Selecionados — agrupado por vencimento")}><Printer className="size-4" />Imprimir seleção</Button>
+                <Button size="sm" variant="outline" disabled={!valoresVisiveis} onClick={() => imprimir(clientesVisiveis.filter((t) => selecionados.has(t.id)), "Selecionados — agrupado por vencimento")}><Printer className="size-4" />Imprimir seleção</Button>
                 <Button size="sm" variant="destructive" onClick={() => {
                   if (!confirm(`Excluir ${ids.length} lançamento(s)?`)) return;
                   removeMany.mutate(ids, { onSuccess: () => setSelecionados(new Set()), onError: erro });
                 }}><Trash2 className="size-4" />Excluir</Button>
               </div>
             )}
-            <TitulosTable
-              titulos={filtrados}
-              totais={totais}
-              selecionados={selecionados}
-              onToggle={(id) => setSelecionados((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })}
-              onToggleTodos={(m) => setSelecionados(m ? new Set(filtrados.map((t) => t.id)) : new Set())}
-              onEditar={(t) => { setEditando(t); setTituloOpen(true); }}
-              onWhatsApp={setWhats}
-              onRelatorio={(t) => { setRelCliente(t.cliente); setRelOpen(true); }}
-              onAlternarSituacao={(t) => patchMany.mutate({ ids: [t.id], values: { situacao: t.situacao === "PAGO" ? "ABERTO" : "PAGO" } }, { onError: erro })}
-              onExcluir={(t) => { if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro }); }}
-            />
+            {!filtroAplicado ? (
+              <div className="card-panel flex min-h-56 items-center justify-center p-8 text-center">
+                <div className="max-w-md space-y-2 text-muted-foreground">
+                  <Filter className="mx-auto size-7" />
+                  <p className="text-base font-bold text-foreground">Clientes protegidos</p>
+                  <p className="text-xs">Busque um cliente ou escolha situação, mês ou vencimento para liberar a lista.</p>
+                </div>
+              </div>
+            ) : (
+              <TitulosTable
+                titulos={clientesVisiveis}
+                totais={totais}
+                valoresVisiveis={valoresVisiveis}
+                selecionados={selecionados}
+                onToggle={(id) => setSelecionados((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })}
+                onToggleTodos={(m) => setSelecionados(m ? new Set(clientesVisiveis.map((t) => t.id)) : new Set())}
+                onEditar={(t) => { setEditando(t); setTituloOpen(true); }}
+                onWhatsApp={setWhats}
+                onRelatorio={(t) => { setRelCliente(t.cliente); setRelOpen(true); }}
+                onAlternarSituacao={(t) => patchMany.mutate({ ids: [t.id], values: { situacao: t.situacao === "PAGO" ? "ABERTO" : "PAGO" } }, { onError: erro })}
+                onExcluir={(t) => { if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro }); }}
+              />
+            )}
           </>
         )}
       </main>
@@ -201,7 +232,7 @@ function Painel() {
           onError: erro,
         })} />
       <RelatorioDialog open={relOpen} titulos={todos} clienteInicial={relCliente} onOpenChange={setRelOpen} onImprimir={imprimir} />
-      <CobrancaLoteDialog open={loteOpen} titulos={filtrados.filter((t) => selecionados.has(t.id))} onOpenChange={setLoteOpen} />
+      <CobrancaLoteDialog open={loteOpen} titulos={clientesVisiveis.filter((t) => selecionados.has(t.id))} onOpenChange={setLoteOpen} />
       {impressao ? <AreaImpressao titulos={impressao.titulos} subtitulo={impressao.subtitulo} /> : null}
     </div>
   );
