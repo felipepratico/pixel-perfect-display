@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAuditoriaRouteImport } from './routes/_authenticated/auditoria'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedCobrancasEfiRouteImport } from './routes/_authenticated/cobrancas-efi'
 import { Route as AuthenticatedOperacaoRouteImport } from './routes/_authenticated/operacao'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 
@@ -41,6 +42,12 @@ const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCobrancasEfiRoute =
+  AuthenticatedCobrancasEfiRouteImport.update({
+    id: '/cobrancas-efi',
+    path: '/cobrancas-efi',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOperacaoRoute = AuthenticatedOperacaoRouteImport.update({
   id: '/operacao',
   path: '/operacao',
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/clientes': typeof AuthenticatedClientesRoute
+  '/cobrancas-efi': typeof AuthenticatedCobrancasEfiRoute
   '/operacao': typeof AuthenticatedOperacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
 }
@@ -65,6 +73,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/clientes': typeof AuthenticatedClientesRoute
+  '/cobrancas-efi': typeof AuthenticatedCobrancasEfiRoute
   '/operacao': typeof AuthenticatedOperacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
 }
@@ -75,15 +84,29 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/auditoria': typeof AuthenticatedAuditoriaRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
+  '/_authenticated/cobrancas-efi': typeof AuthenticatedCobrancasEfiRoute
   '/_authenticated/operacao': typeof AuthenticatedOperacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/auditoria' | '/clientes' | '/operacao' | '/painel'
+    | '/'
+    | '/auth'
+    | '/auditoria'
+    | '/clientes'
+    | '/cobrancas-efi'
+    | '/operacao'
+    | '/painel'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/auditoria' | '/clientes' | '/operacao' | '/painel'
+  to:
+    | '/'
+    | '/auth'
+    | '/auditoria'
+    | '/clientes'
+    | '/cobrancas-efi'
+    | '/operacao'
+    | '/painel'
   id:
     | '__root__'
     | '/'
@@ -91,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/auditoria'
     | '/_authenticated/clientes'
+    | '/_authenticated/cobrancas-efi'
     | '/_authenticated/operacao'
     | '/_authenticated/painel'
   fileRoutesById: FileRoutesById
@@ -138,6 +162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/cobrancas-efi': {
+      id: '/_authenticated/cobrancas-efi'
+      path: '/cobrancas-efi'
+      fullPath: '/cobrancas-efi'
+      preLoaderRoute: typeof AuthenticatedCobrancasEfiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/operacao': {
       id: '/_authenticated/operacao'
       path: '/operacao'
@@ -158,6 +189,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAuditoriaRoute: typeof AuthenticatedAuditoriaRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
+  AuthenticatedCobrancasEfiRoute: typeof AuthenticatedCobrancasEfiRoute
   AuthenticatedOperacaoRoute: typeof AuthenticatedOperacaoRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
 }
@@ -165,6 +197,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAuditoriaRoute: AuthenticatedAuditoriaRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
+  AuthenticatedCobrancasEfiRoute: AuthenticatedCobrancasEfiRoute,
   AuthenticatedOperacaoRoute: AuthenticatedOperacaoRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
 }
