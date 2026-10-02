@@ -24,6 +24,7 @@ export function TitulosTable({
   onRelatorio,
   onAlternarSituacao,
   onExcluir,
+  valoresVisiveis,
 }: {
   titulos: Titulo[];
   totais: Totais;
@@ -35,8 +36,10 @@ export function TitulosTable({
   onRelatorio: (titulo: Titulo) => void;
   onAlternarSituacao: (titulo: Titulo) => void;
   onExcluir: (titulo: Titulo) => void;
+  valoresVisiveis: boolean;
 }) {
   const todosMarcados = titulos.length > 0 && titulos.every((t) => selecionados.has(t.id));
+  const moeda = (valor: number) => (valoresVisiveis ? formatCurrency(valor) : "R$ ••••••");
 
   return (
     <div className="card-panel overflow-hidden">
@@ -104,19 +107,19 @@ export function TitulosTable({
                     <p>{titulo.telefone || "sem telefone"}</p>
                   </td>
                   <td className="px-3 py-2.5 text-right font-semibold">
-                    {formatCurrency(calc.mensalSite)}
+                    {moeda(calc.mensalSite)}
                   </td>
-                  <td className="px-3 py-2.5 text-right">{formatCurrency(calc.mensalReal)}</td>
-                  <td className="px-3 py-2.5 text-right">{formatCurrency(calc.custoBoleto)}</td>
-                  <td className="px-3 py-2.5 text-center">{calc.franciscoPct}%</td>
+                  <td className="px-3 py-2.5 text-right">{moeda(calc.mensalReal)}</td>
+                  <td className="px-3 py-2.5 text-right">{moeda(calc.custoBoleto)}</td>
+                  <td className="px-3 py-2.5 text-center">{valoresVisiveis ? `${calc.franciscoPct}%` : "•••"}</td>
                   <td className="px-3 py-2.5 text-right font-semibold text-partner">
-                    {formatCurrency(calc.lucroFrancisco)}
+                    {moeda(calc.lucroFrancisco)}
                   </td>
                   <td className="px-3 py-2.5 text-right font-semibold text-warning">
-                    {formatCurrency(calc.custoBltFra)}
+                    {moeda(calc.custoBltFra)}
                   </td>
                   <td className="bg-brand-soft/40 px-3 py-2.5 text-right font-extrabold text-brand">
-                    {formatCurrency(calc.lucroFelipe)}
+                    {moeda(calc.lucroFelipe)}
                   </td>
                   <td className="px-3 py-2.5 text-center">Dia {titulo.vencimento}</td>
                   <td className="px-3 py-2.5 text-center">
@@ -192,18 +195,18 @@ export function TitulosTable({
                 <td className="p-3" colSpan={3}>
                   TOTAIS (filtrados)
                 </td>
-                <td className="p-3 text-right text-info">{formatCurrency(totais.mensalSite)}</td>
-                <td className="p-3 text-right">{formatCurrency(totais.mensalReal)}</td>
-                <td className="p-3 text-right">{formatCurrency(totais.custoBoleto)}</td>
+                <td className="p-3 text-right text-info">{moeda(totais.mensalSite)}</td>
+                <td className="p-3 text-right">{moeda(totais.mensalReal)}</td>
+                <td className="p-3 text-right">{moeda(totais.custoBoleto)}</td>
                 <td className="p-3 text-center text-muted-foreground">--</td>
                 <td className="p-3 text-right text-partner">
-                  {formatCurrency(totais.lucroFrancisco)}
+                  {moeda(totais.lucroFrancisco)}
                 </td>
                 <td className="p-3 text-right text-warning">
-                  {formatCurrency(totais.custoBltFra)}
+                  {moeda(totais.custoBltFra)}
                 </td>
                 <td className="bg-brand-soft/60 p-3 text-right text-brand">
-                  {formatCurrency(totais.lucroFelipe)}
+                  {moeda(totais.lucroFelipe)}
                 </td>
                 <td className="p-3 text-center" colSpan={3}>
                   --
