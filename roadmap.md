@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Change every paid title to open
 - [ ] Create customer, audit, support, and Efí billing schema with automatic conversion
 - [ ] Add customer domain types, validation, calculations, and data access
 - [ ] Build customer, operations, audit, trash, and Efí billing screens
