@@ -100,13 +100,12 @@ export function rowsToTitulos(rows: SheetRow[], mapping: Mapping, mesAno: string
         .toUpperCase()
         .trim();
       if (!cliente) return null;
-      const situacaoRaw = normalize(String(pick(row, mapping.situacao) ?? ""));
-      const situacao: Situacao = situacaoRaw.includes("pago") ? "PAGO" : "ABERTO";
       const cnpjRaw = pick(row, mapping.cnpj);
       const cnpj = parseNumber(cnpjRaw) === 0 ? "" : String(cnpjRaw).trim();
       const vencimento = Math.min(31, Math.max(1, Math.round(parseNumber(pick(row, mapping.vencimento))) || 5));
       const mesAnoCell = String(pick(row, mapping.mes_ano) ?? "").trim();
       return {
+        cliente_id: null,
         cliente,
         cnpj,
         telefone: String(pick(row, mapping.telefone) ?? "").replace(/\D/g, ""),
@@ -118,7 +117,7 @@ export function rowsToTitulos(rows: SheetRow[], mapping: Mapping, mesAno: string
         mes_ano: mesAnoCell || mesAno || currentMesAno(),
         tipo_cobranca: "RECORRENTE" as const,
         status_assinatura: "ATIVO" as const,
-        situacao,
+        situacao: "ABERTO" as const,
       };
     })
     .filter((item): item is TituloInput => item !== null);
