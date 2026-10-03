@@ -6,13 +6,13 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "FinControl Cloud — Contas a receber e assinaturas" },
+      { title: "Up System FinControl — Contas a receber e assinaturas" },
       {
         name: "description",
         content:
           "Controle mensalidades de site, assinaturas recorrentes, lucros e cobranças em um painel único salvo na nuvem.",
       },
-      { property: "og:title", content: "FinControl Cloud — Contas a receber e assinaturas" },
+      { property: "og:title", content: "Up System FinControl — Contas a receber e assinaturas" },
       {
         property: "og:description",
         content:
