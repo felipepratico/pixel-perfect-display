@@ -22,6 +22,8 @@ export const Route = createFileRoute("/auth")({
         property: "og:description",
         content: "Acesse o painel de contas a receber e assinaturas do FinControl Cloud.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,

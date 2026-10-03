@@ -28,12 +28,14 @@ export function RelatorioDialog({
   clienteInicial,
   onOpenChange,
   onImprimir,
+  valoresVisiveis,
 }: {
   open: boolean;
   titulos: Titulo[];
   clienteInicial?: string | null;
   onOpenChange: (open: boolean) => void;
   onImprimir: (titulos: Titulo[], subtitulo: string) => void;
+  valoresVisiveis: boolean;
 }) {
   const clientes = useMemo(
     () => [...new Set(titulos.map((t) => t.cliente).filter(Boolean))].sort(),
@@ -45,12 +47,12 @@ export function RelatorioDialog({
   useEffect(() => {
     if (!open) return;
     setBusca("");
-    setCliente(clienteInicial || clientes[0] || "");
+    setCliente(clienteInicial || "");
   }, [open, clienteInicial, clientes]);
 
   const visiveis = useMemo(() => {
     const termo = busca.trim().toUpperCase();
-    return termo ? clientes.filter((c) => c.toUpperCase().includes(termo)) : clientes;
+    return termo ? clientes.filter((c) => c.toUpperCase().includes(termo)) : [];
   }, [clientes, busca]);
 
   const lancamentos = useMemo(
@@ -85,6 +87,8 @@ export function RelatorioDialog({
       vencimento: base?.vencimento ?? "—",
     };
   }, [lancamentos]);
+  const moeda = (valor: number) =>
+    valoresVisiveis ? formatCurrency(valor) : "R$ ••••••";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -140,16 +144,16 @@ export function RelatorioDialog({
                 <span className="font-semibold">{resumo.ativo ? "ativa" : "cancelada/avulso"}</span>
               </p>
               <p className="rounded-lg bg-info-soft p-2 text-info">
-                Total faturado: <span className="font-bold">{formatCurrency(resumo.faturado)}</span>
+                Total faturado: <span className="font-bold">{moeda(resumo.faturado)}</span>
               </p>
               <p className="rounded-lg bg-brand-soft p-2 text-brand">
-                Lucro Felipe: <span className="font-bold">{formatCurrency(resumo.lucro)}</span>
+                Lucro Felipe: <span className="font-bold">{moeda(resumo.lucro)}</span>
               </p>
               <p className="rounded-lg bg-warning-soft p-2 text-warning">
-                Em aberto: <span className="font-bold">{formatCurrency(resumo.aberto)}</span>
+                Em aberto: <span className="font-bold">{moeda(resumo.aberto)}</span>
               </p>
               <p className="rounded-lg bg-brand-soft p-2 text-brand">
-                Já pago: <span className="font-bold">{formatCurrency(resumo.pago)}</span>
+                Já pago: <span className="font-bold">{moeda(resumo.pago)}</span>
               </p>
             </div>
 
@@ -170,10 +174,10 @@ export function RelatorioDialog({
                       <tr key={item.id}>
                         <td className="px-2 py-1.5">{item.mes_ano || "—"}</td>
                         <td className="px-2 py-1.5 text-right">
-                          {formatCurrency(calc.mensalSite)}
+                          {moeda(calc.mensalSite)}
                         </td>
                         <td className="px-2 py-1.5 text-right text-brand">
-                          {formatCurrency(calc.lucroFelipe)}
+                          {moeda(calc.lucroFelipe)}
                         </td>
                         <td className="px-2 py-1.5 text-center font-semibold">{item.situacao}</td>
                       </tr>
@@ -196,7 +200,7 @@ export function RelatorioDialog({
           <Button
             type="button"
             variant="outline"
-            disabled={!lancamentos.length}
+            disabled={!lancamentos.length || !valoresVisiveis}
             onClick={() => exportTitulos(lancamentos)}
           >
             <Download className="size-4" />
@@ -204,7 +208,7 @@ export function RelatorioDialog({
           </Button>
           <Button
             type="button"
-            disabled={!lancamentos.length}
+            disabled={!lancamentos.length || !valoresVisiveis}
             onClick={() => onImprimir(lancamentos, `Relatório do cliente: ${cliente}`)}
           >
             <Printer className="size-4" />

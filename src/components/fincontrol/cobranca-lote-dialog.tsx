@@ -32,10 +32,12 @@ function abrirConversa(titulo: Titulo) {
 export function CobrancaLoteDialog({
   open,
   titulos,
+  valoresVisiveis,
   onOpenChange,
 }: {
   open: boolean;
   titulos: Titulo[];
+  valoresVisiveis: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   return (
@@ -56,7 +58,9 @@ export function CobrancaLoteDialog({
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{titulo.cliente}</p>
                   <p className="text-xs text-muted-foreground">
-                    {formatCurrency(computeRow(titulo).mensalSite)} · dia {titulo.vencimento} ·{" "}
+                    {valoresVisiveis
+                      ? formatCurrency(computeRow(titulo).mensalSite)
+                      : "R$ ••••••"} · dia {titulo.vencimento} ·{" "}
                     {titulo.situacao}
                   </p>
                   {!temTelefone ? (

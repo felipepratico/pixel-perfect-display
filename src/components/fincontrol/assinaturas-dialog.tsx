@@ -19,11 +19,13 @@ type Linha = {
 export function AssinaturasDialog({
   open,
   titulos,
+  valoresVisiveis,
   onOpenChange,
   onAlternar,
 }: {
   open: boolean;
   titulos: Titulo[];
+  valoresVisiveis: boolean;
   onOpenChange: (open: boolean) => void;
   onAlternar: (ids: string[], ativar: boolean) => void;
 }) {
@@ -62,7 +64,9 @@ export function AssinaturasDialog({
         <div className="flex items-center justify-between rounded-2xl border border-partner-border bg-partner-soft p-3 text-xs">
           <p className="font-bold text-partner">
             MRR ativo estimado:{" "}
-            <span className="font-extrabold">{formatCurrency(mrr)} /mês</span>
+            <span className="font-extrabold">
+              {valoresVisiveis ? formatCurrency(mrr) : "R$ ••••••"} /mês
+            </span>
           </p>
           <span className="rounded-full bg-partner px-2.5 py-0.5 font-bold text-partner-foreground">
             {ativas.length} ativas
@@ -84,7 +88,9 @@ export function AssinaturasDialog({
               {linhas.map((linha) => (
                 <tr key={linha.cliente}>
                   <td className="p-3 font-bold">{linha.cliente}</td>
-                  <td className="p-3 text-right">{formatCurrency(linha.valor)}</td>
+                  <td className="p-3 text-right">
+                    {valoresVisiveis ? formatCurrency(linha.valor) : "R$ ••••••"}
+                  </td>
                   <td className="p-3 text-center">Dia {linha.vencimento}</td>
                   <td className="p-3 text-center">
                     <span

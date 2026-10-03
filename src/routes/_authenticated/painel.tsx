@@ -29,6 +29,8 @@ export const Route = createFileRoute("/_authenticated/painel")({
       { name: "description", content: "Painel de contas a receber, lucros e assinaturas recorrentes." },
       { property: "og:title", content: "Painel — FinControl Cloud" },
       { property: "og:description", content: "Painel de contas a receber, lucros e assinaturas recorrentes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Painel,
@@ -162,11 +164,11 @@ function Painel() {
               {valoresVisiveis ? "Ocultar valores" : "Mostrar valores"}
             </Button>
             <Button size="sm" onClick={() => { setEditando(null); setTituloOpen(true); }}><Plus className="size-4" />Lançamento</Button>
-            <Button size="sm" variant="secondary" onClick={() => setAssOpen(true)}><Repeat className="size-4" />Assinaturas</Button>
+            <Button size="sm" variant="secondary" disabled={!filtroAplicado} onClick={() => setAssOpen(true)}><Repeat className="size-4" />Assinaturas</Button>
             <Button size="sm" variant="secondary" onClick={() => setRecOpen(true)}><CalendarPlus className="size-4" />Gerar meses</Button>
             <Button size="sm" variant="secondary" onClick={() => setImpOpen(true)}><Upload className="size-4" />Importar</Button>
             <Button size="sm" variant="secondary" disabled={!filtroAplicado || !valoresVisiveis} onClick={() => exportTitulos(clientesVisiveis)}><Download className="size-4" />Exportar</Button>
-            <Button size="sm" variant="secondary" onClick={() => { setRelCliente(null); setRelOpen(true); }}><FileText className="size-4" />Relatórios</Button>
+            <Button size="sm" variant="secondary" disabled={!filtroAplicado} onClick={() => { setRelCliente(null); setRelOpen(true); }}><FileText className="size-4" />Relatórios</Button>
             <Button size="sm" variant="secondary" disabled={!filtroAplicado || !valoresVisiveis} onClick={() => imprimir(clientesVisiveis, `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`)}><Printer className="size-4" />Imprimir</Button>
             <Button size="sm" variant="ghost" onClick={async () => { await supabase.auth.signOut(); void navigate({ to: "/auth" }); }}><LogOut className="size-4" /></Button>
           </div>
@@ -222,7 +224,7 @@ function Painel() {
       </main>
 
       <TituloDialog open={tituloOpen} titulo={editando} saving={saveTitulo.isPending} onOpenChange={setTituloOpen} onSave={onSave} />
-      <AssinaturasDialog open={assOpen} titulos={todos} onOpenChange={setAssOpen}
+      <AssinaturasDialog open={assOpen} titulos={clientesVisiveis} valoresVisiveis={valoresVisiveis} onOpenChange={setAssOpen}
         onAlternar={(i, ativar) => patchMany.mutate({ ids: i, values: { status_assinatura: ativar ? "ATIVO" : "CANCELADO" } }, { onError: erro })} />
       <RecorrenciaDialog open={recOpen} titulos={todos} gerando={insertMany.isPending} onOpenChange={setRecOpen} onGerar={onGerar} />
       <WhatsAppDialog open={!!whats} titulo={whats} onOpenChange={(o) => !o && setWhats(null)} />
@@ -231,8 +233,8 @@ function Painel() {
           onSuccess: (n) => { toast.success(`${n} lançamentos importados.`); setImpOpen(false); },
           onError: erro,
         })} />
-      <RelatorioDialog open={relOpen} titulos={todos} clienteInicial={relCliente} onOpenChange={setRelOpen} onImprimir={imprimir} />
-      <CobrancaLoteDialog open={loteOpen} titulos={clientesVisiveis.filter((t) => selecionados.has(t.id))} onOpenChange={setLoteOpen} />
+      <RelatorioDialog open={relOpen} titulos={clientesVisiveis} clienteInicial={relCliente} valoresVisiveis={valoresVisiveis} onOpenChange={setRelOpen} onImprimir={imprimir} />
+      <CobrancaLoteDialog open={loteOpen} titulos={clientesVisiveis.filter((t) => selecionados.has(t.id))} valoresVisiveis={valoresVisiveis} onOpenChange={setLoteOpen} />
       {impressao ? <AreaImpressao titulos={impressao.titulos} subtitulo={impressao.subtitulo} /> : null}
     </div>
   );
