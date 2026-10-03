@@ -12,15 +12,15 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Entrar — FinControl Cloud" },
+      { title: "Entrar — Up System FinControl" },
       {
         name: "description",
-        content: "Acesse o painel de contas a receber e assinaturas do FinControl Cloud.",
+        content: "Acesse o painel de contas a receber e assinaturas do Up System FinControl.",
       },
-      { property: "og:title", content: "Entrar — FinControl Cloud" },
+      { property: "og:title", content: "Entrar — Up System FinControld" },
       {
         property: "og:description",
-        content: "Acesse o painel de contas a receber e assinaturas do FinControl Cloud.",
+        content: "Acesse o painel de contas a receber e assinaturas do Up System FinControl.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
