@@ -164,7 +164,7 @@ function Painel() {
               {valoresVisiveis ? "Ocultar valores" : "Mostrar valores"}
             </Button>
             <Button size="sm" onClick={() => { setEditando(null); setTituloOpen(true); }}><Plus className="size-4" />Lançamento</Button>
-            <Button size="sm" variant="secondary" onClick={() => setAssOpen(true)}><Repeat className="size-4" />Assinaturas</Button>
+            <Button size="sm" variant="secondary" disabled={!filtroAplicado} onClick={() => setAssOpen(true)}><Repeat className="size-4" />Assinaturas</Button>
             <Button size="sm" variant="secondary" onClick={() => setRecOpen(true)}><CalendarPlus className="size-4" />Gerar meses</Button>
             <Button size="sm" variant="secondary" onClick={() => setImpOpen(true)}><Upload className="size-4" />Importar</Button>
             <Button size="sm" variant="secondary" disabled={!filtroAplicado || !valoresVisiveis} onClick={() => exportTitulos(clientesVisiveis)}><Download className="size-4" />Exportar</Button>
@@ -224,7 +224,7 @@ function Painel() {
       </main>
 
       <TituloDialog open={tituloOpen} titulo={editando} saving={saveTitulo.isPending} onOpenChange={setTituloOpen} onSave={onSave} />
-      <AssinaturasDialog open={assOpen} titulos={todos} valoresVisiveis={valoresVisiveis} onOpenChange={setAssOpen}
+      <AssinaturasDialog open={assOpen} titulos={clientesVisiveis} valoresVisiveis={valoresVisiveis} onOpenChange={setAssOpen}
         onAlternar={(i, ativar) => patchMany.mutate({ ids: i, values: { status_assinatura: ativar ? "ATIVO" : "CANCELADO" } }, { onError: erro })} />
       <RecorrenciaDialog open={recOpen} titulos={todos} gerando={insertMany.isPending} onOpenChange={setRecOpen} onGerar={onGerar} />
       <WhatsAppDialog open={!!whats} titulo={whats} onOpenChange={(o) => !o && setWhats(null)} />

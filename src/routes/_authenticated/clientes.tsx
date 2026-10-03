@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, CircleDollarSign, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { Building2, CircleDollarSign, Eye, EyeOff, Filter, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -32,14 +32,18 @@ function ClientesPage() {
   const [grupo, setGrupo] = useState("all");
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState<Cliente | null>(null);
+  const [valoresVisiveis, setValoresVisiveis] = useState(false);
+
+  const filtroAplicado = busca.trim().length > 0 || grupo !== "all";
 
   const visiveis = useMemo(() => {
     const termo = busca.trim().toLocaleUpperCase("pt-BR");
+    if (!filtroAplicado) return [];
     return clientes.filter((cliente) => {
       if (grupo !== "all" && cliente.grupo_id !== grupo) return false;
       return !termo || `${cliente.razao_social} ${cliente.nome_fantasia} ${cliente.cnpj}`.toLocaleUpperCase("pt-BR").includes(termo);
     });
-  }, [clientes, busca, grupo]);
+  }, [clientes, busca, grupo, filtroAplicado]);
 
   const ativos = clientes.filter((cliente) => cliente.status === "ATIVO").length;
   const receita = clientes.filter((cliente) => cliente.status === "ATIVO").reduce((total, cliente) => total + valorContrato(cliente), 0);
@@ -51,14 +55,14 @@ function ClientesPage() {
   }
 
   return <div className="min-h-screen bg-background"><AppHeader /><main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
-    <div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-extrabold">Clientes e contratos</h1><p className="text-sm text-muted-foreground">Planos, grupos, computadores, módulos e dados técnicos.</p></div><Button onClick={() => { setEditando(null); setOpen(true); }}><Plus className="size-4" />Novo cliente</Button></div>
+    <div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-extrabold">Clientes e contratos</h1><p className="text-sm text-muted-foreground">Planos, grupos, computadores, módulos e dados técnicos.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setValoresVisiveis((visivel) => !visivel)} aria-pressed={valoresVisiveis}>{valoresVisiveis ? <EyeOff className="size-4" /> : <Eye className="size-4" />}{valoresVisiveis ? "Ocultar valores" : "Mostrar valores"}</Button><Button onClick={() => { setEditando(null); setOpen(true); }}><Plus className="size-4" />Novo cliente</Button></div></div>
     <section className="grid gap-3 sm:grid-cols-3">
       <Metric icon={Users} label="Clientes ativos" value={String(ativos)} />
-      <Metric icon={CircleDollarSign} label="Receita contratada" value={formatCurrency(receita)} />
-      <Metric icon={Building2} label="Ticket médio" value={formatCurrency(ticketMedio(clientes))} />
+      <Metric icon={CircleDollarSign} label="Receita contratada" value={valoresVisiveis ? formatCurrency(receita) : "R$ ••••••"} />
+      <Metric icon={Building2} label="Ticket médio" value={valoresVisiveis ? formatCurrency(ticketMedio(clientes)) : "R$ ••••••"} />
     </section>
     <section className="flex flex-col gap-3 sm:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><Input className="pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome ou CNPJ" /></div><select className="h-10 rounded-md border border-input bg-card px-3 text-sm" value={grupo} onChange={(e) => setGrupo(e.target.value)}><option value="all">Todos os grupos</option>{grupos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></section>
-    <div className="overflow-hidden rounded-md border bg-card"><div className="scroll-slim overflow-x-auto"><table className="w-full whitespace-nowrap text-left text-sm"><thead className="bg-muted text-xs uppercase"><tr><th className="p-3">Cliente / grupo</th><th className="p-3">Plano e módulos</th><th className="p-3 text-center">Computadores</th><th className="p-3 text-right">Mensalidade</th><th className="p-3 text-center">Status</th><th className="p-3 text-center">Ações</th></tr></thead><tbody className="divide-y">{visiveis.map((cliente) => <tr key={cliente.id} className="hover:bg-muted/50"><td className="p-3"><strong>{cliente.razao_social}</strong><p className="text-xs text-muted-foreground">{grupos.find((item) => item.id === cliente.grupo_id)?.nome ?? "Sem grupo"} · {cliente.cnpj || "CNPJ não informado"}</p></td><td className="p-3"><Badge variant="outline">{cliente.plano}</Badge><p className="mt-1 max-w-md truncate text-xs text-muted-foreground">{cliente.modulos.join(" · ") || "Sem módulos"}</p></td><td className="p-3 text-center">{cliente.quantidade_computadores}</td><td className="p-3 text-right font-bold text-brand">{formatCurrency(valorContrato(cliente))}</td><td className="p-3 text-center"><Badge variant={cliente.status === "ATIVO" ? "default" : "secondary"}>{cliente.status}</Badge></td><td className="p-3"><div className="flex justify-center gap-1"><Button size="icon" variant="ghost" title="Editar cliente" onClick={() => { setEditando(cliente); setOpen(true); }}><Pencil className="size-4" /></Button><Button size="icon" variant="ghost" className="text-destructive" title="Mover para a lixeira" onClick={() => { if (confirm(`Mover ${cliente.razao_social} para a lixeira?`)) softDeleteCliente.mutate(cliente.id, { onSuccess: () => toast.success("Cliente movido para a lixeira."), onError: erro }); }}><Trash2 className="size-4" /></Button></div></td></tr>)}</tbody></table></div>{!isLoading && visiveis.length === 0 ? <p className="p-10 text-center text-sm text-muted-foreground">Nenhum cliente encontrado.</p> : null}</div>
+    {!filtroAplicado ? <div className="flex min-h-56 items-center justify-center rounded-md border bg-card p-8 text-center"><div className="max-w-md space-y-2 text-muted-foreground"><Filter className="mx-auto size-7" /><p className="font-bold text-foreground">Clientes protegidos</p><p className="text-xs">Busque pelo nome ou CNPJ, ou escolha um grupo para liberar a lista.</p></div></div> : <div className="overflow-hidden rounded-md border bg-card"><div className="scroll-slim overflow-x-auto"><table className="w-full whitespace-nowrap text-left text-sm"><thead className="bg-muted text-xs uppercase"><tr><th className="p-3">Cliente / grupo</th><th className="p-3">Plano e módulos</th><th className="p-3 text-center">Computadores</th><th className="p-3 text-right">Mensalidade</th><th className="p-3 text-center">Status</th><th className="p-3 text-center">Ações</th></tr></thead><tbody className="divide-y">{visiveis.map((cliente) => <tr key={cliente.id} className="hover:bg-muted/50"><td className="p-3"><strong>{cliente.razao_social}</strong><p className="text-xs text-muted-foreground">{grupos.find((item) => item.id === cliente.grupo_id)?.nome ?? "Sem grupo"} · {cliente.cnpj || "CNPJ não informado"}</p></td><td className="p-3"><Badge variant="outline">{cliente.plano}</Badge><p className="mt-1 max-w-md truncate text-xs text-muted-foreground">{cliente.modulos.join(" · ") || "Sem módulos"}</p></td><td className="p-3 text-center">{cliente.quantidade_computadores}</td><td className="p-3 text-right font-bold text-brand">{valoresVisiveis ? formatCurrency(valorContrato(cliente)) : "R$ ••••••"}</td><td className="p-3 text-center"><Badge variant={cliente.status === "ATIVO" ? "default" : "secondary"}>{cliente.status}</Badge></td><td className="p-3"><div className="flex justify-center gap-1"><Button size="icon" variant="ghost" title="Editar cliente" onClick={() => { setEditando(cliente); setOpen(true); }}><Pencil className="size-4" /></Button><Button size="icon" variant="ghost" className="text-destructive" title="Mover para a lixeira" onClick={() => { if (confirm(`Mover ${cliente.razao_social} para a lixeira?`)) softDeleteCliente.mutate(cliente.id, { onSuccess: () => toast.success("Cliente movido para a lixeira."), onError: erro }); }}><Trash2 className="size-4" /></Button></div></td></tr>)}</tbody></table></div>{!isLoading && visiveis.length === 0 ? <p className="p-10 text-center text-sm text-muted-foreground">Nenhum cliente encontrado.</p> : null}</div>}
   </main><ClienteDialog open={open} cliente={editando} grupos={grupos} saving={saveCliente.isPending} onOpenChange={setOpen} onCreateGrupo={(nome) => createGrupo.mutateAsync(nome)} onSave={salvar} /></div>;
 }
 

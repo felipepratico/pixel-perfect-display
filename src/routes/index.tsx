@@ -1,5 +1,4 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { CloudCheck, FileSpreadsheet, Repeat, ShieldCheck, Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   beforeLoad: () => {
