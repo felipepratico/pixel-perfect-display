@@ -3,7 +3,7 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
-  useRouter,
+  useRouter
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -80,12 +80,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FinControl Cloud" },
+      { title: "Up System FinControl" },
       {
         name: "description",
         content: "Controle de contas a receber e assinaturas recorrentes na nuvem.",
       },
-      { property: "og:title", content: "FinControl Cloud" },
+      { property: "og:title", content: "Up System FinControl" },
       {
         property: "og:description",
         content: "Controle de contas a receber e assinaturas recorrentes na nuvem.",
