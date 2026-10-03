@@ -19,7 +19,7 @@ export function AppHeader() {
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
         <Link to="/painel" className="flex items-center gap-3 font-extrabold">
           <span className="rounded-lg bg-brand p-2 text-brand-foreground"><CloudCheck className="size-5" /></span>
-          FinControl Cloud
+         Up System FinControl
         </Link>
         <nav className="scroll-slim flex gap-1 overflow-x-auto pb-1 lg:pb-0" aria-label="Áreas do sistema">
           {items.map(({ to, label, icon: Icon }) => (
