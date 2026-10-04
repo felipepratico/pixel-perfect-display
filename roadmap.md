@@ -7,4 +7,5 @@
 - [ ] Connect titles, filters, reports, WhatsApp, and recurring generation to customers
 - [ ] Add secure Efí sandbox server integration and notification endpoint
 - [ ] Request sandbox credentials securely
+- [x] Integrate the Efí subscription and first-boleto generator into the billing page
 - [ ] Validate build and key user flows on desktop and mobile
