@@ -102,7 +102,7 @@ export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
         body: JSON.stringify({ grant_type: "client_credentials" }),
       });
       const authJson: unknown = await authResponse.json().catch(() => ({}));
-      const accessToken = textValue(asRecord(authJson).access_token);
+      const accessToken = textValue(asRecord(authJson)['access_token']);
       if (!authResponse.ok || !accessToken) {
         await supabaseAdmin.from("cobrancas_efi").update({ status: "ERRO", ultimo_erro: "Falha na autenticação de homologação Efí." }).eq("id", registroId);
         throw new Error("A Efí recusou a autenticação de homologação. Confira as credenciais salvas.");
@@ -142,7 +142,7 @@ export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
       const responseJson: unknown = await chargeResponse.json().catch(() => ({}));
       if (!chargeResponse.ok) {
         const provider = asRecord(responseJson);
-        const providerMessage = textValue(provider.message, provider.error_description, provider.error) || "Dados recusados pela Efí.";
+        const providerMessage = textValue(provider['message'], provider['error_description'], provider['error']) || "Dados recusados pela Efí.";
         const uncertain = chargeResponse.status >= 500;
         await supabaseAdmin.from("cobrancas_efi").update({
           status: uncertain ? "VERIFICAR" : "ERRO",
@@ -152,15 +152,15 @@ export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
       }
 
       const root = asRecord(responseJson);
-      const responseData = asRecord(root.data ?? root);
-      const payment = asRecord(responseData.payment);
-      const billet = asRecord(payment.banking_billet ?? responseData.banking_billet);
-      const pdf = asRecord(billet.pdf);
-      const subscriptionId = numberValue(responseData.subscription_id, root.subscription_id);
-      const chargeId = numberValue(responseData.charge_id, root.charge_id, billet.charge_id);
-      const link = textValue(billet.link, billet.payment_url, pdf.charge, responseData.link, responseData.payment_url);
-      const barcode = textValue(billet.barcode, billet.digitable_line, responseData.barcode, responseData.digitable_line);
-      const status = textValue(responseData.status, root.status) || "ATIVO";
+      const responseData = asRecord(root['data'] ?? root);
+      const payment = asRecord(responseData['payment']);
+      const billet = asRecord(payment['banking_billet'] ?? responseData['banking_billet']);
+      const pdf = asRecord(billet['pdf']);
+      const subscriptionId = numberValue(responseData['subscription_id'], root['subscription_id']);
+      const chargeId = numberValue(responseData['charge_id'], root['charge_id'], billet['charge_id']);
+      const link = textValue(billet['link'], billet['payment_url'], pdf['charge'], responseData['link'], responseData['payment_url']);
+      const barcode = textValue(billet['barcode'], billet['digitable_line'], responseData['barcode'], responseData['digitable_line']);
+      const status = textValue(responseData['status'], root['status']) || "ATIVO";
 
       const { data: cobranca, error: updateError } = await supabaseAdmin.from("cobrancas_efi").update({
         efi_subscription_id: subscriptionId,

@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { valorContrato } from "@/lib/clientes";
 import { emitirAssinaturaEfi } from "@/lib/efi.functions";
-import { assinaturaEfiSchema, type AssinaturaEfiInput, type CobrancaEfi } from "@/lib/efi";
+import { assinaturaEfiSchema, type CobrancaEfi } from "@/lib/efi";
 import { formatCurrency, normalizePhone } from "@/lib/fincontrol";
 import { useClientes } from "@/lib/use-clientes";
 import { COBRANCAS_EFI_KEY, useCobrancasEfi } from "@/lib/use-cobrancas-efi";
@@ -103,7 +103,7 @@ function CobrancasEfi() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const input: AssinaturaEfiInput = {
+    const input = {
       clienteId, planId, itemName, valor, vencimento, mensagem, razaoSocial, cnpj,
       email, telefone, endereco, numeroEndereco, bairro, cep, cidade, uf,
     };
