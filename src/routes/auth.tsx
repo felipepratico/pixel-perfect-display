@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { CloudCheck, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/auth")({
         name: "description",
         content: "Acesse o painel de contas a receber e assinaturas do Up System FinControl.",
       },
-      { property: "og:title", content: "Entrar — Up System FinControld" },
+      { property: "og:title", content: "Entrar — Up System FinControl" },
       {
         property: "og:description",
         content: "Acesse o painel de contas a receber e assinaturas do Up System FinControl.",
@@ -30,7 +30,6 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,12 +39,12 @@ function AuthPage() {
   useEffect(() => {
     let active = true;
     void supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) void navigate({ to: "/painel", replace: true });
+      if (active && data.session) window.location.replace("/painel");
     });
     return () => {
       active = false;
     };
-  }, [navigate]);
+  }, []);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -62,12 +61,12 @@ function AuthPage() {
           setCheckEmail(true);
           return;
         }
-        await navigate({ to: "/painel", replace: true });
+        window.location.replace("/painel");
         return;
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      await navigate({ to: "/painel", replace: true });
+      window.location.replace("/painel");
     } catch (error) {
       toast.error(
         error instanceof Error ? traduzErro(error.message) : "Não foi possível continuar.",
@@ -88,7 +87,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    await navigate({ to: "/painel", replace: true });
+    window.location.replace("/painel");
   }
 
   return (
