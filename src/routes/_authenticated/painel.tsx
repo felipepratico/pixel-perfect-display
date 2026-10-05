@@ -25,9 +25,9 @@ import { exportTitulos } from "@/lib/excel";
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
     meta: [
-      { title: "Painel — FinControl Cloud" },
+      { title: "Painel — UPSYSTEM FINCONTROL" },
       { name: "description", content: "Painel de contas a receber, lucros e assinaturas recorrentes." },
-      { property: "og:title", content: "Painel — FinControl Cloud" },
+      { property: "og:title", content: "Painel — UPSYSTEM FINCONTROL" },
       { property: "og:description", content: "Painel de contas a receber, lucros e assinaturas recorrentes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
