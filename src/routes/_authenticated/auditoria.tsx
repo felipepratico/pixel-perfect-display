@@ -13,7 +13,7 @@ import { useClienteMutations, useClientes } from "@/lib/use-clientes";
 
 export const Route = createFileRoute("/_authenticated/auditoria")({
   head: () => ({ meta: [
-    { title: "Histórico e lixeira — FinControl Cloud" }, { name: "description", content: "Auditoria de alterações, novos cadastros e recuperação de clientes excluídos." },
+    { title: "Histórico e lixeira — UPSYSTEM FINCONTROL" }, { name: "description", content: "Auditoria de alterações, novos cadastros e recuperação de clientes excluídos." },
     { property: "og:title", content: "Histórico e lixeira — FinControl Cloud" }, { property: "og:description", content: "Auditoria de alterações, novos cadastros e recuperação de clientes excluídos." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),
