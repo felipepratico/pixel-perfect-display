@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CloudCheck, Download, Eye, EyeOff, FileText, Filter, Loader2, LogOut, MessageCircle, Plus, Printer, Repeat, Trash2, Upload, CalendarPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -166,6 +166,7 @@ function Painel() {
             <Button size="sm" onClick={() => { setEditando(null); setTituloOpen(true); }}><Plus className="size-4" />Lançamento</Button>
             <Button size="sm" variant="secondary" disabled={!filtroAplicado} onClick={() => setAssOpen(true)}><Repeat className="size-4" />Assinaturas</Button>
             <Button size="sm" variant="secondary" onClick={() => setRecOpen(true)}><CalendarPlus className="size-4" />Gerar meses</Button>
+            <Button size="sm" variant="secondary" asChild><Link to="/cobrancas-efi"><CloudCheck className="size-4" />Cobranças Efí</Link></Button>
             <Button size="sm" variant="secondary" onClick={() => setImpOpen(true)}><Upload className="size-4" />Importar</Button>
             <Button size="sm" variant="secondary" disabled={!filtroAplicado || !valoresVisiveis} onClick={() => exportTitulos(clientesVisiveis)}><Download className="size-4" />Exportar</Button>
             <Button size="sm" variant="secondary" disabled={!filtroAplicado} onClick={() => { setRelCliente(null); setRelOpen(true); }}><FileText className="size-4" />Relatórios</Button>

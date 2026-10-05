@@ -1,3 +1,4 @@
+import { Loader2, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
 }) {
   const [form, setForm] = useState<ClienteInput>(emptyCliente());
   const [novoGrupo, setNovoGrupo] = useState("");
+  const [consultandoCnpj, setConsultandoCnpj] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -45,6 +47,51 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
       toast.success("Grupo criado.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível criar o grupo.");
+    }
+  }
+
+  async function consultarCnpj() {
+    const cnpj = form.cnpj.replace(/\D/g, "");
+    if (cnpj.length !== 14) {
+      toast.error("Informe um CNPJ com 14 dígitos.");
+      return;
+    }
+
+    setConsultandoCnpj(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${encodeURIComponent(cnpj)}`);
+      if (!response.ok) throw new Error("CNPJ não encontrado.");
+      const data = await response.json() as {
+        razao_social?: string;
+        nome_fantasia?: string;
+        ddd_telefone_1?: string;
+        email?: string;
+        logradouro?: string;
+        numero?: string;
+        bairro?: string;
+        cep?: string;
+        municipio?: string;
+        uf?: string;
+      };
+      setForm((current) => ({
+        ...current,
+        cnpj,
+        razao_social: data.razao_social?.trim() || current.razao_social,
+        nome_fantasia: data.nome_fantasia?.trim() || current.nome_fantasia,
+        telefone: data.ddd_telefone_1?.replace(/\D/g, "") || current.telefone,
+        email: data.email?.trim().toLowerCase() || current.email,
+        endereco: data.logradouro?.trim() || current.endereco,
+        numero_endereco: data.numero?.trim() || current.numero_endereco,
+        bairro: data.bairro?.trim() || current.bairro,
+        cep: data.cep?.replace(/\D/g, "") || current.cep,
+        cidade: data.municipio?.trim() || current.cidade,
+        uf: data.uf?.trim().toUpperCase() || current.uf,
+      }));
+      toast.success("Dados do CNPJ preenchidos. Confira antes de salvar.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível consultar esse CNPJ.");
+    } finally {
+      setConsultandoCnpj(false);
     }
   }
 
@@ -71,7 +118,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
           <section className="space-y-3"><h3 className="text-sm font-bold">Identificação e grupo</h3><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Razão social *" className="lg:col-span-2"><Input required value={form.razao_social} onChange={(e) => update("razao_social", e.target.value)} /></Field>
             <Field label="Nome fantasia"><Input value={form.nome_fantasia} onChange={(e) => update("nome_fantasia", e.target.value)} /></Field>
-            <Field label="CNPJ / CPF"><Input value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} /></Field>
+            <Field label="CNPJ / CPF"><div className="flex gap-2"><Input value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} onBlur={() => { if (form.cnpj.replace(/\D/g, "").length === 14 && !cliente) void consultarCnpj(); }} /><Button type="button" size="icon" variant="outline" title="Buscar dados do CNPJ" disabled={consultandoCnpj} onClick={consultarCnpj}>{consultandoCnpj ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</Button></div></Field>
             <Field label="WhatsApp"><Input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} /></Field>
             <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
             <Field label="Endereço" className="lg:col-span-2"><Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} /></Field>
@@ -90,7 +137,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
             <Field label="Valor base"><Input type="number" min="0" step="0.01" value={form.valor_base} onChange={(e) => update("valor_base", Number(e.target.value))} /></Field>
             <Field label="Computadores"><Input type="number" min="1" value={form.quantidade_computadores} onChange={(e) => update("quantidade_computadores", Number(e.target.value))} /></Field>
             <Field label="Valor por adicional"><Input type="number" min="0" step="0.01" value={form.valor_computador_adicional} onChange={(e) => update("valor_computador_adicional", Number(e.target.value))} /></Field>
-            <Field label="Dia do vencimento"><Input type="number" min="1" max="31" value={form.vencimento} onChange={(e) => update("vencimento", Number(e.target.value))} /></Field>
+            <Field label="Dia de vencimento mensal *"><Input required type="number" min="1" max="31" value={form.vencimento} onChange={(e) => update("vencimento", Number(e.target.value))} placeholder="Ex: 5" /></Field>
           </div><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{MODULOS.map((modulo) => <label key={modulo} className="flex items-center gap-2 rounded-md border p-2 text-sm font-semibold"><Checkbox checked={form.modulos.includes(modulo)} onCheckedChange={(checked) => update("modulos", checked ? [...form.modulos, modulo] : form.modulos.filter((item) => item !== modulo))} />{modulo}</label>)}</div></section>
 
           <section className="space-y-3 border-t pt-4"><h3 className="text-sm font-bold">Operação técnica</h3><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
