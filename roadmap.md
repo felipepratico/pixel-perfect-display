@@ -8,4 +8,7 @@
 - [ ] Add secure Efí sandbox server integration and notification endpoint
 - [ ] Request sandbox credentials securely
 - [x] Integrate the Efí subscription and first-boleto generator into the billing page
+- [ ] Add Efí Billing to the initial screen and make its primary actions visible
+- [ ] Auto-fill customer registration from CNPJ and expose the monthly due day
+- [ ] Implement secure Efí payment-status webhooks
 - [ ] Validate build and key user flows on desktop and mobile
