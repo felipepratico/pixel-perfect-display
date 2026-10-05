@@ -14,7 +14,7 @@ import { useClienteMutations, useClientes, useGrupos } from "@/lib/use-clientes"
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   head: () => ({ meta: [
-    { title: "Clientes e contratos — FinControl Cloud" },
+    { title: "Clientes e contratos — UPSYSTEM FINCONTROL" },
     { name: "description", content: "Cadastro de clientes, grupos, planos, módulos e contratos." },
     { property: "og:title", content: "Clientes e contratos — FinControl Cloud" },
     { property: "og:description", content: "Cadastro de clientes, grupos, planos, módulos e contratos." },
