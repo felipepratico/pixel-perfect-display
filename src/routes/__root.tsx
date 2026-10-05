@@ -80,12 +80,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Up System FinControl" },
+      { title: "UPSYSTEM FINCONTROL" },
       {
         name: "description",
         content: "Controle de contas a receber e assinaturas recorrentes na nuvem.",
       },
-      { property: "og:title", content: "Up System FinControl" },
+      { property: "og:title", content: "UPSYSTEM FINCONTROL" },
       {
         property: "og:description",
         content: "Controle de contas a receber e assinaturas recorrentes na nuvem.",
