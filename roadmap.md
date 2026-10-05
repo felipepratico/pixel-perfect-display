@@ -10,5 +10,6 @@
 - [x] Integrate the Efí subscription and first-boleto generator into the billing page
 - [x] Add Efí Billing to the initial screen and make its primary actions visible
 - [x] Auto-fill customer registration from CNPJ and expose the monthly due day
+- [x] Apply dark mode consistently across all application screens
 - [ ] Implement secure Efí payment-status webhooks
 - [ ] Validate build and key user flows on desktop and mobile
