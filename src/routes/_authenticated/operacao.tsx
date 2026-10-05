@@ -12,7 +12,7 @@ import { useClienteMutations, useClientes, useConfiguracoes } from "@/lib/use-cl
 
 export const Route = createFileRoute("/_authenticated/operacao")({
   head: () => ({ meta: [
-    { title: "Operação técnica — FinControl Cloud" }, { name: "description", content: "Controle de backups, versões, VPN e certificados dos clientes." },
+    { title: "Operação técnica — UPSYSTEM FINCONTROL" }, { name: "description", content: "Controle de backups, versões, VPN e certificados dos clientes." },
     { property: "og:title", content: "Operação técnica — FinControl Cloud" }, { property: "og:description", content: "Controle de backups, versões, VPN e certificados dos clientes." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),
