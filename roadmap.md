@@ -11,5 +11,6 @@
 - [x] Add Efí Billing to the initial screen and make its primary actions visible
 - [x] Auto-fill customer registration from CNPJ and expose the monthly due day
 - [x] Apply dark mode consistently across all application screens
+- [x] Support individual customers and CPF billing in Efí subscriptions
 - [ ] Implement secure Efí payment-status webhooks
 - [ ] Validate build and key user flows on desktop and mobile

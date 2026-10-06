@@ -25,13 +25,18 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
   const [form, setForm] = useState<ClienteInput>(emptyCliente());
   const [novoGrupo, setNovoGrupo] = useState("");
   const [consultandoCnpj, setConsultandoCnpj] = useState(false);
+  const [tipoPessoa, setTipoPessoa] = useState<"FISICA" | "JURIDICA">("JURIDICA");
 
   useEffect(() => {
     if (!open) return;
     if (cliente) {
       const { id: _id, created_at: _created, updated_at: _updated, deleted_at: _deleted, ...values } = cliente;
       setForm(values);
-    } else setForm(emptyCliente());
+      setTipoPessoa(cliente.cnpj.replace(/\D/g, "").length === 11 ? "FISICA" : "JURIDICA");
+    } else {
+      setForm(emptyCliente());
+      setTipoPessoa("JURIDICA");
+    }
     setNovoGrupo("");
   }, [open, cliente]);
 
@@ -116,9 +121,10 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
         <DialogHeader><DialogTitle>{cliente ? "Editar cliente" : "Novo cliente"}</DialogTitle><DialogDescription>Plano, módulos, dados técnicos e cobrança em um só cadastro.</DialogDescription></DialogHeader>
         <form onSubmit={submit} className="space-y-5">
           <section className="space-y-3"><h3 className="text-sm font-bold">Identificação e grupo</h3><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Field label="Razão social *" className="lg:col-span-2"><Input required value={form.razao_social} onChange={(e) => update("razao_social", e.target.value)} /></Field>
-            <Field label="Nome fantasia"><Input value={form.nome_fantasia} onChange={(e) => update("nome_fantasia", e.target.value)} /></Field>
-            <Field label="CNPJ / CPF"><div className="flex gap-2"><Input value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} onBlur={() => { if (form.cnpj.replace(/\D/g, "").length === 14 && !cliente) void consultarCnpj(); }} /><Button type="button" size="icon" variant="outline" title="Buscar dados do CNPJ" disabled={consultandoCnpj} onClick={consultarCnpj}>{consultandoCnpj ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</Button></div></Field>
+            <Field label="Tipo de pessoa"><div className="grid grid-cols-2 gap-1 rounded-md border bg-muted p-1"><Button type="button" size="sm" variant={tipoPessoa === "FISICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("FISICA")}>Pessoa física</Button><Button type="button" size="sm" variant={tipoPessoa === "JURIDICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("JURIDICA")}>Pessoa jurídica</Button></div></Field>
+            <Field label={tipoPessoa === "FISICA" ? "Nome completo *" : "Razão social *"} className="lg:col-span-2"><Input required value={form.razao_social} onChange={(e) => update("razao_social", e.target.value)} /></Field>
+            {tipoPessoa === "JURIDICA" ? <Field label="Nome fantasia"><Input value={form.nome_fantasia} onChange={(e) => update("nome_fantasia", e.target.value)} /></Field> : null}
+            <Field label={tipoPessoa === "FISICA" ? "CPF *" : "CNPJ *"}><div className="flex gap-2"><Input required inputMode="numeric" maxLength={tipoPessoa === "FISICA" ? 14 : 18} value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} onBlur={() => { if (tipoPessoa === "JURIDICA" && form.cnpj.replace(/\D/g, "").length === 14 && !cliente) void consultarCnpj(); }} />{tipoPessoa === "JURIDICA" ? <Button type="button" size="icon" variant="outline" title="Buscar dados do CNPJ" disabled={consultandoCnpj} onClick={consultarCnpj}>{consultandoCnpj ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</Button> : null}</div></Field>
             <Field label="WhatsApp"><Input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} /></Field>
             <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
             <Field label="Endereço" className="lg:col-span-2"><Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} /></Field>

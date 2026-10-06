@@ -47,7 +47,9 @@ export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
     const clientSecret = process.env['EFI_CLIENT_SECRET_HOMOLOGACAO'];
     if (!clientId || !clientSecret) throw new Error("As credenciais de homologação Efí ainda não estão configuradas.");
 
-    const key = await idempotencyKey([userId, data.clienteId, String(data.planId), data.vencimento]);
+    const documento = data.tipoPessoa === "FISICA" ? data.cpf : data.cnpj;
+    const nomeCliente = data.tipoPessoa === "FISICA" ? data.nome : data.razaoSocial;
+    const key = await idempotencyKey([userId, data.clienteId, data.tipoPessoa, documento, String(data.planId), data.vencimento]);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existente, error: existenteError } = await supabaseAdmin
       .from("cobrancas_efi")
@@ -72,7 +74,9 @@ export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
     const snapshot = {
       plan_id: data.planId,
       item_name: data.itemName,
-      customer: { corporate_name: data.razaoSocial, cnpj: data.cnpj },
+      customer: data.tipoPessoa === "FISICA"
+        ? { type: "individual", name: data.nome, cpf: data.cpf }
+        : { type: "juridical", corporate_name: data.razaoSocial, cnpj: data.cnpj },
       environment: "HOMOLOGACAO",
     };
     let registroId = existente?.id;
@@ -108,21 +112,33 @@ export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
         throw new Error("A Efí recusou a autenticação de homologação. Confira as credenciais salvas.");
       }
 
+      const customer = data.tipoPessoa === "FISICA"
+        ? {
+            name: data.nome,
+            cpf: data.cpf,
+            email: data.email,
+            phone_number: data.telefone,
+            address: {
+              street: data.endereco, number: data.numeroEndereco, neighborhood: data.bairro,
+              zipcode: data.cep, city: data.cidade, state: data.uf,
+            },
+          }
+        : {
+            juridical_person: { corporate_name: data.razaoSocial, cnpj: data.cnpj },
+            email: data.email,
+            phone_number: data.telefone,
+            address: {
+              street: data.endereco, number: data.numeroEndereco, neighborhood: data.bairro,
+              zipcode: data.cep, city: data.cidade, state: data.uf,
+            },
+          };
       const body = {
         items: [{ name: data.itemName, value: Math.round(data.valor * 100), amount: 1 }],
         payment: {
           banking_billet: {
             expire_at: data.vencimento,
             message: data.mensagem,
-            customer: {
-              juridical_person: { corporate_name: data.razaoSocial, cnpj: data.cnpj },
-              email: data.email,
-              phone_number: data.telefone,
-              address: {
-                street: data.endereco, number: data.numeroEndereco, neighborhood: data.bairro,
-                zipcode: data.cep, city: data.cidade, state: data.uf,
-              },
-            },
+            customer,
           },
         },
       };
@@ -148,7 +164,7 @@ export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
           status: uncertain ? "VERIFICAR" : "ERRO",
           ultimo_erro: (uncertain ? "Resposta inconclusiva da Efí. " : "") + providerMessage.slice(0, 1500),
         }).eq("id", registroId);
-        throw new Error(uncertain ? "A Efí não confirmou a emissão. Verifique antes de tentar novamente." : `A Efí não aceitou a assinatura: ${providerMessage}`);
+        throw new Error(uncertain ? "A Efí não confirmou a emissão. Verifique antes de tentar novamente." : `A Efí não aceitou a assinatura de ${nomeCliente}: ${providerMessage}`);
       }
 
       const root = asRecord(responseJson);

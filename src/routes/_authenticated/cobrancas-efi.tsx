@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, CheckCircle2, Clipboard, CloudCheck, Eye, EyeOff, Loader2, MessageCircle, Search, Send, ShieldCheck } from "lucide-react";
+import { Building2, CheckCircle2, Clipboard, CloudCheck, Eye, EyeOff, Loader2, MessageCircle, Search, Send, ShieldCheck, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -44,6 +44,9 @@ function CobrancasEfi() {
   const [valor, setValor] = useState("");
   const [vencimento, setVencimento] = useState("");
   const [mensagem, setMensagem] = useState("Pague sua mensalidade em dia e evite transtornos.");
+  const [tipoPessoa, setTipoPessoa] = useState<"FISICA" | "JURIDICA">("JURIDICA");
+  const [nome, setNome] = useState("");
+  const [cpf, setCpf] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [razaoSocial, setRazaoSocial] = useState("");
   const [email, setEmail] = useState("");
@@ -70,8 +73,13 @@ function CobrancasEfi() {
     setClienteId(id);
     const selected = clientes.find((item) => item.id === id);
     if (!selected) return;
+    const documento = selected.cnpj.replace(/\D/g, "");
+    const pessoaFisica = documento.length === 11;
+    setTipoPessoa(pessoaFisica ? "FISICA" : "JURIDICA");
+    setNome(pessoaFisica ? selected.razao_social : "");
+    setCpf(pessoaFisica ? documento : "");
     setRazaoSocial(selected.razao_social);
-    setCnpj(selected.cnpj);
+    setCnpj(pessoaFisica ? "" : selected.cnpj);
     setEmail(selected.email);
     setTelefone(selected.telefone);
     setEndereco(selected.endereco);
@@ -104,7 +112,7 @@ function CobrancasEfi() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     const input = {
-      clienteId, planId, itemName, valor, vencimento, mensagem, razaoSocial, cnpj,
+      clienteId, tipoPessoa, planId, itemName, valor, vencimento, mensagem, nome, cpf, razaoSocial, cnpj,
       email, telefone, endereco, numeroEndereco, bairro, cep, cidade, uf,
     };
     const parsed = assinaturaEfiSchema.safeParse(input);
@@ -144,18 +152,24 @@ function CobrancasEfi() {
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
           <form onSubmit={submit} className="space-y-5 rounded-md border bg-card p-5">
-            <div><h2 className="font-bold">Gerar assinatura e boleto</h2><p className="text-xs text-muted-foreground">Escolha um cliente cadastrado e confira os dados antes de emitir.</p></div>
+            <div><h2 className="font-bold">Gerar assinatura e boleto</h2><p className="text-xs text-muted-foreground">Emita para pessoa física ou jurídica e confira os dados antes de continuar.</p></div>
+            <div className="space-y-2"><Label>Tipo de pessoa</Label><div className="grid grid-cols-2 gap-1 rounded-md border bg-muted p-1"><Button type="button" variant={tipoPessoa === "FISICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("FISICA")}><UserRound className="size-4" />Pessoa física</Button><Button type="button" variant={tipoPessoa === "JURIDICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("JURIDICA")}><Building2 className="size-4" />Pessoa jurídica</Button></div></div>
             <div className="space-y-2"><Label>Cliente</Label><Select value={clienteId} onValueChange={escolherCliente}><SelectTrigger><SelectValue placeholder={loadingClientes ? "Carregando clientes..." : "Selecione um cliente ativo"} /></SelectTrigger><SelectContent>{clientes.filter((item) => item.status === "ATIVO").map((item) => <SelectItem key={item.id} value={item.id}>{item.razao_social}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="ID do plano Efí"><Input inputMode="numeric" value={planId} onChange={(e) => setPlanId(e.target.value.replace(/\D/g, ""))} placeholder="Ex: 54380" /></Field>
               <Field label="Valor mensal"><Input type="number" min="0.01" max="999999.99" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" /></Field>
             </div>
             <Field label="Nome do serviço"><Input maxLength={255} value={itemName} onChange={(e) => setItemName(e.target.value)} /></Field>
-            <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
-              <Field label="CNPJ"><Input maxLength={18} value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></Field>
-              <div className="flex items-end"><Button type="button" variant="outline" disabled={consultando} onClick={consultarCnpj}>{consultando ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}Consultar</Button></div>
-            </div>
-            <Field label="Razão social"><Input maxLength={255} value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} /></Field>
+            {tipoPessoa === "FISICA" ? <>
+              <Field label="Nome completo"><Input maxLength={255} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da pessoa" /></Field>
+              <Field label="CPF"><Input inputMode="numeric" maxLength={14} value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="000.000.000-00" /></Field>
+            </> : <>
+              <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+                <Field label="CNPJ"><Input inputMode="numeric" maxLength={18} value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></Field>
+                <div className="flex items-end"><Button type="button" variant="outline" disabled={consultando} onClick={consultarCnpj}>{consultando ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}Consultar</Button></div>
+              </div>
+              <Field label="Razão social"><Input maxLength={255} value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} /></Field>
+            </>}
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="E-mail"><Input type="email" maxLength={255} value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
               <Field label="Telefone / WhatsApp"><Input maxLength={20} value={telefone} onChange={(e) => setTelefone(e.target.value)} /></Field>
@@ -179,7 +193,7 @@ function CobrancasEfi() {
           <section className="space-y-4 lg:sticky lg:top-4">
             <div className="rounded-md border bg-card p-5">
               <div className="mb-4 flex items-center gap-2"><Building2 className="size-4 text-primary" /><h2 className="font-bold">Resumo da emissão</h2></div>
-              {cliente ? <dl className="space-y-3 text-sm"><Summary label="Cliente" value={razaoSocial || cliente.razao_social} /><Summary label="Plano do cadastro" value={cliente.plano} /><Summary label="Módulos" value={cliente.modulos.join(" · ") || "Não informados"} /><Summary label="Valor" value={valoresVisiveis ? formatCurrency(Number(valor || 0)) : "R$ ••••••"} /><Summary label="Primeiro vencimento" value={formatDate(vencimento)} /></dl> : <p className="py-12 text-center text-sm text-muted-foreground">Selecione um cliente para preencher e revisar a assinatura.</p>}
+              {cliente ? <dl className="space-y-3 text-sm"><Summary label="Tipo" value={tipoPessoa === "FISICA" ? "Pessoa física" : "Pessoa jurídica"} /><Summary label="Cliente" value={(tipoPessoa === "FISICA" ? nome : razaoSocial) || cliente.razao_social} /><Summary label="Documento" value={tipoPessoa === "FISICA" ? cpf || "—" : cnpj || "—"} /><Summary label="Plano do cadastro" value={cliente.plano} /><Summary label="Módulos" value={cliente.modulos.join(" · ") || "Não informados"} /><Summary label="Valor" value={valoresVisiveis ? formatCurrency(Number(valor || 0)) : "R$ ••••••"} /><Summary label="Primeiro vencimento" value={formatDate(vencimento)} /></dl> : <p className="py-12 text-center text-sm text-muted-foreground">Selecione um cliente para preencher e revisar a assinatura.</p>}
             </div>
             <div className="rounded-md border bg-card p-5"><h2 className="font-bold">Histórico de emissões</h2><p className="mb-4 text-xs text-muted-foreground">Busque um cliente, situação ou identificador para liberar a lista.</p><div className="relative"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><Input className="pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar cobrança" /></div></div>
           </section>
