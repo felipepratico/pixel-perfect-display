@@ -12,3 +12,4 @@
 - Keep customer records as the source of contract and operational data; financial titles reference customers so history remains stable.
 - Keep Efí credentials and API calls server-side; browser code only invokes authenticated server functions.
 - Render the application in dark mode by default so every route and shared control uses the same semantic theme.
+- Centralize the application theme in global CSS and load its fonts in the root head; shared tokens keep every screen consistent without changing business behavior.

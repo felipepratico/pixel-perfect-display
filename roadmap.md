@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Apply the uploaded charcoal/yellow theme across the existing application
 - [x] Hide customers until a filter is applied and keep financial values hidden by default
 - [x] Change every paid title to open
 - [ ] Create customer, audit, support, and Efí billing schema with automatic conversion
