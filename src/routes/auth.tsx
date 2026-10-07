@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { safeAuthNext } from "@/lib/auth-redirect";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({ next: safeAuthNext(search['next']) }),
+  validateSearch: (search: Record<string, unknown>): { next?: string } => ({ next: safeAuthNext(search['next']) }),
   head: () => ({
     meta: [
       { title: "Entrar — UPSYSTEM FINCONTROL" },
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { next } = Route.useSearch();
+  const next = safeAuthNext(Route.useSearch().next);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

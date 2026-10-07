@@ -1,6 +1,6 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser } from "../supabase";
+import { supabaseForUser, mcpUserId } from "../supabase";
 
 export default defineTool({
   name: "listar_cobrancas_efi",
@@ -16,7 +16,7 @@ export default defineTool({
   handler: async ({ cliente_id, status, limite, pagina }, ctx) => {
     let query = supabaseForUser(ctx).from("cobrancas_efi")
       .select("id, cliente_id, titulo_id, status, valor, vencimento, efi_charge_id, efi_subscription_id, created_at", { count: "exact" })
-      .eq("user_id", ctx.getUserId()).is("deleted_at", null).order("created_at", { ascending: false }).order("id");
+      .eq("user_id", mcpUserId(ctx)).is("deleted_at", null).order("created_at", { ascending: false }).order("id");
     if (cliente_id) query = query.eq("cliente_id", cliente_id);
     if (status) query = query.eq("status", status);
     const { data, count, error } = await query.range((pagina - 1) * limite, pagina * limite - 1).abortSignal(ctx.signal);

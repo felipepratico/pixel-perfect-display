@@ -1,6 +1,6 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser } from "../supabase";
+import { supabaseForUser, mcpUserId } from "../supabase";
 
 export default defineTool({
   name: "listar_clientes",
@@ -16,7 +16,7 @@ export default defineTool({
   handler: async ({ busca, situacao, limite, pagina }, ctx) => {
     let query = supabaseForUser(ctx).from("clientes")
       .select("id, razao_social, nome_fantasia, cnpj, plano, valor_base, quantidade_computadores, valor_computador_adicional, modulos, vencimento, status", { count: "exact" })
-      .eq("user_id", ctx.getUserId()).is("deleted_at", null).order("razao_social").order("id");
+      .eq("user_id", mcpUserId(ctx)).is("deleted_at", null).order("razao_social").order("id");
     if (situacao) query = query.eq("status", situacao);
     if (busca) {
       const safe = busca.replace(/[^\p{L}\p{N}\s.-]/gu, "").trim();

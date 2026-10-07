@@ -1,6 +1,6 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser } from "../supabase";
+import { supabaseForUser, mcpUserId } from "../supabase";
 
 export default defineTool({
   name: "listar_titulos",
@@ -17,7 +17,7 @@ export default defineTool({
   handler: async ({ cliente_id, situacao, mes_ano, limite, pagina }, ctx) => {
     let query = supabaseForUser(ctx).from("titulos")
       .select("id, cliente_id, cliente, mes_ano, vencimento, situacao, mensal_site, pago_em", { count: "exact" })
-      .eq("user_id", ctx.getUserId()).is("deleted_at", null).order("created_at", { ascending: false }).order("id");
+      .eq("user_id", mcpUserId(ctx)).is("deleted_at", null).order("created_at", { ascending: false }).order("id");
     if (cliente_id) query = query.eq("cliente_id", cliente_id);
     if (situacao) query = query.eq("situacao", situacao);
     if (mes_ano) query = query.eq("mes_ano", mes_ano);

@@ -7,6 +7,13 @@ function configured(names: string[]): string | undefined {
     const value = process.env[name]?.trim();
     if (value) return value;
   }
+  return undefined;
+}
+
+export function mcpUserId(ctx: ToolContext): string {
+  const userId = ctx.getUserId();
+  if (!ctx.isAuthenticated() || !userId) throw new ToolError("Entre na sua conta para consultar os dados.");
+  return userId;
 }
 
 function configuration() {
