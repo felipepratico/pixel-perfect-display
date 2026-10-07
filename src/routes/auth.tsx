@@ -8,10 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { safeAuthNext } from "@/lib/auth-redirect";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>): { next?: string } => ({ next: safeAuthNext(search['next']) }),
   head: () => ({
     meta: [
       { title: "Entrar — UPSYSTEM FINCONTROL" },
@@ -32,7 +30,6 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const next = safeAuthNext(Route.useSearch().next);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,12 +39,12 @@ function AuthPage() {
   useEffect(() => {
     let active = true;
     void supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) window.location.replace(next);
+      if (active && data.session) window.location.replace("/painel");
     });
     return () => {
       active = false;
     };
-  }, [next]);
+  }, []);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -57,19 +54,19 @@ function AuthPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/auth?next=${encodeURIComponent(next)}` },
+          options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
         if (!data.session) {
           setCheckEmail(true);
           return;
         }
-        window.location.replace(next);
+        window.location.replace("/painel");
         return;
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      window.location.replace(next);
+      window.location.replace("/painel");
     } catch (error) {
       toast.error(
         error instanceof Error ? traduzErro(error.message) : "Não foi possível continuar.",
@@ -82,7 +79,7 @@ function AuthPage() {
   async function handleGoogle() {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/auth?next=${encodeURIComponent(next)}`,
+      redirect_uri: window.location.origin,
     });
     if (result.error) {
       setLoading(false);
@@ -90,7 +87,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    window.location.replace(next);
+    window.location.replace("/painel");
   }
 
   return (
