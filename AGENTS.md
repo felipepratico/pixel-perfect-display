@@ -13,3 +13,4 @@
 - Keep Efí credentials and API calls server-side; browser code only invokes authenticated server functions.
 - Render the application in dark mode by default so every route and shared control uses the same semantic theme.
 - Centralize the application theme in global CSS and load its fonts in the root head; shared tokens keep every screen consistent without changing business behavior.
+- Expose read-only MCP queries through the SDK-generated routes with OAuth and a shared user-token database factory; user-scoped RLS prevents cross-account access and MCP never uses privileged credentials.
