@@ -55,6 +55,8 @@ export function TitulosTable({
                 />
               </th>
               <th className="px-3 py-3">Cliente / assinatura</th>
+              <th className="px-3 py-3 text-center">Situação</th>
+              <th className="px-3 py-3 text-center">Ações</th>
               <th className="px-3 py-3">CNPJ / telefone</th>
               <th className="px-3 py-3 text-right">Mensal site</th>
               <th className="px-3 py-3 text-right">Mensal real</th>
@@ -64,8 +66,6 @@ export function TitulosTable({
               <th className="px-3 py-3 text-right">Custo (Blt x Fra)</th>
               <th className="px-3 py-3 text-right">Lucro Felipe</th>
               <th className="px-3 py-3 text-center">Vencimento</th>
-              <th className="px-3 py-3 text-center">Situação</th>
-              <th className="px-3 py-3 text-center">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -102,26 +102,6 @@ export function TitulosTable({
                       <span className="text-muted-foreground">{titulo.mes_ano}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2.5 text-muted-foreground">
-                    <p>{titulo.cnpj || "—"}</p>
-                    <p>{titulo.telefone || "sem telefone"}</p>
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-semibold">
-                    {moeda(calc.mensalSite)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right">{moeda(calc.mensalReal)}</td>
-                  <td className="px-3 py-2.5 text-right">{moeda(calc.custoBoleto)}</td>
-                  <td className="px-3 py-2.5 text-center">{valoresVisiveis ? `${calc.franciscoPct}%` : "•••"}</td>
-                  <td className="px-3 py-2.5 text-right font-semibold text-partner">
-                    {moeda(calc.lucroFrancisco)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-semibold text-warning">
-                    {moeda(calc.custoBltFra)}
-                  </td>
-                  <td className="bg-brand-soft/40 px-3 py-2.5 text-right font-extrabold text-brand">
-                    {moeda(calc.lucroFelipe)}
-                  </td>
-                  <td className="px-3 py-2.5 text-center">Dia {titulo.vencimento}</td>
                   <td className="px-3 py-2.5 text-center">
                     <button
                       type="button"
@@ -185,6 +165,26 @@ export function TitulosTable({
                       </Button>
                     </div>
                   </td>
+                  <td className="px-3 py-2.5 text-muted-foreground">
+                    <p>{titulo.cnpj || "—"}</p>
+                    <p>{titulo.telefone || "sem telefone"}</p>
+                  </td>
+                  <td className="px-3 py-2.5 text-right font-semibold">
+                    {moeda(calc.mensalSite)}
+                  </td>
+                  <td className="px-3 py-2.5 text-right">{moeda(calc.mensalReal)}</td>
+                  <td className="px-3 py-2.5 text-right">{moeda(calc.custoBoleto)}</td>
+                  <td className="px-3 py-2.5 text-center">{valoresVisiveis ? `${calc.franciscoPct}%` : "•••"}</td>
+                  <td className="px-3 py-2.5 text-right font-semibold text-partner">
+                    {moeda(calc.lucroFrancisco)}
+                  </td>
+                  <td className="px-3 py-2.5 text-right font-semibold text-warning">
+                    {moeda(calc.custoBltFra)}
+                  </td>
+                  <td className="bg-brand-soft/40 px-3 py-2.5 text-right font-extrabold text-brand">
+                    {moeda(calc.lucroFelipe)}
+                  </td>
+                  <td className="px-3 py-2.5 text-center">Dia {titulo.vencimento}</td>
                 </tr>
               );
             })}
@@ -192,7 +192,7 @@ export function TitulosTable({
           {titulos.length > 0 ? (
             <tfoot className="border-t-2 border-border bg-muted text-xs font-bold">
               <tr>
-                <td className="p-3" colSpan={3}>
+                <td className="p-3" colSpan={5}>
                   TOTAIS (filtrados)
                 </td>
                 <td className="p-3 text-right text-info">{moeda(totais.mensalSite)}</td>
@@ -208,7 +208,7 @@ export function TitulosTable({
                 <td className="bg-brand-soft/60 p-3 text-right text-brand">
                   {moeda(totais.lucroFelipe)}
                 </td>
-                <td className="p-3 text-center" colSpan={3}>
+                <td className="p-3 text-center">
                   --
                 </td>
               </tr>
