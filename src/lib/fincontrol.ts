@@ -128,6 +128,31 @@ export function whatsappMessage(t: Titulo): string {
   );
 }
 
+export function getVencimentoDate(t: Pick<Titulo, "vencimento" | "mes_ano">): Date | null {
+  if (!t.mes_ano) return null;
+  const [mStr, yStr] = t.mes_ano.split("/");
+  const month = Number.parseInt(mStr ?? "", 10);
+  const year = Number.parseInt(yStr ?? "", 10);
+  if (!month || !year || month < 1 || month > 12) return null;
+  const day = Math.min(Math.max(Number(t.vencimento) || 1, 1), 31);
+  return new Date(year, month - 1, day, 23, 59, 59, 999);
+}
+
+export function isTituloVencido(t: Pick<Titulo, "situacao" | "vencimento" | "mes_ano">): boolean {
+  if (t.situacao === "PAGO") return false;
+  const dueDate = getVencimentoDate(t);
+  if (!dueDate) return false;
+  return Date.now() > dueDate.getTime();
+}
+
+export function getDiasVencido(t: Pick<Titulo, "situacao" | "vencimento" | "mes_ano">): number {
+  const dueDate = getVencimentoDate(t);
+  if (!dueDate) return 0;
+  const diffMs = Date.now() - dueDate.getTime();
+  if (diffMs <= 0) return 0;
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
+
 export const emptyTitulo = (): TituloInput => ({
   cliente_id: null,
   cliente: "",

@@ -1,8 +1,10 @@
 import {
+  AlertTriangle,
   CircleCheck,
   Clock,
   FileText,
   FolderOpen,
+  Link2,
   MessageCircle,
   Pencil,
   Trash2,
@@ -10,7 +12,14 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { computeRow, formatCurrency, isActiveSubscription, type Titulo } from "@/lib/fincontrol";
+import {
+  computeRow,
+  formatCurrency,
+  getDiasVencido,
+  isActiveSubscription,
+  isTituloVencido,
+  type Titulo,
+} from "@/lib/fincontrol";
 import type { Totais } from "@/lib/totais";
 
 export function TitulosTable({
@@ -72,8 +81,17 @@ export function TitulosTable({
             {titulos.map((titulo) => {
               const calc = computeRow(titulo);
               const ativa = isActiveSubscription(titulo);
+              const vencido = isTituloVencido(titulo);
+              const diasAtraso = vencido ? getDiasVencido(titulo) : 0;
               return (
-                <tr key={titulo.id} className="transition-colors hover:bg-muted/60">
+                <tr
+                  key={titulo.id}
+                  className={`transition-colors ${
+                    vencido
+                      ? "bg-destructive/5 hover:bg-destructive/10 border-l-2 border-l-destructive"
+                      : "hover:bg-muted/60"
+                  }`}
+                >
                   <td className="px-3 py-2.5 text-center">
                     <Checkbox
                       checked={selecionados.has(titulo.id)}
@@ -82,7 +100,18 @@ export function TitulosTable({
                     />
                   </td>
                   <td className="px-3 py-2.5">
-                    <p className="font-bold">{titulo.cliente}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-bold">{titulo.cliente}</p>
+                      {titulo.cliente_id && (
+                        <span
+                          title="Vinculado ao cadastro de clientes"
+                          className="inline-flex items-center gap-0.5 rounded-full bg-brand-soft px-1.5 py-0.2 text-[9px] font-semibold text-brand"
+                        >
+                          <Link2 className="size-2.5" />
+                          Cliente
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-0.5 flex items-center gap-1.5 text-[10px] font-semibold">
                       {titulo.tipo_cobranca === "RECORRENTE" ? (
                         <span
@@ -109,15 +138,23 @@ export function TitulosTable({
                       className={
                         titulo.situacao === "PAGO"
                           ? "inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-1 text-[10px] font-bold text-brand"
+                          : vencido
+                          ? "inline-flex items-center gap-1 rounded-full border border-destructive/40 bg-destructive/15 px-2 py-1 text-[10px] font-black text-destructive"
                           : "inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning"
                       }
                     >
                       {titulo.situacao === "PAGO" ? (
                         <CircleCheck className="size-3" />
+                      ) : vencido ? (
+                        <AlertTriangle className="size-3 text-destructive animate-pulse" />
                       ) : (
                         <Clock className="size-3" />
                       )}
-                      {titulo.situacao}
+                      {titulo.situacao === "PAGO"
+                        ? "PAGO"
+                        : vencido
+                        ? `VENCIDO (${diasAtraso}d)`
+                        : "ABERTO"}
                     </button>
                   </td>
                   <td className="px-3 py-2.5">

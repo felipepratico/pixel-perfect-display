@@ -1,4 +1,4 @@
-import { Coins } from "lucide-react";
+import { Building2, Coins, Link2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { valorContrato } from "@/lib/clientes";
 import {
   computeRow,
   emptyTitulo,
@@ -20,6 +21,7 @@ import {
   type Titulo,
   type TituloInput,
 } from "@/lib/fincontrol";
+import { useClientes } from "@/lib/use-clientes";
 
 const selectClass =
   "h-10 w-full rounded-xl border border-input bg-card px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-ring";
@@ -37,6 +39,7 @@ export function TituloDialog({
   onOpenChange: (open: boolean) => void;
   onSave: (values: TituloInput, id?: string) => void;
 }) {
+  const { data: clientes = [] } = useClientes();
   const [form, setForm] = useState<TituloInput>(emptyTitulo());
 
   useEffect(() => {
@@ -53,6 +56,25 @@ export function TituloDialog({
 
   function update<K extends keyof TituloInput>(key: K, value: TituloInput[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleSelectCliente(clienteId: string) {
+    if (!clienteId || clienteId === "none") {
+      update("cliente_id", null);
+      return;
+    }
+    const c = clientes.find((item) => item.id === clienteId);
+    if (!c) return;
+    const mensalidade = valorContrato(c);
+    setForm((prev) => ({
+      ...prev,
+      cliente_id: c.id,
+      cliente: c.razao_social,
+      cnpj: c.cnpj,
+      telefone: c.telefone,
+      vencimento: c.vencimento,
+      mensal_site: prev.mensal_site > 0 ? prev.mensal_site : mensalidade,
+    }));
   }
 
   function handleSubmit(event: React.FormEvent) {
@@ -78,12 +100,39 @@ export function TituloDialog({
         <DialogHeader>
           <DialogTitle>{titulo ? "Editar lançamento" : "Lançar cliente / assinatura"}</DialogTitle>
           <DialogDescription>
-            Os lucros são calculados automaticamente conforme você digita.
+            Títulos vinculados a clientes mantêm histórico estável e dados contratuais sincronizados.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-sm">
           <div className="grid grid-cols-1 gap-3 rounded-2xl border border-border bg-muted/50 p-3.5 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="clienteSelect" className="flex items-center gap-1.5 font-bold">
+                  <Building2 className="size-4 text-brand" />
+                  Vincular a cliente cadastrado
+                </Label>
+                {form.cliente_id && (
+                  <span className="flex items-center gap-1 text-xs text-brand font-medium">
+                    <Link2 className="size-3" /> Vinculado ao cadastro
+                  </span>
+                )}
+              </div>
+              <select
+                id="clienteSelect"
+                className={selectClass}
+                value={form.cliente_id ?? "none"}
+                onChange={(e) => handleSelectCliente(e.target.value)}
+              >
+                <option value="none">-- Selecionar cliente cadastrado ou preencher avulso --</option>
+                {clientes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.razao_social} {c.cnpj ? `(${c.cnpj})` : ""} · Dia {c.vencimento}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="cliente">Nome do cliente / razão social *</Label>
               <Input
@@ -164,7 +213,7 @@ export function TituloDialog({
                 <option value="CANCELADO">🔴 Cancelada (não gera novos meses)</option>
               </select>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="situacao">Situação do pagamento *</Label>
               <select
                 id="situacao"

@@ -3,7 +3,7 @@ import { CalendarDays, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export type StatusFiltro = "all" | "PAGO" | "ABERTO" | "RECORRENTE";
+export type StatusFiltro = "all" | "PAGO" | "ABERTO" | "RECORRENTE" | "VENCIDO";
 export type Ordenacao = "clienteAsc" | "vencimentoAsc" | "lucroFelipeDesc" | "mensalSiteDesc";
 
 export type FiltrosState = {
@@ -21,15 +21,18 @@ export function Filtros({
   state,
   onChange,
   mesesDisponiveis,
+  countVencidos = 0,
 }: {
   state: FiltrosState;
   onChange: (next: Partial<FiltrosState>) => void;
   mesesDisponiveis: string[];
+  countVencidos?: number;
 }) {
-  const statusButtons: Array<{ value: StatusFiltro; label: string }> = [
+  const statusButtons: Array<{ value: StatusFiltro; label: string; badge?: number; variantActive?: string }> = [
     { value: "all", label: "Todos" },
     { value: "PAGO", label: "Pagos" },
     { value: "ABERTO", label: "Abertos" },
+    { value: "VENCIDO", label: "⚠️ Vencidos", badge: countVencidos },
     { value: "RECORRENTE", label: "🔁 Assinaturas ativas" },
   ];
 
@@ -46,19 +49,36 @@ export function Filtros({
           />
         </div>
 
-        <div className="flex flex-wrap gap-1.5 text-xs font-semibold">
-          {statusButtons.map((item) => (
-            <Button
-              key={item.value}
-              type="button"
-              size="sm"
-              variant={state.status === item.value ? "default" : "secondary"}
-              className="h-8 rounded-xl text-xs"
-              onClick={() => onChange({ status: item.value })}
-            >
-              {item.label}
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
+          {statusButtons.map((item) => {
+            const isActive = state.status === item.value;
+            const isVencidoBtn = item.value === "VENCIDO";
+            return (
+              <Button
+                key={item.value}
+                type="button"
+                size="sm"
+                variant={isActive ? (isVencidoBtn ? "destructive" : "default") : "secondary"}
+                className={`h-8 rounded-xl text-xs gap-1.5 ${
+                  isVencidoBtn && !isActive && (item.badge ?? 0) > 0
+                    ? "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                    : ""
+                }`}
+                onClick={() => onChange({ status: item.value })}
+              >
+                <span>{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span
+                    className={`rounded-full px-1.5 py-0.2 text-[10px] font-black ${
+                      isActive ? "bg-white text-destructive" : "bg-destructive text-white"
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </Button>
+            );
+          })}
         </div>
       </div>
 

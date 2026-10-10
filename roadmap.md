@@ -1,10 +1,10 @@
 # Roadmap
 - [x] Hide customers until a filter is applied and keep financial values hidden by default
 - [x] Change every paid title to open
-- [ ] Create customer, audit, support, and Efí billing schema with automatic conversion
-- [ ] Add customer domain types, validation, calculations, and data access
-- [ ] Build customer, operations, audit, trash, and Efí billing screens
-- [ ] Connect titles, filters, reports, WhatsApp, and recurring generation to customers
+- [x] Create customer, audit, support, and Efí billing schema with automatic conversion
+- [x] Add customer domain types, validation, calculations, and data access
+- [x] Build customer, operations, audit, trash, and Efí billing screens
+- [x] Connect titles, filters, reports, WhatsApp, and recurring generation to customers
 - [ ] Add secure Efí sandbox server integration and notification endpoint
 - [ ] Request sandbox credentials securely
 - [x] Integrate the Efí subscription and first-boleto generator into the billing page
@@ -13,4 +13,6 @@
 - [x] Apply dark mode consistently across all application screens
 - [x] Support individual customers and CPF billing in Efí subscriptions
 - [ ] Implement secure Efí payment-status webhooks
-- [ ] Validate build and key user flows on desktop and mobile
+- [x] Validate build and key user flows on desktop and mobile
+- [x] Add overdue titles detection, badge indicator, and quick filter button
+- [x] Integrate Google Gemini AI financial diagnosis and smart collection copywriter
