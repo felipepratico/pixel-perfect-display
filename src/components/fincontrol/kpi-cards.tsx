@@ -1,4 +1,4 @@
-import { ChartPie, Globe, Receipt, Repeat, UserRoundCog, Wallet } from "lucide-react";
+import { Clock, Globe, Receipt, Repeat, UserRound, Wallet } from "lucide-react";
 
 import { formatCurrency } from "@/lib/fincontrol";
 import type { Totais } from "@/lib/totais";
@@ -10,65 +10,87 @@ export function KpiCards({ totais, valoresVisiveis }: { totais: Totais; valoresV
   const pagosPct = totais.quantidade > 0 ? (totais.pagos / totais.quantidade) * 100 : 0;
 
   return (
-    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      {/* 1. MENSAL SITE TOTAL */}
       <Card
-        label="Mensal site total"
-        icon={<Globe className="size-4" />}
-        iconClass="bg-info-soft text-info"
+        label="MENSAL SITE TOTAL"
+        icon={<Globe className="size-3.5" />}
+        iconClass="bg-sky-500/15 text-sky-400"
         value={moeda(totais.mensalSite)}
         hint={`${totais.quantidade} lançamentos`}
       />
+
+      {/* 2. LUCRO FELIPE (LÍQUIDO) - Destaque Verde */}
       <Card
-        label="Lucro Felipe (líquido)"
-        icon={<Wallet className="size-4" />}
-        iconClass="bg-brand text-brand-foreground"
+        label="LUCRO FELIPE (LÍQUIDO)"
+        icon={<Wallet className="size-3.5" />}
+        iconClass="bg-emerald-500 text-black font-bold"
         value={moeda(totais.lucroFelipe)}
-        valueClass="text-brand"
+        valueClass="text-emerald-400"
         hint={valoresVisiveis ? `${pctFelipe}% do total` : "Percentual oculto"}
-        hintClass="text-brand"
-        className="border-brand-border bg-brand-soft/40"
+        hintClass="text-emerald-400/90 font-medium"
+        className="border-emerald-500/35 bg-emerald-950/25 shadow-sm shadow-emerald-950/30"
       />
+
+      {/* 3. LUCRO FRANCISCO - Roxo */}
       <Card
-        label="Lucro Francisco"
-        icon={<UserRoundCog className="size-4" />}
-        iconClass="bg-partner-soft text-partner"
+        label="LUCRO FRANCISCO"
+        icon={<UserRound className="size-3.5" />}
+        iconClass="bg-purple-500/20 text-purple-400"
         value={moeda(totais.lucroFrancisco)}
-        valueClass="text-partner"
+        valueClass="text-purple-400"
         hint="Comissão repassada"
-        className="border-partner-border"
+        className="border-purple-500/20 bg-card/70"
       />
+
+      {/* 4. CUSTOS (BLT X FRA) - Âmbar */}
       <Card
-        label="Custos (Blt x Fra)"
-        icon={<Receipt className="size-4" />}
-        iconClass="bg-warning-soft text-warning"
+        label="CUSTOS (BLT X FRA)"
+        icon={<Receipt className="size-3.5" />}
+        iconClass="bg-amber-500/20 text-amber-400"
         value={moeda(totais.custoBltFra)}
         hint={valoresVisiveis ? `Boletos: ${formatCurrency(totais.custoBoleto)}` : "Boletos: R$ ••••••"}
+        className="border-amber-500/20 bg-card/70"
       />
+
+      {/* 5. MRR (ASSINATURAS) - Roxo */}
       <Card
-        label="MRR (assinaturas)"
-        icon={<Repeat className="size-4" />}
-        iconClass="bg-partner-soft text-partner"
+        label="MRR (ASSINATURAS)"
+        icon={<Repeat className="size-3.5" />}
+        iconClass="bg-purple-500/20 text-purple-400"
         value={`${totais.assinaturasAtivas} ativas`}
-        valueClass="text-partner"
+        valueClass="text-purple-400"
         hint={`${moeda(totais.mrr)} /mês`}
-        hintClass="text-partner font-semibold"
-        className="border-partner-border"
+        hintClass="text-purple-400/80 font-medium"
+        className="border-purple-500/20 bg-card/70"
       />
-      <div className="card-panel p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-            Situação pagamentos
+
+      {/* 6. SITUAÇÃO PAGAMENTOS */}
+      <div className="card-panel flex flex-col justify-between p-3.5 bg-card/70">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+            SITUAÇÃO PAGAMENTOS
           </p>
-          <div className="rounded-xl bg-info-soft p-2 text-info">
-            <ChartPie className="size-4" />
+          <div className="rounded-lg bg-sky-500/20 p-1.5 text-sky-400">
+            <Clock className="size-3.5" />
           </div>
         </div>
-        <h3 className="mt-2 text-xl font-extrabold">
-          {totais.pagos} / {totais.quantidade} pagos
-        </h3>
-        <div className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-muted">
-          <div className="h-full bg-brand transition-all" style={{ width: `${pagosPct}%` }} />
-          <div className="h-full bg-warning transition-all" style={{ width: `${100 - pagosPct}%` }} />
+        <div className="my-1.5">
+          <h3 className="text-lg font-black tracking-tight text-foreground">
+            {totais.pagos} / {totais.quantidade} pagos
+          </h3>
+        </div>
+        <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
+          <div
+            className="h-full bg-emerald-500 transition-all"
+            style={{ width: `${pagosPct}%` }}
+            title={`${totais.pagos} pagos`}
+          />
+          <div
+            className="h-full bg-amber-500 transition-all"
+            style={{ width: `${100 - pagosPct}%` }}
+            title={`${totais.abertos} abertos`}
+          />
         </div>
       </div>
     </div>
@@ -95,15 +117,19 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`card-panel p-4 ${className ?? ""}`}>
+    <div className={`card-panel flex flex-col justify-between p-3.5 bg-card/70 ${className ?? ""}`}>
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
           {label}
         </p>
-        <div className={`rounded-xl p-2 ${iconClass}`}>{icon}</div>
+        <div className={`rounded-lg p-1.5 ${iconClass}`}>{icon}</div>
       </div>
-      <h3 className={`mt-2 text-xl font-extrabold ${valueClass ?? ""}`}>{value}</h3>
-      <p className={`mt-1 text-xs text-muted-foreground ${hintClass ?? ""}`}>{hint}</p>
+      <div className="my-1.5">
+        <h3 className={`text-lg font-black tracking-tight text-foreground ${valueClass ?? ""}`}>
+          {value}
+        </h3>
+      </div>
+      <p className={`text-[11px] text-muted-foreground/75 truncate ${hintClass ?? ""}`}>{hint}</p>
     </div>
   );
 }

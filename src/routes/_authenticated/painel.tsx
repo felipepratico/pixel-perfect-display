@@ -89,7 +89,7 @@ function Painel() {
   const [relOpen, setRelOpen] = useState(false);
   const [relCliente, setRelCliente] = useState<string | null>(null);
   const [loteOpen, setLoteOpen] = useState(false);
-  const [valoresVisiveis, setValoresVisiveis] = useState(false);
+  const [valoresVisiveis, setValoresVisiveis] = useState(true);
   const [geminiOpen, setGeminiOpen] = useState(false);
   const [impressao, setImpressao] = useState<{ titulos: Titulo[]; subtitulo: string } | null>(null);
 
@@ -140,12 +140,7 @@ function Painel() {
     });
   }, [todos, filtros]);
 
-  const filtroAplicado =
-    filtros.busca.trim().length > 0 ||
-    filtros.status !== "all" ||
-    filtros.mesAno !== "all" ||
-    filtros.vencimento !== "all";
-  const clientesVisiveis = filtroAplicado ? filtrados : [];
+  const clientesVisiveis = filtrados;
 
   const totais = useMemo(
     () => calcularTotais(clientesVisiveis, todos),
@@ -215,31 +210,98 @@ function Painel() {
     <div className="min-h-screen bg-background">
       <AppHeader />
 
-      {/* Toolbar secundária de ações */}
-      <div className="border-b bg-card/60 backdrop-blur-sm print:hidden">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3">
+      {/* Toolbar superior de ações (alinhada com a imagem) */}
+      <div className="border-b border-border/60 bg-card/70 backdrop-blur-md print:hidden">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-2 px-4 py-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
-              variant={valoresVisiveis ? "default" : "secondary"}
               onClick={() => setValoresVisiveis((visivel) => !visivel)}
               aria-pressed={valoresVisiveis}
-              className="gap-1.5"
+              className={`gap-1.5 rounded-lg font-semibold text-xs transition-colors ${
+                valoresVisiveis
+                  ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
             >
-              {valoresVisiveis ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {valoresVisiveis ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
               {valoresVisiveis ? "Ocultar valores" : "Mostrar valores"}
             </Button>
-            <Button size="sm" onClick={() => { setEditando(null); setTituloOpen(true); }} className="gap-1.5">
-              <Plus className="size-4" />
+            <Button
+              size="sm"
+              onClick={() => { setEditando(null); setTituloOpen(true); }}
+              className="gap-1.5 rounded-lg bg-sky-500 font-semibold text-xs text-white hover:bg-sky-600 shadow-sm"
+            >
+              <Plus className="size-3.5" />
               Lançamento
             </Button>
-            <Button size="sm" variant="secondary" disabled={!filtroAplicado} onClick={() => setAssOpen(true)} className="gap-1.5">
-              <Repeat className="size-4" />
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setAssOpen(true)}
+              className="gap-1.5 rounded-lg text-xs font-semibold"
+            >
+              <Repeat className="size-3.5" />
               Assinaturas
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => setRecOpen(true)} className="gap-1.5">
-              <CalendarPlus className="size-4" />
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setRecOpen(true)}
+              className="gap-1.5 rounded-lg text-xs font-semibold"
+            >
+              <CalendarPlus className="size-3.5" />
               Gerar meses
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              asChild
+              className="gap-1.5 rounded-lg text-xs font-semibold"
+            >
+              <Link to="/cobrancas-efi">
+                <CloudCheck className="size-3.5" />
+                Cobranças Efí
+              </Link>
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setImpOpen(true)}
+              className="gap-1.5 rounded-lg text-xs font-semibold"
+            >
+              <Upload className="size-3.5" />
+              Importar
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!valoresVisiveis || clientesVisiveis.length === 0}
+              onClick={() => exportTitulos(clientesVisiveis)}
+              className="gap-1.5 rounded-lg text-xs font-semibold"
+            >
+              <Download className="size-3.5" />
+              Exportar
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={clientesVisiveis.length === 0}
+              onClick={() => { setRelCliente(null); setRelOpen(true); }}
+              className="gap-1.5 rounded-lg text-xs font-semibold"
+            >
+              <FileText className="size-3.5" />
+              Relatórios
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!valoresVisiveis || clientesVisiveis.length === 0}
+              onClick={() => imprimir(clientesVisiveis, `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`)}
+              className="gap-1.5 rounded-lg text-xs font-semibold"
+            >
+              <Printer className="size-3.5" />
+              Imprimir
             </Button>
           </div>
 
@@ -248,9 +310,9 @@ function Painel() {
             <Button
               size="sm"
               onClick={() => setGeminiOpen(true)}
-              className="gap-1.5 bg-gradient-to-r from-brand via-primary to-indigo-600 font-extrabold text-white shadow-md shadow-brand/20 transition-all hover:opacity-90"
+              className="gap-1.5 rounded-lg bg-gradient-to-r from-brand via-primary to-indigo-600 text-xs font-extrabold text-white shadow-md shadow-brand/20 transition-all hover:opacity-90"
             >
-              <Sparkles className="size-4 animate-pulse" />
+              <Sparkles className="size-3.5 animate-pulse" />
               Gemini IA
               {titulosVencidos.length > 0 && (
                 <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[10px] font-black">
@@ -259,83 +321,77 @@ function Painel() {
               )}
             </Button>
 
-            <Button size="sm" variant="secondary" onClick={() => setImpOpen(true)} className="gap-1.5">
-              <Upload className="size-4" />
-              Importar
-            </Button>
-            <Button size="sm" variant="secondary" disabled={!filtroAplicado || !valoresVisiveis} onClick={() => exportTitulos(clientesVisiveis)} className="gap-1.5">
-              <Download className="size-4" />
-              Exportar
-            </Button>
-            <Button size="sm" variant="secondary" disabled={!filtroAplicado} onClick={() => { setRelCliente(null); setRelOpen(true); }} className="gap-1.5">
-              <FileText className="size-4" />
-              Relatórios
-            </Button>
-            <Button size="sm" variant="secondary" disabled={!filtroAplicado || !valoresVisiveis} onClick={() => imprimir(clientesVisiveis, `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`)} className="gap-1.5">
-              <Printer className="size-4" />
-              Imprimir
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Sair"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                void navigate({ to: "/auth" });
+              }}
+            >
+              <LogOut className="size-4" />
             </Button>
           </div>
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
+      {/* Conteúdo Principal organizado conforme a imagem: Cartões -> Gráficos -> Filtros -> Tabela */}
+      <main className="mx-auto max-w-[1440px] space-y-4 px-4 py-4">
         {isLoading ? (
-          <div className="flex justify-center py-20"><Loader2 className="size-6 animate-spin" /></div>
+          <div className="flex justify-center py-20"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
         ) : (
           <>
+            {/* 1. Cartões de KPI */}
+            <KpiCards totais={totais} valoresVisiveis={valoresVisiveis} />
+
+            {/* 2. Gráficos */}
+            <Graficos titulos={clientesVisiveis} totais={totais} valoresVisiveis={valoresVisiveis} />
+
+            {/* 3. Filtros */}
             <Filtros
               state={filtros}
               onChange={(n) => setFiltros((s) => ({ ...s, ...n }))}
               mesesDisponiveis={mesesDisponiveis}
               countVencidos={titulosVencidos.length}
             />
-            <KpiCards totais={totais} valoresVisiveis={valoresVisiveis} />
-            <Graficos titulos={clientesVisiveis} totais={totais} valoresVisiveis={valoresVisiveis} />
+
+            {/* Ações em lote caso haja itens selecionados */}
             {ids.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3 text-sm">
-                <span className="font-semibold">{ids.length} selecionado(s)</span>
-                <Button size="sm" variant="outline" onClick={() => patchMany.mutate({ ids, values: { situacao: "PAGO" } }, { onError: erro })}>Marcar pago</Button>
-                <Button size="sm" variant="outline" onClick={() => patchMany.mutate({ ids, values: { situacao: "ABERTO" } }, { onError: erro })}>Marcar aberto</Button>
-                <Button size="sm" variant="outline" className="border-brand/30 bg-brand-soft text-brand hover:bg-brand-soft gap-1" onClick={() => setLoteOpen(true)}>
-                  <MessageCircle className="size-4" />Cobrar no WhatsApp
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-card p-3 text-xs">
+                <span className="font-semibold text-foreground">{ids.length} selecionado(s)</span>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => patchMany.mutate({ ids, values: { situacao: "PAGO" } }, { onError: erro })}>Marcar pago</Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => patchMany.mutate({ ids, values: { situacao: "ABERTO" } }, { onError: erro })}>Marcar aberto</Button>
+                <Button size="sm" variant="outline" className="h-7 border-emerald-500/30 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 gap-1 text-xs" onClick={() => setLoteOpen(true)}>
+                  <MessageCircle className="size-3.5" />Cobrar no WhatsApp
                 </Button>
-                <Button size="sm" variant="outline" disabled={!valoresVisiveis} onClick={() => imprimir(clientesVisiveis.filter((t) => selecionados.has(t.id)), "Selecionados — agrupado por vencimento")}>
-                  <Printer className="size-4" />Imprimir seleção
+                <Button size="sm" variant="outline" className="h-7 text-xs" disabled={!valoresVisiveis} onClick={() => imprimir(clientesVisiveis.filter((t) => selecionados.has(t.id)), "Selecionados — agrupado por vencimento")}>
+                  <Printer className="size-3.5" />Imprimir seleção
                 </Button>
-                <Button size="sm" variant="destructive" onClick={() => {
+                <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => {
                   if (!confirm(`Excluir ${ids.length} lançamento(s)?`)) return;
                   removeMany.mutate(ids, { onSuccess: () => setSelecionados(new Set()), onError: erro });
                 }}>
-                  <Trash2 className="size-4" />Excluir
+                  <Trash2 className="size-3.5" />Excluir
                 </Button>
               </div>
             )}
-            {!filtroAplicado ? (
-              <div className="card-panel flex min-h-56 items-center justify-center p-8 text-center">
-                <div className="max-w-md space-y-2 text-muted-foreground">
-                  <Filter className="mx-auto size-7" />
-                  <p className="text-base font-bold text-foreground">Clientes protegidos</p>
-                  <p className="text-xs">
-                    Busque um cliente ou escolha situação, vencidos, mês ou dia de vencimento para liberar a lista.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <TitulosTable
-                titulos={clientesVisiveis}
-                totais={totais}
-                valoresVisiveis={valoresVisiveis}
-                selecionados={selecionados}
-                onToggle={(id) => setSelecionados((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })}
-                onToggleTodos={(m) => setSelecionados(m ? new Set(clientesVisiveis.map((t) => t.id)) : new Set())}
-                onEditar={(t) => { setEditando(t); setTituloOpen(true); }}
-                onWhatsApp={setWhats}
-                onRelatorio={(t) => { setRelCliente(t.cliente); setRelOpen(true); }}
-                onAlternarSituacao={(t) => patchMany.mutate({ ids: [t.id], values: { situacao: t.situacao === "PAGO" ? "ABERTO" : "PAGO" } }, { onError: erro })}
-                onExcluir={(t) => { if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro }); }}
-              />
-            )}
+
+            {/* 4. Tabela de Lançamentos */}
+            <TitulosTable
+              titulos={clientesVisiveis}
+              totais={totais}
+              valoresVisiveis={valoresVisiveis}
+              selecionados={selecionados}
+              onToggle={(id) => setSelecionados((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })}
+              onToggleTodos={(m) => setSelecionados(m ? new Set(clientesVisiveis.map((t) => t.id)) : new Set())}
+              onEditar={(t) => { setEditando(t); setTituloOpen(true); }}
+              onWhatsApp={setWhats}
+              onRelatorio={(t) => { setRelCliente(t.cliente); setRelOpen(true); }}
+              onAlternarSituacao={(t) => patchMany.mutate({ ids: [t.id], values: { situacao: t.situacao === "PAGO" ? "ABERTO" : "PAGO" } }, { onError: erro })}
+              onExcluir={(t) => { if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro }); }}
+            />
           </>
         )}
       </main>
