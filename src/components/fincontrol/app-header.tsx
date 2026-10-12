@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Banknote, CloudCheck, FileClock, LogOut, MonitorCog, Users } from "lucide-react";
+import { Banknote, CloudCheck, FileClock, LogOut, MonitorCog, ShieldAlert, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,9 +8,11 @@ const items = [
   { to: "/painel", label: "Financeiro", icon: Banknote },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/operacao", label: "Operação", icon: MonitorCog },
+  { to: "/monitoramento", label: "Monitoramento", icon: ShieldAlert },
   { to: "/auditoria", label: "Auditoria", icon: FileClock },
   { to: "/cobrancas-efi", label: "Cobranças Efí", icon: CloudCheck },
 ] as const;
+
 
 export function AppHeader() {
   const navigate = useNavigate();
