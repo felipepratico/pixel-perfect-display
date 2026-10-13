@@ -460,26 +460,24 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 gap-1 px-2 text-xs font-semibold"
+                            size="icon"
+                            variant="ghost"
+                            className="size-8"
                             title="Editar cliente"
                             disabled={exemplo}
                             onClick={(e) => { e.stopPropagation(); onEditar(c); }}
                           >
-                            <Pencil className="size-3.5" />
-                            Editar
+                            <Pencil className="size-4" />
                           </Button>
                           <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 gap-1 px-2 text-xs font-semibold text-destructive"
+                            size="icon"
+                            variant="ghost"
+                            className="size-8 text-destructive"
                             title="Mover para a lixeira"
                             disabled={exemplo}
                             onClick={(e) => { e.stopPropagation(); onExcluir(c); }}
                           >
-                            <Trash2 className="size-3.5" />
-                            Excluir
+                            <Trash2 className="size-4" />
                           </Button>
                           {c.telefone ? (
                             <a
@@ -694,26 +692,24 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
                       <td className="px-2 py-2 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 gap-1 px-2 text-xs font-semibold"
+                            size="icon"
+                            variant="ghost"
+                            className="size-8"
                             title="Editar cliente"
                             disabled={exemplo}
                             onClick={(e) => { e.stopPropagation(); onEditar(c); }}
                           >
-                            <Pencil className="size-3.5" />
-                            Editar
+                            <Pencil className="size-4" />
                           </Button>
                           <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 gap-1 px-2 text-xs font-semibold text-destructive"
+                            size="icon"
+                            variant="ghost"
+                            className="size-8 text-destructive"
                             title="Mover para a lixeira"
                             disabled={exemplo}
                             onClick={(e) => { e.stopPropagation(); onExcluir(c); }}
                           >
-                            <Trash2 className="size-3.5" />
-                            Excluir
+                            <Trash2 className="size-4" />
                           </Button>
                           {c.telefone ? (
                             <a
