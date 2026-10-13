@@ -3,20 +3,25 @@ import {
   Calendar,
   Database,
   MessageCircle,
+  Pencil,
   Search,
   Shield,
   ShieldAlert,
   ShieldCheck,
   ShieldOff,
+  Trash2,
   WifiOff,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
+import { ClienteDialog } from "@/components/fincontrol/cliente-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { diasAte, diasDesde } from "@/lib/clientes";
+import { diasAte, diasDesde, type ClienteInput } from "@/lib/clientes";
 import type { Cliente } from "@/lib/clientes";
+import { useClienteMutations, useGrupos } from "@/lib/use-clientes";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 const hoje = new Date();
@@ -279,7 +284,7 @@ function encodeWhatsApp(tel: string, msg: string) {
 }
 
 // ─── Aba Backup ───────────────────────────────────────────────────────────────
-type AbaBackupProps = { clientes: Cliente[] };
+type AbaBackupProps = { clientes: Cliente[]; onEditar: (cliente: Cliente) => void; onExcluir: (cliente: Cliente) => void };
 
 function BadgeDias({ dias }: { dias: number | null }) {
   if (dias === null)
@@ -307,10 +312,11 @@ function BadgeDias({ dias }: { dias: number | null }) {
   );
 }
 
-function AbaBackup({ clientes }: AbaBackupProps) {
+function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState<"all" | "ATIVO" | "INATIVO">("ATIVO");
   const [diasRegra, setDiasRegra] = useState<DiasRegraBackup>(10);
+  const [selecionado, setSelecionado] = useState<string | null>(null);
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toUpperCase();
@@ -379,6 +385,7 @@ function AbaBackup({ clientes }: AbaBackupProps) {
           backup em atraso
         </span>
       </div>
+      <p className="text-xs text-muted-foreground">Clique em um cliente e pressione Enter para editar.</p>
 
       {/* Tabela */}
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
@@ -408,11 +415,20 @@ function AbaBackup({ clientes }: AbaBackupProps) {
               ) : (
                 filtrados.map((c) => {
                   const dias = diasDesde(c.ultimo_backup);
+                  const exemplo = MOCK_CLIENTES.some((m) => m.id === c.id);
                   const msgWhats = `Olá ${c.nome_fantasia || c.razao_social}, identificamos que o último backup do seu sistema Prático foi realizado em ${formatData(c.ultimo_backup)} (há mais de ${dias ?? "vários"} dias). Para garantir a segurança dos seus dados e evitar perdas, por favor, realize a cópia de segurança o quanto antes. Se precisar de suporte, estamos à disposição!`;
                   return (
                     <tr
                       key={c.id}
-                      className="group transition-colors hover:bg-muted/40"
+                      tabIndex={exemplo ? -1 : 0}
+                      className={`group transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60 ${selecionado === c.id ? "bg-muted/60" : ""}`}
+                      onClick={() => setSelecionado(c.id)}
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" || exemplo) return;
+                        if ((e.target as HTMLElement).closest("a,button,input,select,textarea")) return;
+                        e.preventDefault();
+                        onEditar(c);
+                      }}
                     >
                       <td className="px-4 py-3">
                         <p className="font-semibold text-foreground">{c.razao_social}</p>
@@ -442,24 +458,47 @@ function AbaBackup({ clientes }: AbaBackupProps) {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {c.telefone ? (
-                          <a
-                            href={encodeWhatsApp(c.telefone, msgWhats)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Notificar ${c.razao_social} via WhatsApp`}
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-8"
+                            title="Editar cliente"
+                            disabled={exemplo}
+                            onClick={(e) => { e.stopPropagation(); onEditar(c); }}
                           >
-                            <Button
-                              size="sm"
-                              className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold h-8 px-3 shadow-sm"
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-8 text-destructive"
+                            title="Mover para a lixeira"
+                            disabled={exemplo}
+                            onClick={(e) => { e.stopPropagation(); onExcluir(c); }}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                          {c.telefone ? (
+                            <a
+                              href={encodeWhatsApp(c.telefone, msgWhats)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Notificar ${c.razao_social} via WhatsApp`}
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <MessageCircle className="size-3.5" />
-                              WhatsApp
-                            </Button>
-                          </a>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Sem número</span>
-                        )}
+                              <Button
+                                size="sm"
+                                className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold h-8 px-3 shadow-sm"
+                              >
+                                <MessageCircle className="size-3.5" />
+                                WhatsApp
+                              </Button>
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Sem número</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -474,7 +513,7 @@ function AbaBackup({ clientes }: AbaBackupProps) {
 }
 
 // ─── Aba Certificado ──────────────────────────────────────────────────────────
-type AbaCertificadoProps = { clientes: Cliente[] };
+type AbaCertificadoProps = { clientes: Cliente[]; onEditar: (cliente: Cliente) => void; onExcluir: (cliente: Cliente) => void };
 
 function BadgeCertificado({ dias }: { dias: number | null }) {
   if (dias === null)
@@ -502,10 +541,11 @@ function BadgeCertificado({ dias }: { dias: number | null }) {
   );
 }
 
-function AbaCertificado({ clientes }: AbaCertificadoProps) {
+function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) {
   const [busca, setBusca] = useState("");
   const [tipoCert, setTipoCert] = useState<"all" | "A1" | "A3" | "">("all");
   const [apenasAlerta, setApenasAlerta] = useState(true);
+  const [selecionado, setSelecionado] = useState<string | null>(null);
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toUpperCase();
@@ -570,6 +610,7 @@ function AbaCertificado({ clientes }: AbaCertificadoProps) {
           com certificado vencido ou a vencer
         </span>
       </div>
+      <p className="text-xs text-muted-foreground">Clique em um cliente e pressione Enter para editar.</p>
 
       {/* Tabela */}
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
@@ -598,6 +639,7 @@ function AbaCertificado({ clientes }: AbaCertificadoProps) {
               ) : (
                 filtrados.map((c) => {
                   const dias = diasAte(c.validade_certificado);
+                  const exemplo = MOCK_CLIENTES.some((m) => m.id === c.id);
                   const status =
                     dias === null
                       ? "não informado"
@@ -608,7 +650,15 @@ function AbaCertificado({ clientes }: AbaCertificadoProps) {
                   return (
                     <tr
                       key={c.id}
-                      className="group transition-colors hover:bg-muted/40"
+                      tabIndex={exemplo ? -1 : 0}
+                      className={`group transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60 ${selecionado === c.id ? "bg-muted/60" : ""}`}
+                      onClick={() => setSelecionado(c.id)}
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" || exemplo) return;
+                        if ((e.target as HTMLElement).closest("a,button,input,select,textarea")) return;
+                        e.preventDefault();
+                        onEditar(c);
+                      }}
                     >
                       <td className="px-4 py-3">
                         <p className="font-semibold text-foreground">{c.razao_social}</p>
@@ -640,25 +690,48 @@ function AbaCertificado({ clientes }: AbaCertificadoProps) {
                         <BadgeCertificado dias={dias} />
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {c.telefone ? (
-                          <a
-                            href={encodeWhatsApp(c.telefone, msgWhats)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Notificar ${c.razao_social} sobre certificado via WhatsApp`}
-                            title={status}
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-8"
+                            title="Editar cliente"
+                            disabled={exemplo}
+                            onClick={(e) => { e.stopPropagation(); onEditar(c); }}
                           >
-                            <Button
-                              size="sm"
-                              className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold h-8 px-3 shadow-sm"
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-8 text-destructive"
+                            title="Mover para a lixeira"
+                            disabled={exemplo}
+                            onClick={(e) => { e.stopPropagation(); onExcluir(c); }}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                          {c.telefone ? (
+                            <a
+                              href={encodeWhatsApp(c.telefone, msgWhats)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Notificar ${c.razao_social} sobre certificado via WhatsApp`}
+                              title={status}
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <MessageCircle className="size-3.5" />
-                              WhatsApp
-                            </Button>
-                          </a>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Sem número</span>
-                        )}
+                              <Button
+                                size="sm"
+                                className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold h-8 px-3 shadow-sm"
+                              >
+                                <MessageCircle className="size-3.5" />
+                                WhatsApp
+                              </Button>
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Sem número</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -681,6 +754,25 @@ type MonitoramentoTecnicoProps = {
 
 export function MonitoramentoTecnico({ clientes = MOCK_CLIENTES }: MonitoramentoTecnicoProps) {
   const [aba, setAba] = useState<Tab>("backup");
+  const { data: grupos = [] } = useGrupos();
+  const { createGrupo, saveCliente, softDeleteCliente } = useClienteMutations();
+  const [open, setOpen] = useState(false);
+  const [editando, setEditando] = useState<Cliente | null>(null);
+
+  function salvar(values: ClienteInput, id?: string) {
+    const payload = id ? { id, values } : { values };
+    saveCliente.mutate(payload, { onSuccess: () => { toast.success("Cliente salvo."); setOpen(false); }, onError: (e) => toast.error(e.message) });
+  }
+
+  function editar(cliente: Cliente) {
+    setEditando(cliente);
+    setOpen(true);
+  }
+
+  function excluir(cliente: Cliente) {
+    if (!confirm(`Mover ${cliente.razao_social} para a lixeira?`)) return;
+    softDeleteCliente.mutate(cliente.id, { onSuccess: () => toast.success("Cliente movido para a lixeira."), onError: (e) => toast.error(e.message) });
+  }
 
   const totalBackupAtrasado = useMemo(
     () =>
@@ -743,12 +835,13 @@ export function MonitoramentoTecnico({ clientes = MOCK_CLIENTES }: Monitoramento
         </div>
         <div className="p-4">
           {aba === "backup" ? (
-            <AbaBackup clientes={clientes} />
+            <AbaBackup clientes={clientes} onEditar={editar} onExcluir={excluir} />
           ) : (
-            <AbaCertificado clientes={clientes} />
+            <AbaCertificado clientes={clientes} onEditar={editar} onExcluir={excluir} />
           )}
         </div>
       </div>
+      <ClienteDialog open={open} cliente={editando} grupos={grupos} saving={saveCliente.isPending} onOpenChange={setOpen} onCreateGrupo={(nome) => createGrupo.mutateAsync(nome)} onSave={salvar} />
     </div>
   );
 }
@@ -773,7 +866,7 @@ function StatCard({
     red: "from-red-950/60 border-red-500/20 text-red-400",
     emerald: "from-emerald-950/60 border-emerald-500/20 text-emerald-400",
   };
-  const cls = colors[tone] ?? colors.orange;
+  const cls = colors[tone] ?? colors["orange"];
   return (
     <div className={`flex items-center gap-4 rounded-xl border bg-gradient-to-br to-card p-4 ${cls}`}>
       <div className={`rounded-lg bg-card/80 p-3 ${cls}`}>
