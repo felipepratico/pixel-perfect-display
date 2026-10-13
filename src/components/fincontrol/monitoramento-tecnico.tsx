@@ -618,11 +618,11 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
           <table className="w-full whitespace-nowrap text-left text-sm">
             <thead>
               <tr className="border-b border-border/60 bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3">Razão Social / CNPJ</th>
-                <th className="px-4 py-3 text-center">Tipo</th>
-                <th className="px-4 py-3">Validade do Certificado</th>
-                <th className="px-4 py-3 text-center">Status</th>
-                <th className="px-4 py-3 text-center">Ação</th>
+                <th className="px-2 py-2">Razão Social / CNPJ</th>
+                <th className="px-2 py-2 text-center">Tipo</th>
+                <th className="px-2 py-3">Validade do Certificado</th>
+                <th className="px-2 py-2 text-center">Status</th>
+                <th className="px-2 py-2 text-center">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
@@ -660,11 +660,11 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
                         onEditar(c);
                       }}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-2">
                         <p className="font-semibold text-foreground">{c.razao_social}</p>
                         <p className="font-mono text-xs text-muted-foreground">{c.cnpj || "CNPJ não informado"}</p>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 py-2 text-center">
                         {c.tipo_certificado ? (
                           <Badge
                             variant="outline"
@@ -680,16 +680,16 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
                           <span className="text-xs text-zinc-500">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-2">
                         <span className="inline-flex items-center gap-1.5 text-xs">
                           <Calendar className="size-3.5 text-muted-foreground" />
                           {formatData(c.validade_certificado)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 py-2 text-center">
                         <BadgeCertificado dias={dias} />
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 py-2 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Button
                             size="icon"
