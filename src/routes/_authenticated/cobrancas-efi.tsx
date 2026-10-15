@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Building2,
@@ -10,8 +10,10 @@ import {
   EyeOff,
   Loader2,
   MessageCircle,
+  QrCode,
   Search,
   Send,
+  ShieldAlert,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
@@ -39,7 +41,7 @@ import {
   isValidCnpj,
   onlyDigits,
 } from "@/lib/cnpj";
-import { emitirAssinaturaEfi } from "@/lib/efi.functions";
+import { emitirAssinaturaEfi, statusEfi } from "@/lib/efi.functions";
 import { assinaturaEfiSchema, type CobrancaEfi } from "@/lib/efi";
 import { formatCurrency, normalizePhone } from "@/lib/fincontrol";
 import { useClientes } from "@/lib/use-clientes";
@@ -69,7 +71,14 @@ function CobrancasEfi() {
   const { data: clientes = [], isLoading: loadingClientes } = useClientes();
   const { data: cobrancas = [], isLoading: loadingCobrancas } = useCobrancasEfi();
   const emitir = useServerFn(emitirAssinaturaEfi);
+  const obterStatusEfi = useServerFn(statusEfi);
   const queryClient = useQueryClient();
+  const { data: efiStatus } = useQuery({
+    queryKey: ["efi-status"],
+    queryFn: () => obterStatusEfi(),
+    retry: false,
+  });
+  const producao = efiStatus?.ambiente === "PRODUCAO";
   const [clienteId, setClienteId] = useState("");
   const [planId, setPlanId] = useState("");
   const [itemName, setItemName] = useState("ASSINATURA PRÁTICO SISTEMAS");
@@ -202,7 +211,7 @@ function CobrancasEfi() {
       toast.success(
         result.duplicate
           ? "Essa assinatura já havia sido emitida; nenhum boleto foi duplicado."
-          : "Assinatura e primeiro boleto emitidos em homologação.",
+          : `Assinatura e primeiro boleto emitidos em ${result.ambiente === "PRODUCAO" ? "produção" : "homologação"}.`,
       );
       await queryClient.invalidateQueries({ queryKey: COBRANCAS_EFI_KEY });
       setBusca(razaoSocial);
@@ -225,14 +234,23 @@ function CobrancasEfi() {
             <div>
               <h1 className="text-2xl font-extrabold">Cobranças Efí</h1>
               <p className="text-sm text-muted-foreground">
-                Assinaturas recorrentes e boletos em ambiente de homologação.
+                {producao
+                  ? "Assinaturas recorrentes e boletos em ambiente de produção."
+                  : "Assinaturas recorrentes e boletos em ambiente de homologação."}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="border-warning-border bg-warning-soft text-warning">
+            <Badge
+              variant="outline"
+              className={
+                producao
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
+                  : "border-warning-border bg-warning-soft text-warning"
+              }
+            >
               <ShieldCheck className="mr-1 size-3.5" />
-              Homologação
+              {producao ? "Produção" : "Homologação"}
             </Badge>
             <Button variant="outline" onClick={() => setValoresVisiveis((value) => !value)}>
               {valoresVisiveis ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -240,6 +258,17 @@ function CobrancasEfi() {
             </Button>
           </div>
         </div>
+
+        {efiStatus && !efiStatus.credenciaisConfiguradas ? (
+          <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+            <ShieldAlert className="mt-0.5 size-4 shrink-0" />
+            <span>
+              A integração Efí não está configurada em {producao ? "produção" : "homologação"}.
+              Defina {efiStatus.faltando.join(" e ")} no ambiente do servidor para liberar a
+              emissão.
+            </span>
+          </div>
+        ) : null}
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
           <form onSubmit={submit} className="space-y-5 rounded-md border bg-card p-5">
@@ -455,8 +484,10 @@ function CobrancasEfi() {
             <div className="flex items-start gap-2 rounded-md border border-brand-border bg-brand-soft p-3 text-xs text-brand">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
               <span>
-                As credenciais ficam protegidas no servidor. Esta emissão não gera cobrança real
-                enquanto estiver em homologação.
+                As credenciais ficam protegidas no servidor.{" "}
+                {producao
+                  ? "Esta emissão gera cobranças reais na conta de produção."
+                  : "Esta emissão não gera cobrança real enquanto estiver em homologação."}
               </span>
             </div>
             <Button className="w-full" type="submit" disabled={enviando || !cliente}>
@@ -584,8 +615,9 @@ function CobrancaRow({ item, valoresVisiveis }: { item: CobrancaEfi; valoresVisi
     await navigator.clipboard.writeText(value);
     toast.success(`${label} copiada.`);
   };
-  const message = `Olá, ${item.cliente?.razao_social ?? ""}! Segue sua cobrança Efí com vencimento em ${formatDate(item.vencimento)} no valor de ${formatCurrency(item.valor)}.${item.link_pagamento ? `\nLink: ${item.link_pagamento}` : ""}${item.linha_digitavel ? `\nLinha digitável: ${item.linha_digitavel}` : ""}`;
+  const message = `Olá, ${item.cliente?.razao_social ?? ""}! Segue sua cobrança Efí com vencimento em ${formatDate(item.vencimento)} no valor de ${formatCurrency(item.valor)}.${item.link_pagamento ? `\nLink: ${item.link_pagamento}` : ""}${item.linha_digitavel ? `\nLinha digitável: ${item.linha_digitavel}` : ""}${item.pix_copia_cola ? `\nPix copia e cola: ${item.pix_copia_cola}` : ""}`;
   const phone = normalizePhone(item.cliente?.telefone ?? "");
+  const temCobranca = Boolean(item.link_pagamento || item.linha_digitavel || item.pix_copia_cola);
   return (
     <tr className="hover:bg-muted/50">
       <td className="p-3 font-semibold">{item.cliente?.razao_social ?? "Cliente"}</td>
@@ -632,14 +664,24 @@ function CobrancaRow({ item, valoresVisiveis }: { item: CobrancaEfi; valoresVisi
               <CloudCheck className="size-4" />
             </Button>
           ) : null}
+          {item.pix_copia_cola ? (
+            <Button
+              size="icon"
+              variant="ghost"
+              title="Copiar Pix copia e cola"
+              onClick={() => copiar(item.pix_copia_cola, "Pix copia e cola")}
+            >
+              <QrCode className="size-4" />
+            </Button>
+          ) : null}
           <Button
             size="icon"
             variant="ghost"
             title="Enviar pelo WhatsApp"
-            disabled={!phone || (!item.link_pagamento && !item.linha_digitavel)}
-            asChild={Boolean(phone && (item.link_pagamento || item.linha_digitavel))}
+            disabled={!phone || !temCobranca}
+            asChild={Boolean(phone && temCobranca)}
           >
-            {phone && (item.link_pagamento || item.linha_digitavel) ? (
+            {phone && temCobranca ? (
               <a
                 href={`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`}
                 target="_blank"

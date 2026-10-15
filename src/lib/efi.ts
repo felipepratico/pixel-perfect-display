@@ -31,6 +31,30 @@ export const assinaturaEfiSchema = z.object({
 });
 
 export type AssinaturaEfiInput = z.input<typeof assinaturaEfiSchema>;
+export type AssinaturaEfiDados = z.output<typeof assinaturaEfiSchema>;
+
+/** Ambiente da API Cobranças do Efí. */
+export type EfiAmbiente = "HOMOLOGACAO" | "PRODUCAO";
+
+/** Situação da configuração da integração Efí, exibida na interface. */
+export type EfiDiagnostico = {
+  ambiente: EfiAmbiente;
+  sandbox: boolean;
+  baseUrl: string;
+  credenciaisConfiguradas: boolean;
+  certificadoConfigurado: boolean;
+  faltando: string[];
+};
+
+/** Dados normalizados devolvidos pela Efí ao criar uma assinatura. */
+export type ResultadoAssinaturaEfi = {
+  status: string;
+  subscriptionId: number | null;
+  chargeId: number | null;
+  link: string;
+  linhaDigitavel: string;
+  pixCopiaECola: string;
+};
 
 export type CobrancaEfi = {
   id: string;
