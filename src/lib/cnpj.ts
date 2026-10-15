@@ -1,10 +1,14 @@
 /**
  * Consulta pública de CNPJ.
  *
- * Consulta primeiro a BrasilAPI e, se ela falhar (fora do ar, limite de
- * requisições ou CNPJ ausente), cai automaticamente para a ReceitaWS. A
- * resposta é normalizada para os campos usados pelos formulários e todos os
+ * Consulta em cadeia a BrasilAPI, ReceitaWS e MinhaReceita; se um provedor
+ * falhar (fora do ar, limite de requisições ou CNPJ ausente), tenta o próximo.
+ * A resposta é normalizada para os campos usados pelos formulários e todos os
  * erros são convertidos em mensagens em português prontas para exibição.
+ *
+ * Os erros são classificados por `CnpjErrorKind` para que a interface escolha
+ * o tom do aviso: `validacao` é uma falha de digitação; `nao_encontrado` e
+ * `indisponivel` são situações em que o utilizador pode preencher à mão.
  */
 
 export type CnpjData = {
@@ -21,10 +25,16 @@ export type CnpjData = {
   uf: string;
 };
 
+/** Classificação do erro, para a interface escolher o tom do aviso. */
+export type CnpjErrorKind = "validacao" | "nao_encontrado" | "indisponivel";
+
 export class CnpjError extends Error {
-  constructor(message: string) {
+  readonly kind: CnpjErrorKind;
+
+  constructor(message: string, kind: CnpjErrorKind = "indisponivel") {
     super(message);
     this.name = "CnpjError";
+    this.kind = kind;
   }
 }
 
@@ -33,6 +43,7 @@ const TIMEOUT_MS = 12_000;
 const PROVIDERS = [
   (cnpj: string) => `https://brasilapi.com.br/api/cnpj/v1/${cnpj}`,
   (cnpj: string) => `https://receitaws.com.br/v1/cnpj/${cnpj}`,
+  (cnpj: string) => `https://minhareceita.org/${cnpj}`,
 ];
 
 /** Remove qualquer máscara e mantém apenas os dígitos. */
@@ -89,7 +100,7 @@ function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-/** Campos relevantes das respostas da BrasilAPI e da ReceitaWS. */
+/** Campos relevantes das respostas da BrasilAPI, ReceitaWS e MinhaReceita. */
 type CnpjApiRaw = {
   // BrasilAPI
   razao_social?: unknown;
@@ -133,18 +144,26 @@ function normalize(raw: CnpjApiRaw, cnpj: string): CnpjData {
 async function request(url: string, signal: AbortSignal): Promise<CnpjApiRaw> {
   const response = await fetch(url, { signal, headers: { Accept: "application/json" } });
 
-  if (response.status === 404) throw new CnpjError("CNPJ não encontrado na base pública.");
+  if (response.status === 404) {
+    throw new CnpjError("CNPJ não encontrado na base pública.", "nao_encontrado");
+  }
   if (response.status === 429) {
     throw new CnpjError(
       "Muitas consultas em pouco tempo. Aguarde alguns segundos e tente novamente.",
+      "indisponivel",
     );
   }
-  if (!response.ok) throw new CnpjError(`A consulta falhou (HTTP ${response.status}).`);
+  if (!response.ok) {
+    throw new CnpjError(
+      "Não foi possível consultar o CNPJ agora. Tente novamente em instantes.",
+      "indisponivel",
+    );
+  }
 
   const payload = (await response.json()) as CnpjApiRaw;
-  // A ReceitaWS responde 200 com status "ERROR" quando o CNPJ não existe.
+  // A ReceitaWS responde 200 com status "ERROR" quando não tem o CNPJ em cache.
   if (text(payload.status).toUpperCase() === "ERROR") {
-    throw new CnpjError(text(payload.message) || "CNPJ não encontrado na base pública.");
+    throw new CnpjError("CNPJ não encontrado na base pública.", "nao_encontrado");
   }
   return payload;
 }
@@ -161,8 +180,12 @@ async function request(url: string, signal: AbortSignal): Promise<CnpjApiRaw> {
 export async function consultarCnpj(value: string): Promise<CnpjData | null> {
   const cnpj = onlyDigits(value);
   if (isCnpjZerado(cnpj)) return null;
-  if (cnpj.length !== 14) throw new CnpjError("Informe um CNPJ com 14 dígitos.");
-  if (!isValidCnpj(cnpj)) throw new CnpjError("CNPJ inválido. Confira os dígitos informados.");
+  if (cnpj.length !== 14) {
+    throw new CnpjError("Informe um CNPJ com 14 dígitos.", "validacao");
+  }
+  if (!isValidCnpj(cnpj)) {
+    throw new CnpjError("CNPJ inválido. Confira os dígitos informados.", "validacao");
+  }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -182,8 +205,14 @@ export async function consultarCnpj(value: string): Promise<CnpjData | null> {
   }
 
   if (controller.signal.aborted) {
-    throw new CnpjError("A consulta demorou demais. Verifique a conexão e tente novamente.");
+    throw new CnpjError(
+      "A consulta demorou demais. Verifique a conexão e tente novamente.",
+      "indisponivel",
+    );
   }
   if (lastError instanceof CnpjError) throw lastError;
-  throw new CnpjError("Não foi possível consultar o CNPJ. Verifique a conexão e tente novamente.");
+  throw new CnpjError(
+    "Não foi possível consultar o CNPJ. Verifique a conexão e tente novamente.",
+    "indisponivel",
+  );
 }

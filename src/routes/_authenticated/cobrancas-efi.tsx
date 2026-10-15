@@ -33,6 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { valorContrato } from "@/lib/clientes";
 import {
+  CnpjError,
   consultarCnpj as consultarCnpjApi,
   isCnpjZerado,
   isValidCnpj,
@@ -134,7 +135,7 @@ function CobrancasEfi() {
     // CNPJ só de zeros: placeholder aceito, preenchimento manual e sem consulta externa.
     if (isCnpjZerado(numero)) return;
     if (numero.length !== 14) {
-      toast.error("Informe um CNPJ com 14 dígitos.");
+      toast.warning("Informe um CNPJ com 14 dígitos.");
       return;
     }
     setConsultando(true);
@@ -153,7 +154,15 @@ function CobrancasEfi() {
       if (data.uf) setUf(data.uf);
       toast.success("CNPJ encontrado. Confira os dados antes de emitir.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível consultar esse CNPJ.");
+      const mensagem =
+        error instanceof Error ? error.message : "Não foi possível consultar esse CNPJ.";
+      if (error instanceof CnpjError && error.kind === "validacao") {
+        toast.warning(mensagem);
+      } else {
+        // Provedores indisponíveis ou CNPJ ausente: aviso suave, sem bloquear nem
+        // limpar os campos — o formulário permanece editável para preenchimento manual.
+        toast.info(`${mensagem} Você pode preencher os dados manualmente.`);
+      }
     } finally {
       setConsultando(false);
     }

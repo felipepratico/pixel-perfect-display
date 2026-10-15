@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { emptyCliente, MODULOS, valorContrato, type Cliente, type ClienteInput, type GrupoCliente } from "@/lib/clientes";
 import {
+  CnpjError,
   consultarCnpj as consultarCnpjApi,
   isCnpjZerado,
   isValidCnpj,
@@ -69,7 +70,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
     // CNPJ só de zeros: placeholder aceito, preenchimento manual e sem consulta externa.
     if (isCnpjZerado(cnpj)) return;
     if (cnpj.length !== 14) {
-      toast.error("Informe um CNPJ com 14 dígitos.");
+      toast.warning("Informe um CNPJ com 14 dígitos.");
       return;
     }
 
@@ -94,7 +95,15 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
       }));
       toast.success("Dados do CNPJ preenchidos. Confira antes de salvar.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível consultar esse CNPJ.");
+      const mensagem =
+        error instanceof Error ? error.message : "Não foi possível consultar esse CNPJ.";
+      if (error instanceof CnpjError && error.kind === "validacao") {
+        toast.warning(mensagem);
+      } else {
+        // Provedores indisponíveis ou CNPJ ausente: aviso suave, sem bloquear nem
+        // limpar os campos — o cadastro permanece editável para preenchimento manual.
+        toast.info(`${mensagem} Você pode preencher os dados manualmente.`);
+      }
     } finally {
       setConsultandoCnpj(false);
     }
