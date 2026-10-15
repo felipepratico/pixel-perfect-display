@@ -32,7 +32,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { valorContrato } from "@/lib/clientes";
-import { consultarCnpj as consultarCnpjApi, isValidCnpj, onlyDigits } from "@/lib/cnpj";
+import {
+  consultarCnpj as consultarCnpjApi,
+  isCnpjZerado,
+  isValidCnpj,
+  onlyDigits,
+} from "@/lib/cnpj";
 import { emitirAssinaturaEfi } from "@/lib/efi.functions";
 import { assinaturaEfiSchema, type CobrancaEfi } from "@/lib/efi";
 import { formatCurrency, normalizePhone } from "@/lib/fincontrol";
@@ -126,6 +131,8 @@ function CobrancasEfi() {
 
   async function consultarCnpj() {
     const numero = onlyDigits(cnpj);
+    // CNPJ só de zeros: placeholder aceito, preenchimento manual e sem consulta externa.
+    if (isCnpjZerado(numero)) return;
     if (numero.length !== 14) {
       toast.error("Informe um CNPJ com 14 dígitos.");
       return;
@@ -133,6 +140,7 @@ function CobrancasEfi() {
     setConsultando(true);
     try {
       const data = await consultarCnpjApi(cnpj);
+      if (!data) return;
       cnpjConsultado.current = data.cnpj;
       setRazaoSocial(data.razao_social || data.nome_fantasia || razaoSocial);
       if (data.telefone) setTelefone(data.telefone);
@@ -334,6 +342,7 @@ function CobrancasEfi() {
                       onBlur={() => {
                         const digitos = onlyDigits(cnpj);
                         if (
+                          !isCnpjZerado(digitos) &&
                           isValidCnpj(digitos) &&
                           digitos !== cnpjConsultado.current &&
                           !consultando

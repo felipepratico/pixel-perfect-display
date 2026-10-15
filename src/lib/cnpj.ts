@@ -50,10 +50,23 @@ export function formatCnpj(value: string): string {
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
 
+/**
+ * CNPJ placeholder composto apenas por zeros (ex.: 00.000.000/0000-00).
+ *
+ * É aceito como valor válido para cadastros preenchidos manualmente, mas não
+ * possui registro na base pública, por isso nunca é enviado à API de consulta.
+ */
+export function isCnpjZerado(value: string): boolean {
+  return /^0{14}$/.test(onlyDigits(value));
+}
+
 /** Valida os 14 dígitos do CNPJ, incluindo os dígitos verificadores. */
 export function isValidCnpj(value: string): boolean {
   const cnpj = onlyDigits(value);
-  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+  if (cnpj.length !== 14) return false;
+  // Placeholder aceito para preenchimento manual (não há dígitos verificadores).
+  if (isCnpjZerado(cnpj)) return true;
+  if (/^(\d)\1{13}$/.test(cnpj)) return false;
 
   const checkDigit = (base: string): number => {
     let weight = base.length - 7;
@@ -139,11 +152,15 @@ async function request(url: string, signal: AbortSignal): Promise<CnpjApiRaw> {
 /**
  * Consulta os dados de um CNPJ nos provedores públicos.
  *
+ * Retorna `null` quando o CNPJ é o placeholder de zeros, sem contatar a API —
+ * nesse caso o formulário é preenchido manualmente.
+ *
  * @throws {CnpjError} quando o CNPJ é inválido, não existe ou os provedores
  * estão indisponíveis — sempre com uma mensagem amigável em português.
  */
-export async function consultarCnpj(value: string): Promise<CnpjData> {
+export async function consultarCnpj(value: string): Promise<CnpjData | null> {
   const cnpj = onlyDigits(value);
+  if (isCnpjZerado(cnpj)) return null;
   if (cnpj.length !== 14) throw new CnpjError("Informe um CNPJ com 14 dígitos.");
   if (!isValidCnpj(cnpj)) throw new CnpjError("CNPJ inválido. Confira os dígitos informados.");
 

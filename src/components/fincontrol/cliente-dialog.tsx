@@ -9,7 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { emptyCliente, MODULOS, valorContrato, type Cliente, type ClienteInput, type GrupoCliente } from "@/lib/clientes";
-import { consultarCnpj as consultarCnpjApi, isValidCnpj, onlyDigits } from "@/lib/cnpj";
+import {
+  consultarCnpj as consultarCnpjApi,
+  isCnpjZerado,
+  isValidCnpj,
+  onlyDigits,
+} from "@/lib/cnpj";
 import { formatCurrency } from "@/lib/fincontrol";
 
 const selectClass = "h-10 w-full rounded-md border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring";
@@ -61,6 +66,8 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
 
   async function consultarCnpj() {
     const cnpj = onlyDigits(form.cnpj);
+    // CNPJ só de zeros: placeholder aceito, preenchimento manual e sem consulta externa.
+    if (isCnpjZerado(cnpj)) return;
     if (cnpj.length !== 14) {
       toast.error("Informe um CNPJ com 14 dígitos.");
       return;
@@ -69,6 +76,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
     setConsultandoCnpj(true);
     try {
       const data = await consultarCnpjApi(form.cnpj);
+      if (!data) return;
       ultimoCnpjConsultado.current = data.cnpj;
       setForm((current) => ({
         ...current,
@@ -116,7 +124,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
             <Field label="Tipo de pessoa"><div className="grid grid-cols-2 gap-1 rounded-md border bg-muted p-1"><Button type="button" size="sm" variant={tipoPessoa === "FISICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("FISICA")}>Pessoa física</Button><Button type="button" size="sm" variant={tipoPessoa === "JURIDICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("JURIDICA")}>Pessoa jurídica</Button></div></Field>
             <Field label={tipoPessoa === "FISICA" ? "Nome completo *" : "Razão social *"} className="lg:col-span-2"><Input required value={form.razao_social} onChange={(e) => update("razao_social", e.target.value)} /></Field>
             {tipoPessoa === "JURIDICA" ? <Field label="Nome fantasia"><Input value={form.nome_fantasia} onChange={(e) => update("nome_fantasia", e.target.value)} /></Field> : null}
-            <Field label={tipoPessoa === "FISICA" ? "CPF *" : "CNPJ *"}><div className="flex gap-2"><Input required inputMode="numeric" maxLength={tipoPessoa === "FISICA" ? 14 : 18} value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} onBlur={() => { const digitos = onlyDigits(form.cnpj); if (tipoPessoa === "JURIDICA" && isValidCnpj(digitos) && digitos !== ultimoCnpjConsultado.current) void consultarCnpj(); }} />{tipoPessoa === "JURIDICA" ? <Button type="button" size="icon" variant="outline" title="Buscar dados do CNPJ" disabled={consultandoCnpj} onClick={consultarCnpj}>{consultandoCnpj ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</Button> : null}</div></Field>
+            <Field label={tipoPessoa === "FISICA" ? "CPF *" : "CNPJ *"}><div className="flex gap-2"><Input required inputMode="numeric" maxLength={tipoPessoa === "FISICA" ? 14 : 18} value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} onBlur={() => { const digitos = onlyDigits(form.cnpj); if (!cliente && tipoPessoa === "JURIDICA" && !isCnpjZerado(digitos) && isValidCnpj(digitos) && digitos !== ultimoCnpjConsultado.current) void consultarCnpj(); }} />{tipoPessoa === "JURIDICA" ? <Button type="button" size="icon" variant="outline" title="Buscar dados do CNPJ" disabled={consultandoCnpj} onClick={consultarCnpj}>{consultandoCnpj ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</Button> : null}</div></Field>
             <Field label="WhatsApp"><Input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} /></Field>
             <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
             <Field label="Endereço" className="lg:col-span-2"><Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} /></Field>
