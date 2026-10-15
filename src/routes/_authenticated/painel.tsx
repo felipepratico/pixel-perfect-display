@@ -54,9 +54,15 @@ export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
     meta: [
       { title: "Painel — UPSYSTEM FINCONTROL" },
-      { name: "description", content: "Painel de contas a receber, lucros e assinaturas recorrentes." },
+      {
+        name: "description",
+        content: "Painel de contas a receber, lucros e assinaturas recorrentes.",
+      },
       { property: "og:title", content: "Painel — UPSYSTEM FINCONTROL" },
-      { property: "og:description", content: "Painel de contas a receber, lucros e assinaturas recorrentes." },
+      {
+        property: "og:description",
+        content: "Painel de contas a receber, lucros e assinaturas recorrentes.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -103,10 +109,7 @@ function Painel() {
   }
 
   const titulosVencidos = useMemo(
-    () =>
-      todos
-        .filter(isTituloVencido)
-        .map((t) => ({ ...t, diasAtraso: getDiasVencido(t) })),
+    () => todos.filter(isTituloVencido).map((t) => ({ ...t, diasAtraso: getDiasVencido(t) })),
     [todos],
   );
 
@@ -118,7 +121,8 @@ function Painel() {
   const filtrados = useMemo(() => {
     const busca = filtros.busca.trim().toUpperCase();
     const list = todos.filter((t) => {
-      if (busca && !t.cliente.toUpperCase().includes(busca) && !t.cnpj.includes(busca)) return false;
+      if (busca && !t.cliente.toUpperCase().includes(busca) && !t.cnpj.includes(busca))
+        return false;
       if (filtros.status === "VENCIDO") {
         if (!isTituloVencido(t)) return false;
       } else if (filtros.status === "RECORRENTE") {
@@ -127,29 +131,38 @@ function Painel() {
         return false;
       }
       if (filtros.mesAno && filtros.mesAno !== "all" && t.mes_ano !== filtros.mesAno) return false;
-      if (filtros.vencimento && filtros.vencimento !== "all" && String(t.vencimento) !== filtros.vencimento) return false;
+      if (
+        filtros.vencimento &&
+        filtros.vencimento !== "all" &&
+        String(t.vencimento) !== filtros.vencimento
+      )
+        return false;
       return true;
     });
     return list.sort((a, b) => {
       switch (filtros.ordenacao) {
-        case "vencimentoAsc": return a.vencimento - b.vencimento;
-        case "lucroFelipeDesc": return computeRow(b).lucroFelipe - computeRow(a).lucroFelipe;
-        case "mensalSiteDesc": return b.mensal_site - a.mensal_site;
-        default: return a.cliente.localeCompare(b.cliente);
+        case "vencimentoAsc":
+          return a.vencimento - b.vencimento;
+        case "lucroFelipeDesc":
+          return computeRow(b).lucroFelipe - computeRow(a).lucroFelipe;
+        case "mensalSiteDesc":
+          return b.mensal_site - a.mensal_site;
+        default:
+          return a.cliente.localeCompare(b.cliente);
       }
     });
   }, [todos, filtros]);
 
   const clientesVisiveis = filtrados;
 
-  const totais = useMemo(
-    () => calcularTotais(clientesVisiveis, todos),
-    [clientesVisiveis, todos],
-  );
+  const totais = useMemo(() => calcularTotais(clientesVisiveis, todos), [clientesVisiveis, todos]);
 
   function onSave(values: TituloInput, id?: string) {
     saveTitulo.mutate(id ? { id, values } : { values }, {
-      onSuccess: () => { toast.success("Lançamento salvo."); setTituloOpen(false); },
+      onSuccess: () => {
+        toast.success("Lançamento salvo.");
+        setTituloOpen(false);
+      },
       onError: erro,
     });
   }
@@ -188,9 +201,15 @@ function Painel() {
         rows.push({ ...rest, cliente_id: cId, mes_ano: mes, situacao: "ABERTO" });
       }
     }
-    if (!rows.length) { toast.info("Nenhuma mensalidade nova para gerar."); return; }
+    if (!rows.length) {
+      toast.info("Nenhuma mensalidade nova para gerar.");
+      return;
+    }
     insertMany.mutate(rows, {
-      onSuccess: (n) => { toast.success(`${n} mensalidades geradas.`); setRecOpen(false); },
+      onSuccess: (n) => {
+        toast.success(`${n} mensalidades geradas.`);
+        setRecOpen(false);
+      },
       onError: erro,
     });
   }
@@ -212,7 +231,7 @@ function Painel() {
 
       {/* Toolbar superior de ações (alinhada com a imagem) */}
       <div className="border-b border-border/60 bg-card/70 backdrop-blur-md print:hidden">
-        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-2 px-4 py-2.5">
+        <div className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-4">
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
@@ -229,7 +248,10 @@ function Painel() {
             </Button>
             <Button
               size="sm"
-              onClick={() => { setEditando(null); setTituloOpen(true); }}
+              onClick={() => {
+                setEditando(null);
+                setTituloOpen(true);
+              }}
               className="gap-1.5 rounded-lg bg-sky-500 font-semibold text-xs text-white hover:bg-sky-600 shadow-sm"
             >
               <Plus className="size-3.5" />
@@ -287,7 +309,10 @@ function Painel() {
               size="sm"
               variant="secondary"
               disabled={clientesVisiveis.length === 0}
-              onClick={() => { setRelCliente(null); setRelOpen(true); }}
+              onClick={() => {
+                setRelCliente(null);
+                setRelOpen(true);
+              }}
               className="gap-1.5 rounded-lg text-xs font-semibold"
             >
               <FileText className="size-3.5" />
@@ -297,7 +322,12 @@ function Painel() {
               size="sm"
               variant="secondary"
               disabled={!valoresVisiveis || clientesVisiveis.length === 0}
-              onClick={() => imprimir(clientesVisiveis, `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`)}
+              onClick={() =>
+                imprimir(
+                  clientesVisiveis,
+                  `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`,
+                )
+              }
               className="gap-1.5 rounded-lg text-xs font-semibold"
             >
               <Printer className="size-3.5" />
@@ -338,16 +368,22 @@ function Painel() {
       </div>
 
       {/* Conteúdo Principal organizado conforme a imagem: Cartões -> Gráficos -> Filtros -> Tabela */}
-      <main className="mx-auto max-w-[1440px] space-y-4 px-4 py-4">
+      <main className="w-full space-y-4 px-3 py-4 sm:px-4">
         {isLoading ? (
-          <div className="flex justify-center py-20"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
+          <div className="flex justify-center py-20">
+            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          </div>
         ) : (
           <>
             {/* 1. Cartões de KPI */}
             <KpiCards totais={totais} valoresVisiveis={valoresVisiveis} />
 
             {/* 2. Gráficos */}
-            <Graficos titulos={clientesVisiveis} totais={totais} valoresVisiveis={valoresVisiveis} />
+            <Graficos
+              titulos={clientesVisiveis}
+              totais={totais}
+              valoresVisiveis={valoresVisiveis}
+            />
 
             {/* 3. Filtros */}
             <Filtros
@@ -361,19 +397,64 @@ function Painel() {
             {ids.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-card p-3 text-xs">
                 <span className="font-semibold text-foreground">{ids.length} selecionado(s)</span>
-                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => patchMany.mutate({ ids, values: { situacao: "PAGO" } }, { onError: erro })}>Marcar pago</Button>
-                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => patchMany.mutate({ ids, values: { situacao: "ABERTO" } }, { onError: erro })}>Marcar aberto</Button>
-                <Button size="sm" variant="outline" className="h-7 border-emerald-500/30 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 gap-1 text-xs" onClick={() => setLoteOpen(true)}>
-                  <MessageCircle className="size-3.5" />Cobrar no WhatsApp
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() =>
+                    patchMany.mutate({ ids, values: { situacao: "PAGO" } }, { onError: erro })
+                  }
+                >
+                  Marcar pago
                 </Button>
-                <Button size="sm" variant="outline" className="h-7 text-xs" disabled={!valoresVisiveis} onClick={() => imprimir(clientesVisiveis.filter((t) => selecionados.has(t.id)), "Selecionados — agrupado por vencimento")}>
-                  <Printer className="size-3.5" />Imprimir seleção
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() =>
+                    patchMany.mutate({ ids, values: { situacao: "ABERTO" } }, { onError: erro })
+                  }
+                >
+                  Marcar aberto
                 </Button>
-                <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => {
-                  if (!confirm(`Excluir ${ids.length} lançamento(s)?`)) return;
-                  removeMany.mutate(ids, { onSuccess: () => setSelecionados(new Set()), onError: erro });
-                }}>
-                  <Trash2 className="size-3.5" />Excluir
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 border-emerald-500/30 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 gap-1 text-xs"
+                  onClick={() => setLoteOpen(true)}
+                >
+                  <MessageCircle className="size-3.5" />
+                  Cobrar no WhatsApp
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  disabled={!valoresVisiveis}
+                  onClick={() =>
+                    imprimir(
+                      clientesVisiveis.filter((t) => selecionados.has(t.id)),
+                      "Selecionados — agrupado por vencimento",
+                    )
+                  }
+                >
+                  <Printer className="size-3.5" />
+                  Imprimir seleção
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    if (!confirm(`Excluir ${ids.length} lançamento(s)?`)) return;
+                    removeMany.mutate(ids, {
+                      onSuccess: () => setSelecionados(new Set()),
+                      onError: erro,
+                    });
+                  }}
+                >
+                  <Trash2 className="size-3.5" />
+                  Excluir
                 </Button>
               </div>
             )}
@@ -384,30 +465,95 @@ function Painel() {
               totais={totais}
               valoresVisiveis={valoresVisiveis}
               selecionados={selecionados}
-              onToggle={(id) => setSelecionados((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })}
-              onToggleTodos={(m) => setSelecionados(m ? new Set(clientesVisiveis.map((t) => t.id)) : new Set())}
-              onEditar={(t) => { setEditando(t); setTituloOpen(true); }}
+              onToggle={(id) =>
+                setSelecionados((s) => {
+                  const n = new Set(s);
+                  if (n.has(id)) n.delete(id);
+                  else n.add(id);
+                  return n;
+                })
+              }
+              onToggleTodos={(m) =>
+                setSelecionados(m ? new Set(clientesVisiveis.map((t) => t.id)) : new Set())
+              }
+              onEditar={(t) => {
+                setEditando(t);
+                setTituloOpen(true);
+              }}
               onWhatsApp={setWhats}
-              onRelatorio={(t) => { setRelCliente(t.cliente); setRelOpen(true); }}
-              onAlternarSituacao={(t) => patchMany.mutate({ ids: [t.id], values: { situacao: t.situacao === "PAGO" ? "ABERTO" : "PAGO" } }, { onError: erro })}
-              onExcluir={(t) => { if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro }); }}
+              onRelatorio={(t) => {
+                setRelCliente(t.cliente);
+                setRelOpen(true);
+              }}
+              onAlternarSituacao={(t) =>
+                patchMany.mutate(
+                  { ids: [t.id], values: { situacao: t.situacao === "PAGO" ? "ABERTO" : "PAGO" } },
+                  { onError: erro },
+                )
+              }
+              onExcluir={(t) => {
+                if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro });
+              }}
             />
           </>
         )}
       </main>
 
-      <TituloDialog open={tituloOpen} titulo={editando} saving={saveTitulo.isPending} onOpenChange={setTituloOpen} onSave={onSave} />
-      <AssinaturasDialog open={assOpen} titulos={clientesVisiveis} valoresVisiveis={valoresVisiveis} onOpenChange={setAssOpen}
-        onAlternar={(i, ativar) => patchMany.mutate({ ids: i, values: { status_assinatura: ativar ? "ATIVO" : "CANCELADO" } }, { onError: erro })} />
-      <RecorrenciaDialog open={recOpen} titulos={todos} gerando={insertMany.isPending} onOpenChange={setRecOpen} onGerar={onGerar} />
+      <TituloDialog
+        open={tituloOpen}
+        titulo={editando}
+        saving={saveTitulo.isPending}
+        onOpenChange={setTituloOpen}
+        onSave={onSave}
+      />
+      <AssinaturasDialog
+        open={assOpen}
+        titulos={clientesVisiveis}
+        valoresVisiveis={valoresVisiveis}
+        onOpenChange={setAssOpen}
+        onAlternar={(i, ativar) =>
+          patchMany.mutate(
+            { ids: i, values: { status_assinatura: ativar ? "ATIVO" : "CANCELADO" } },
+            { onError: erro },
+          )
+        }
+      />
+      <RecorrenciaDialog
+        open={recOpen}
+        titulos={todos}
+        gerando={insertMany.isPending}
+        onOpenChange={setRecOpen}
+        onGerar={onGerar}
+      />
       <WhatsAppDialog open={!!whats} titulo={whats} onOpenChange={(o) => !o && setWhats(null)} />
-      <ImportDialog open={impOpen} importando={insertMany.isPending} onOpenChange={setImpOpen}
-        onImportar={(rows) => insertMany.mutate(rows, {
-          onSuccess: (n) => { toast.success(`${n} lançamentos importados.`); setImpOpen(false); },
-          onError: erro,
-        })} />
-      <RelatorioDialog open={relOpen} titulos={clientesVisiveis} clienteInicial={relCliente} valoresVisiveis={valoresVisiveis} onOpenChange={setRelOpen} onImprimir={imprimir} />
-      <CobrancaLoteDialog open={loteOpen} titulos={clientesVisiveis.filter((t) => selecionados.has(t.id))} valoresVisiveis={valoresVisiveis} onOpenChange={setLoteOpen} />
+      <ImportDialog
+        open={impOpen}
+        importando={insertMany.isPending}
+        onOpenChange={setImpOpen}
+        onImportar={(rows) =>
+          insertMany.mutate(rows, {
+            onSuccess: (n) => {
+              toast.success(`${n} lançamentos importados.`);
+              setImpOpen(false);
+            },
+            onError: erro,
+          })
+        }
+      />
+      <RelatorioDialog
+        open={relOpen}
+        titulos={clientesVisiveis}
+        clienteInicial={relCliente}
+        valoresVisiveis={valoresVisiveis}
+        onOpenChange={setRelOpen}
+        onImprimir={imprimir}
+      />
+      <CobrancaLoteDialog
+        open={loteOpen}
+        titulos={clientesVisiveis.filter((t) => selecionados.has(t.id))}
+        valoresVisiveis={valoresVisiveis}
+        onOpenChange={setLoteOpen}
+      />
       <GeminiInsightsDialog
         open={geminiOpen}
         onOpenChange={setGeminiOpen}
@@ -416,8 +562,9 @@ function Painel() {
         totalPago={valorPago}
         onCobrarWhatsapp={(t) => setWhats(t)}
       />
-      {impressao ? <AreaImpressao titulos={impressao.titulos} subtitulo={impressao.subtitulo} /> : null}
+      {impressao ? (
+        <AreaImpressao titulos={impressao.titulos} subtitulo={impressao.subtitulo} />
+      ) : null}
     </div>
   );
-
 }

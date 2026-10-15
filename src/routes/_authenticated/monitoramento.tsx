@@ -8,9 +8,15 @@ export const Route = createFileRoute("/_authenticated/monitoramento")({
   head: () => ({
     meta: [
       { title: "Monitoramento Técnico — UPSYSTEM FINCONTROL" },
-      { name: "description", content: "Relatório de backups atrasados e certificados digitais a vencer." },
+      {
+        name: "description",
+        content: "Relatório de backups atrasados e certificados digitais a vencer.",
+      },
       { property: "og:title", content: "Monitoramento Técnico — UPSYSTEM FINCONTROL" },
-      { property: "og:description", content: "Relatório de backups atrasados e certificados digitais a vencer." },
+      {
+        property: "og:description",
+        content: "Relatório de backups atrasados e certificados digitais a vencer.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -26,7 +32,7 @@ function MonitoramentoPage() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
+      <main className="w-full space-y-6 px-3 py-6 sm:px-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold">Monitoramento Técnico</h1>
