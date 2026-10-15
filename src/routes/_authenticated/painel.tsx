@@ -41,6 +41,7 @@ import {
   computeRow,
   getDiasVencido,
   isActiveSubscription,
+  isTituloAVencer,
   isTituloVencido,
   shiftMesAno,
   type Titulo,
@@ -113,6 +114,8 @@ function Painel() {
     [todos],
   );
 
+  const countAVencer = useMemo(() => todos.filter(isTituloAVencer).length, [todos]);
+
   const mesesDisponiveis = useMemo(
     () => [...new Set(todos.map((t) => t.mes_ano).filter(Boolean))].sort(),
     [todos],
@@ -125,6 +128,8 @@ function Painel() {
         return false;
       if (filtros.status === "VENCIDO") {
         if (!isTituloVencido(t)) return false;
+      } else if (filtros.status === "AVENCER") {
+        if (!isTituloAVencer(t)) return false;
       } else if (filtros.status === "RECORRENTE") {
         if (!isActiveSubscription(t)) return false;
       } else if (filtros.status !== "all" && t.situacao !== filtros.status) {
@@ -390,6 +395,7 @@ function Painel() {
               state={filtros}
               onChange={(n) => setFiltros((s) => ({ ...s, ...n }))}
               mesesDisponiveis={mesesDisponiveis}
+              countAVencer={countAVencer}
               countVencidos={titulosVencidos.length}
             />
 

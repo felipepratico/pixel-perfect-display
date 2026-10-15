@@ -2,7 +2,7 @@ import { CalendarDays, CheckSquare, Search, Square } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 
-export type StatusFiltro = "all" | "PAGO" | "ABERTO" | "RECORRENTE" | "VENCIDO";
+export type StatusFiltro = "all" | "PAGO" | "ABERTO" | "AVENCER" | "RECORRENTE" | "VENCIDO";
 export type Ordenacao = "clienteAsc" | "vencimentoAsc" | "lucroFelipeDesc" | "mensalSiteDesc";
 
 export type FiltrosState = {
@@ -20,11 +20,13 @@ export function Filtros({
   state,
   onChange,
   mesesDisponiveis,
+  countAVencer = 0,
   countVencidos = 0,
 }: {
   state: FiltrosState;
   onChange: (next: Partial<FiltrosState>) => void;
   mesesDisponiveis: string[];
+  countAVencer?: number;
   countVencidos?: number;
 }) {
   const isAssinaturas = state.status === "RECORRENTE";
@@ -99,22 +101,38 @@ export function Filtros({
             <span>Assinaturas ativas</span>
           </button>
 
-          {countVencidos > 0 && (
-            <button
-              type="button"
-              onClick={() => onChange({ status: state.status === "VENCIDO" ? "all" : "VENCIDO" })}
-              className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
-                state.status === "VENCIDO"
-                  ? "border-destructive bg-destructive text-destructive-foreground"
-                  : "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
-              }`}
-            >
-              <span>Vencidos</span>
-              <span className="rounded-full bg-destructive/30 px-1.5 text-[10px] font-bold">
-                {countVencidos}
-              </span>
-            </button>
-          )}
+          {/* Pílulas de vencimento, sempre visíveis: a vencer e vencidos */}
+          <button
+            type="button"
+            onClick={() => onChange({ status: state.status === "AVENCER" ? "all" : "AVENCER" })}
+            title="Títulos em aberto com vencimento hoje ou em data futura"
+            className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
+              state.status === "AVENCER"
+                ? "border-amber-500 bg-amber-500 text-amber-950"
+                : "border-amber-500/40 bg-amber-950/40 text-amber-400 hover:bg-amber-900/50"
+            }`}
+          >
+            <span>A vencer</span>
+            <span className="rounded-full bg-amber-500/30 px-1.5 text-[10px] font-bold">
+              {countAVencer}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChange({ status: state.status === "VENCIDO" ? "all" : "VENCIDO" })}
+            title="Títulos em aberto com vencimento já ultrapassado"
+            className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
+              state.status === "VENCIDO"
+                ? "border-destructive bg-destructive text-destructive-foreground"
+                : "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
+            }`}
+          >
+            <span>Vencidos</span>
+            <span className="rounded-full bg-destructive/30 px-1.5 text-[10px] font-bold">
+              {countVencidos}
+            </span>
+          </button>
         </div>
       </div>
 

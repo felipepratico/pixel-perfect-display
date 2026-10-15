@@ -145,6 +145,14 @@ export function isTituloVencido(t: Pick<Titulo, "situacao" | "vencimento" | "mes
   return Date.now() > dueDate.getTime();
 }
 
+/** Título em aberto com vencimento hoje ou em data futura (dia ainda não ultrapassado). */
+export function isTituloAVencer(t: Pick<Titulo, "situacao" | "vencimento" | "mes_ano">): boolean {
+  if (t.situacao === "PAGO") return false;
+  const dueDate = getVencimentoDate(t);
+  if (!dueDate) return false;
+  return Date.now() <= dueDate.getTime();
+}
+
 export function getDiasVencido(t: Pick<Titulo, "situacao" | "vencimento" | "mes_ano">): number {
   const dueDate = getVencimentoDate(t);
   if (!dueDate) return 0;
