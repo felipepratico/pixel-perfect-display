@@ -15,7 +15,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppHeader } from "@/components/fincontrol/app-header";
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { valorContrato } from "@/lib/clientes";
+import { consultarCnpj as consultarCnpjApi, isValidCnpj, onlyDigits } from "@/lib/cnpj";
 import { emitirAssinaturaEfi } from "@/lib/efi.functions";
 import { assinaturaEfiSchema, type CobrancaEfi } from "@/lib/efi";
 import { formatCurrency, normalizePhone } from "@/lib/fincontrol";
@@ -86,6 +87,7 @@ function CobrancasEfi() {
   const [valoresVisiveis, setValoresVisiveis] = useState(false);
   const [consultando, setConsultando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const cnpjConsultado = useRef("");
 
   const cliente = clientes.find((item) => item.id === clienteId);
   const filtradas = useMemo(() => {
@@ -109,6 +111,7 @@ function CobrancasEfi() {
     setCpf(pessoaFisica ? documento : "");
     setRazaoSocial(selected.razao_social);
     setCnpj(pessoaFisica ? "" : selected.cnpj);
+    cnpjConsultado.current = pessoaFisica ? "" : onlyDigits(selected.cnpj);
     setEmail(selected.email);
     setTelefone(selected.telefone);
     setEndereco(selected.endereco);
@@ -122,22 +125,27 @@ function CobrancasEfi() {
   }
 
   async function consultarCnpj() {
-    const numero = cnpj.replace(/\D/g, "");
+    const numero = onlyDigits(cnpj);
     if (numero.length !== 14) {
       toast.error("Informe um CNPJ com 14 dígitos.");
       return;
     }
     setConsultando(true);
     try {
-      const response = await fetch(
-        `https://brasilapi.com.br/api/cnpj/v1/${encodeURIComponent(numero)}`,
-      );
-      if (!response.ok) throw new Error();
-      const data = (await response.json()) as { razao_social?: string; nome_fantasia?: string };
+      const data = await consultarCnpjApi(cnpj);
+      cnpjConsultado.current = data.cnpj;
       setRazaoSocial(data.razao_social || data.nome_fantasia || razaoSocial);
+      if (data.telefone) setTelefone(data.telefone);
+      if (data.email) setEmail(data.email);
+      if (data.endereco) setEndereco(data.endereco);
+      if (data.numero_endereco) setNumeroEndereco(data.numero_endereco);
+      if (data.bairro) setBairro(data.bairro);
+      if (data.cep) setCep(data.cep);
+      if (data.cidade) setCidade(data.cidade);
+      if (data.uf) setUf(data.uf);
       toast.success("CNPJ encontrado. Confira os dados antes de emitir.");
-    } catch {
-      toast.error("Não foi possível consultar esse CNPJ.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível consultar esse CNPJ.");
     } finally {
       setConsultando(false);
     }
@@ -323,6 +331,16 @@ function CobrancasEfi() {
                       maxLength={18}
                       value={cnpj}
                       onChange={(e) => setCnpj(e.target.value)}
+                      onBlur={() => {
+                        const digitos = onlyDigits(cnpj);
+                        if (
+                          isValidCnpj(digitos) &&
+                          digitos !== cnpjConsultado.current &&
+                          !consultando
+                        ) {
+                          void consultarCnpj();
+                        }
+                      }}
                       placeholder="00.000.000/0000-00"
                     />
                   </Field>

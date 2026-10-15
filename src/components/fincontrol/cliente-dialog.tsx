@@ -1,5 +1,5 @@
 import { Loader2, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { emptyCliente, MODULOS, valorContrato, type Cliente, type ClienteInput, type GrupoCliente } from "@/lib/clientes";
+import { consultarCnpj as consultarCnpjApi, isValidCnpj, onlyDigits } from "@/lib/cnpj";
 import { formatCurrency } from "@/lib/fincontrol";
 
 const selectClass = "h-10 w-full rounded-md border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring";
@@ -26,6 +27,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
   const [novoGrupo, setNovoGrupo] = useState("");
   const [consultandoCnpj, setConsultandoCnpj] = useState(false);
   const [tipoPessoa, setTipoPessoa] = useState<"FISICA" | "JURIDICA">("JURIDICA");
+  const ultimoCnpjConsultado = useRef("");
 
   useEffect(() => {
     if (!open) return;
@@ -33,9 +35,11 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
       const { id: _id, created_at: _created, updated_at: _updated, deleted_at: _deleted, ...values } = cliente;
       setForm(values);
       setTipoPessoa(cliente.cnpj.replace(/\D/g, "").length === 11 ? "FISICA" : "JURIDICA");
+      ultimoCnpjConsultado.current = onlyDigits(cliente.cnpj);
     } else {
       setForm(emptyCliente());
       setTipoPessoa("JURIDICA");
+      ultimoCnpjConsultado.current = "";
     }
     setNovoGrupo("");
   }, [open, cliente]);
@@ -56,7 +60,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
   }
 
   async function consultarCnpj() {
-    const cnpj = form.cnpj.replace(/\D/g, "");
+    const cnpj = onlyDigits(form.cnpj);
     if (cnpj.length !== 14) {
       toast.error("Informe um CNPJ com 14 dígitos.");
       return;
@@ -64,33 +68,21 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
 
     setConsultandoCnpj(true);
     try {
-      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${encodeURIComponent(cnpj)}`);
-      if (!response.ok) throw new Error("CNPJ não encontrado.");
-      const data = await response.json() as {
-        razao_social?: string;
-        nome_fantasia?: string;
-        ddd_telefone_1?: string;
-        email?: string;
-        logradouro?: string;
-        numero?: string;
-        bairro?: string;
-        cep?: string;
-        municipio?: string;
-        uf?: string;
-      };
+      const data = await consultarCnpjApi(form.cnpj);
+      ultimoCnpjConsultado.current = data.cnpj;
       setForm((current) => ({
         ...current,
-        cnpj,
-        razao_social: data.razao_social?.trim() || current.razao_social,
-        nome_fantasia: data.nome_fantasia?.trim() || current.nome_fantasia,
-        telefone: data.ddd_telefone_1?.replace(/\D/g, "") || current.telefone,
-        email: data.email?.trim().toLowerCase() || current.email,
-        endereco: data.logradouro?.trim() || current.endereco,
-        numero_endereco: data.numero?.trim() || current.numero_endereco,
-        bairro: data.bairro?.trim() || current.bairro,
-        cep: data.cep?.replace(/\D/g, "") || current.cep,
-        cidade: data.municipio?.trim() || current.cidade,
-        uf: data.uf?.trim().toUpperCase() || current.uf,
+        cnpj: data.cnpj,
+        razao_social: data.razao_social || current.razao_social,
+        nome_fantasia: data.nome_fantasia || current.nome_fantasia,
+        telefone: data.telefone || current.telefone,
+        email: data.email || current.email,
+        endereco: data.endereco || current.endereco,
+        numero_endereco: data.numero_endereco || current.numero_endereco,
+        bairro: data.bairro || current.bairro,
+        cep: data.cep || current.cep,
+        cidade: data.cidade || current.cidade,
+        uf: data.uf || current.uf,
       }));
       toast.success("Dados do CNPJ preenchidos. Confira antes de salvar.");
     } catch (error) {
@@ -124,7 +116,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
             <Field label="Tipo de pessoa"><div className="grid grid-cols-2 gap-1 rounded-md border bg-muted p-1"><Button type="button" size="sm" variant={tipoPessoa === "FISICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("FISICA")}>Pessoa física</Button><Button type="button" size="sm" variant={tipoPessoa === "JURIDICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("JURIDICA")}>Pessoa jurídica</Button></div></Field>
             <Field label={tipoPessoa === "FISICA" ? "Nome completo *" : "Razão social *"} className="lg:col-span-2"><Input required value={form.razao_social} onChange={(e) => update("razao_social", e.target.value)} /></Field>
             {tipoPessoa === "JURIDICA" ? <Field label="Nome fantasia"><Input value={form.nome_fantasia} onChange={(e) => update("nome_fantasia", e.target.value)} /></Field> : null}
-            <Field label={tipoPessoa === "FISICA" ? "CPF *" : "CNPJ *"}><div className="flex gap-2"><Input required inputMode="numeric" maxLength={tipoPessoa === "FISICA" ? 14 : 18} value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} onBlur={() => { if (tipoPessoa === "JURIDICA" && form.cnpj.replace(/\D/g, "").length === 14 && !cliente) void consultarCnpj(); }} />{tipoPessoa === "JURIDICA" ? <Button type="button" size="icon" variant="outline" title="Buscar dados do CNPJ" disabled={consultandoCnpj} onClick={consultarCnpj}>{consultandoCnpj ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</Button> : null}</div></Field>
+            <Field label={tipoPessoa === "FISICA" ? "CPF *" : "CNPJ *"}><div className="flex gap-2"><Input required inputMode="numeric" maxLength={tipoPessoa === "FISICA" ? 14 : 18} value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} onBlur={() => { const digitos = onlyDigits(form.cnpj); if (tipoPessoa === "JURIDICA" && isValidCnpj(digitos) && digitos !== ultimoCnpjConsultado.current) void consultarCnpj(); }} />{tipoPessoa === "JURIDICA" ? <Button type="button" size="icon" variant="outline" title="Buscar dados do CNPJ" disabled={consultandoCnpj} onClick={consultarCnpj}>{consultandoCnpj ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</Button> : null}</div></Field>
             <Field label="WhatsApp"><Input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} /></Field>
             <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
             <Field label="Endereço" className="lg:col-span-2"><Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} /></Field>
