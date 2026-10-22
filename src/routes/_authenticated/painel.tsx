@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   CalendarPlus,
+  CheckCircle2,
   CloudCheck,
   Download,
   Eye,
@@ -19,6 +20,17 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { AppHeader } from "@/components/fincontrol/app-header";
 import { AssinaturasDialog } from "@/components/fincontrol/assinaturas-dialog";
@@ -98,6 +110,10 @@ function Painel() {
   const [loteOpen, setLoteOpen] = useState(false);
   const [valoresVisiveis, setValoresVisiveis] = useState(true);
   const [geminiOpen, setGeminiOpen] = useState(false);
+  const [confirmarPago, setConfirmarPago] = useState<{
+    ids: string[];
+    nomes?: string[];
+  } | null>(null);
   const [impressao, setImpressao] = useState<{ titulos: Titulo[]; subtitulo: string } | null>(null);
 
   function imprimir(lista: Titulo[], subtitulo: string) {
@@ -407,9 +423,13 @@ function Painel() {
                   size="sm"
                   variant="outline"
                   className="h-7 text-xs"
-                  onClick={() =>
-                    patchMany.mutate({ ids, values: { situacao: "PAGO" } }, { onError: erro })
-                  }
+                  onClick={() => {
+                    const selecionadosList = clientesVisiveis.filter((t) => selecionados.has(t.id));
+                    setConfirmarPago({
+                      ids,
+                      nomes: selecionadosList.map((t) => t.cliente),
+                    });
+                  }}
                 >
                   Marcar pago
                 </Button>
@@ -491,12 +511,19 @@ function Painel() {
                 setRelCliente(t.cliente);
                 setRelOpen(true);
               }}
-              onAlternarSituacao={(t) =>
-                patchMany.mutate(
-                  { ids: [t.id], values: { situacao: t.situacao === "PAGO" ? "ABERTO" : "PAGO" } },
-                  { onError: erro },
-                )
-              }
+              onAlternarSituacao={(t) => {
+                if (t.situacao !== "PAGO") {
+                  setConfirmarPago({
+                    ids: [t.id],
+                    nomes: [t.cliente],
+                  });
+                } else {
+                  patchMany.mutate(
+                    { ids: [t.id], values: { situacao: "ABERTO" } },
+                    { onError: erro },
+                  );
+                }
+              }}
               onExcluir={(t) => {
                 if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro });
               }}
@@ -568,6 +595,82 @@ function Painel() {
         totalPago={valorPago}
         onCobrarWhatsapp={(t) => setWhats(t)}
       />
+      <AlertDialog
+        open={!!confirmarPago}
+        onOpenChange={(open) => {
+          if (!open) setConfirmarPago(null);
+        }}
+      >
+        <AlertDialogContent className="border border-border/80 bg-card text-card-foreground shadow-2xl sm:max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+                <CheckCircle2 className="size-5" />
+              </div>
+              <div className="space-y-1 text-left">
+                <AlertDialogTitle className="text-base font-semibold">
+                  Marcar como pago
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm font-medium text-foreground">
+                  Deseja realmente marcar como pago?
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+            {confirmarPago && confirmarPago.ids.length === 1 ? (
+              <p>
+                O lançamento de{" "}
+                <strong className="text-foreground font-semibold">
+                  {confirmarPago.nomes?.[0] || "1 lançamento"}
+                </strong>{" "}
+                será atualizado para <span className="font-semibold text-emerald-400">PAGO</span>.
+              </p>
+            ) : (
+              <p>
+                Os{" "}
+                <strong className="text-foreground font-semibold">
+                  {confirmarPago?.ids.length} lançamentos selecionados
+                </strong>{" "}
+                serão atualizados para <span className="font-semibold text-emerald-400">PAGO</span>.
+              </p>
+            )}
+          </div>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel className="h-8 text-xs">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="h-8 bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-500"
+              onClick={() => {
+                if (!confirmarPago) return;
+                const totalIds = confirmarPago.ids;
+                patchMany.mutate(
+                  { ids: totalIds, values: { situacao: "PAGO" } },
+                  {
+                    onSuccess: () => {
+                      toast.success(
+                        totalIds.length === 1
+                          ? "Lançamento marcado como pago com sucesso!"
+                          : `${totalIds.length} lançamentos marcados como pagos!`,
+                      );
+                      setSelecionados((prev) => {
+                        const next = new Set(prev);
+                        totalIds.forEach((id) => next.delete(id));
+                        return next;
+                      });
+                      setConfirmarPago(null);
+                    },
+                    onError: erro,
+                  },
+                );
+              }}
+            >
+              Sim, marcar como pago
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {impressao ? (
         <AreaImpressao titulos={impressao.titulos} subtitulo={impressao.subtitulo} />
       ) : null}
