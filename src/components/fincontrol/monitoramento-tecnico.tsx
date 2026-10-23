@@ -266,7 +266,17 @@ export const MOCK_CLIENTES: Cliente[] = [
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-type DiasRegraBackup = 10 | 30 | 7 | "todos";
+export type RegraBackup = "lt_5" | "lt_10" | "gt_7" | "gt_10" | "gt_30" | "todos";
+export type DiasRegraBackup = RegraBackup;
+
+export const OPCOES_FILTRO_BACKUP: { label: string; value: RegraBackup }[] = [
+  { label: "Menos de 5 dias", value: "lt_5" },
+  { label: "Menos de 10 dias", value: "lt_10" },
+  { label: "Mais de 7 dias", value: "gt_7" },
+  { label: "Mais de 10 dias", value: "gt_10" },
+  { label: "Mais de 30 dias", value: "gt_30" },
+  { label: "Todos os clientes", value: "todos" },
+];
 
 function formatData(iso: string | null) {
   if (!iso) return "Não informado";
@@ -315,7 +325,7 @@ function BadgeDias({ dias }: { dias: number | null }) {
 function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState<"all" | "ATIVO" | "INATIVO">("ATIVO");
-  const [diasRegra, setDiasRegra] = useState<DiasRegraBackup>(10);
+  const [diasRegra, setDiasRegra] = useState<RegraBackup>("gt_7");
   const [selecionado, setSelecionado] = useState<string | null>(null);
 
   const filtrados = useMemo(() => {
@@ -323,13 +333,33 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
     return clientes.filter((c) => {
       if (statusFiltro !== "all" && c.status !== statusFiltro) return false;
       const dias = diasDesde(c.ultimo_backup);
-      if (diasRegra !== "todos") {
-        if (dias === null || dias > diasRegra) {
-          // ok — cliente atende ao critério de atraso
-        } else {
-          return false;
-        }
+
+      switch (diasRegra) {
+        case "lt_5":
+          // Clientes cujo último backup ocorreu há menos de 5 dias
+          if (dias === null || dias >= 5) return false;
+          break;
+        case "lt_10":
+          // Clientes cujo último backup ocorreu há menos de 10 dias
+          if (dias === null || dias >= 10) return false;
+          break;
+        case "gt_7":
+          // Clientes com mais de 7 dias sem backup (ou sem backup registrado)
+          if (dias !== null && dias <= 7) return false;
+          break;
+        case "gt_10":
+          // Clientes com mais de 10 dias sem backup (ou sem backup registrado)
+          if (dias !== null && dias <= 10) return false;
+          break;
+        case "gt_30":
+          // Clientes com mais de 30 dias sem backup (ou sem backup registrado)
+          if (dias !== null && dias <= 30) return false;
+          break;
+        case "todos":
+        default:
+          break;
       }
+
       if (termo) {
         const texto = `${c.razao_social} ${c.nome_fantasia} ${c.cnpj}`.toUpperCase();
         if (!texto.includes(termo)) return false;
@@ -363,17 +393,15 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
         </select>
         <select
           className="h-9 rounded-md border border-border/60 bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          value={String(diasRegra)}
-          onChange={(e) => {
-            const v = e.target.value;
-            setDiasRegra(v === "todos" ? "todos" : (Number(v) as DiasRegraBackup));
-          }}
+          value={diasRegra}
+          onChange={(e) => setDiasRegra(e.target.value as RegraBackup)}
           aria-label="Regra de dias de atraso"
         >
-          <option value="7">Mais de 7 dias</option>
-          <option value="10">Mais de 10 dias</option>
-          <option value="30">Mais de 30 dias</option>
-          <option value="todos">Todos os clientes</option>
+          {OPCOES_FILTRO_BACKUP.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -381,8 +409,12 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Database className="size-4 text-orange-400" />
         <span>
-          <strong className="text-foreground">{filtrados.length}</strong> cliente(s) com
-          backup em atraso
+          <strong className="text-foreground">{filtrados.length}</strong>{" "}
+          {diasRegra.startsWith("lt_")
+            ? "cliente(s) com backup recente"
+            : diasRegra === "todos"
+            ? "cliente(s) no total"
+            : "cliente(s) com backup em atraso"}
         </span>
       </div>
       <p className="text-xs text-muted-foreground">Clique em um cliente e pressione Enter para editar.</p>
@@ -407,7 +439,11 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                   <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
                       <Database className="size-8 opacity-30" />
-                      <p className="font-semibold text-foreground">Nenhum cliente em atraso</p>
+                      <p className="font-semibold text-foreground">
+                        {diasRegra.startsWith("lt_")
+                          ? "Nenhum cliente com backup recente encontrado"
+                          : "Nenhum cliente em atraso"}
+                      </p>
                       <p className="text-xs">Ajuste os filtros para ampliar a busca.</p>
                     </div>
                   </td>
@@ -416,7 +452,10 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                 filtrados.map((c) => {
                   const dias = diasDesde(c.ultimo_backup);
                   const exemplo = MOCK_CLIENTES.some((m) => m.id === c.id);
-                  const msgWhats = `Olá ${c.nome_fantasia || c.razao_social}, identificamos que o último backup do seu sistema Prático foi realizado em ${formatData(c.ultimo_backup)} (há mais de ${dias ?? "vários"} dias). Para garantir a segurança dos seus dados e evitar perdas, por favor, realize a cópia de segurança o quanto antes. Se precisar de suporte, estamos à disposição!`;
+                  const msgWhats =
+                    dias !== null && dias < 7
+                      ? `Olá ${c.nome_fantasia || c.razao_social}, confirmamos que o seu último backup do sistema Prático foi realizado em ${formatData(c.ultimo_backup)} (há ${dias === 0 ? "menos de 1 dia" : `${dias} dia(s)`}). Agradecemos por manter as cópias de segurança em dia! Qualquer dúvida, estamos à disposição.`
+                      : `Olá ${c.nome_fantasia || c.razao_social}, identificamos que o último backup do seu sistema Prático foi realizado em ${formatData(c.ultimo_backup)} (há mais de ${dias ?? "vários"} dias). Para garantir a segurança dos seus dados e evitar perdas, por favor, realize a cópia de segurança o quanto antes. Se precisar de suporte, estamos à disposição!`;
                   return (
                     <tr
                       key={c.id}
