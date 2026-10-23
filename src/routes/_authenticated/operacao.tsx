@@ -3,7 +3,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   DatabaseBackup,
+  FileText,
   Pencil,
+  Receipt,
   RefreshCw,
   ShieldCheck,
   Trash2,
@@ -14,6 +16,8 @@ import { toast } from "sonner";
 
 import { AppHeader } from "@/components/fincontrol/app-header";
 import { ClienteDialog } from "@/components/fincontrol/cliente-dialog";
+import { ContratoModal } from "@/components/fincontrol/contrato-modal";
+import { ReciboModal } from "@/components/fincontrol/recibo-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +61,12 @@ function OperacaoPage() {
   const [versao, setVersao] = useState(config.versao_atual);
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState<Cliente | null>(null);
+
+  const [clienteContrato, setClienteContrato] = useState<Cliente | null>(null);
+  const [contratoOpen, setContratoOpen] = useState(false);
+  const [clienteRecibo, setClienteRecibo] = useState<Cliente | null>(null);
+  const [reciboOpen, setReciboOpen] = useState(false);
+
   const ativos = clientes.filter((cliente) => !cliente.deleted_at);
 
   function salvar(values: ClienteInput, id?: string) {
@@ -215,6 +225,32 @@ function OperacaoPage() {
                             <Button
                               size="icon"
                               variant="ghost"
+                              className="text-primary hover:text-primary hover:bg-primary/10"
+                              title="Gerar Contrato"
+                              aria-label="Gerar Contrato"
+                              onClick={() => {
+                                setClienteContrato(cliente);
+                                setContratoOpen(true);
+                              }}
+                            >
+                              <FileText className="size-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                              title="Gerar Recibo"
+                              aria-label="Gerar Recibo"
+                              onClick={() => {
+                                setClienteRecibo(cliente);
+                                setReciboOpen(true);
+                              }}
+                            >
+                              <Receipt className="size-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
                               title="Editar cliente"
                               onClick={() => {
                                 setEditando(cliente);
@@ -258,6 +294,16 @@ function OperacaoPage() {
         onOpenChange={setOpen}
         onCreateGrupo={(nome) => createGrupo.mutateAsync(nome)}
         onSave={salvar}
+      />
+      <ContratoModal
+        open={contratoOpen}
+        cliente={clienteContrato}
+        onOpenChange={setContratoOpen}
+      />
+      <ReciboModal
+        open={reciboOpen}
+        cliente={clienteRecibo}
+        onOpenChange={setReciboOpen}
       />
     </div>
   );
