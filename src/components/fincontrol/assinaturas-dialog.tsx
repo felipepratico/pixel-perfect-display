@@ -1,3 +1,5 @@
+import { Plus } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +34,7 @@ export function AssinaturasDialog({
   valoresVisiveis,
   onOpenChange,
   onAlternar,
+  onNovaAssinatura,
 }: {
   open: boolean;
   titulos: Titulo[];
@@ -39,6 +42,7 @@ export function AssinaturasDialog({
   valoresVisiveis: boolean;
   onOpenChange: (open: boolean) => void;
   onAlternar: (ids: string[], ativar: boolean) => void;
+  onNovaAssinatura: () => void;
 }) {
   const porCliente = new Map<string, Linha>();
   for (const titulo of titulos) {
@@ -76,21 +80,32 @@ export function AssinaturasDialog({
         <DialogHeader>
           <DialogTitle>Painel de assinaturas recorrentes</DialogTitle>
           <DialogDescription>
-            Clientes com renovação automática mensal. O status vale para todos os meses do
-            cliente, mesmo com filtros aplicados na tela. Cancelar impede a geração de novos meses.
+            Clientes com renovação automática mensal. O status vale para todos os meses do cliente,
+            mesmo com filtros aplicados na tela. Cancelar impede a geração de novos meses.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center justify-between rounded-2xl border border-partner-border bg-partner-soft p-3 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-partner-border bg-partner-soft p-3 text-xs">
           <p className="font-bold text-partner">
             MRR ativo estimado:{" "}
             <span className="font-extrabold">
               {valoresVisiveis ? formatCurrency(mrr) : "R$ ••••••"} /mês
             </span>
           </p>
-          <span className="rounded-full bg-partner px-2.5 py-0.5 font-bold text-partner-foreground">
-            {ativas.length} ativas
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-partner px-2.5 py-0.5 font-bold text-partner-foreground">
+              {ativas.length} ativas
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 gap-1 text-xs"
+              onClick={onNovaAssinatura}
+            >
+              <Plus className="size-3.5" />
+              Adicionar assinatura
+            </Button>
+          </div>
         </div>
 
         <div className="scroll-slim max-h-80 overflow-auto rounded-2xl border border-border">

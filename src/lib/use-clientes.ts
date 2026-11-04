@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
-import type { Atendimento, AtendimentoInput, Cliente, ClienteInput, Configuracoes, GrupoCliente } from "@/lib/clientes";
+import type {
+  Atendimento,
+  AtendimentoInput,
+  Cliente,
+  ClienteInput,
+  Configuracoes,
+  GrupoCliente,
+} from "@/lib/clientes";
 
 const CLIENTES_KEY = ["clientes"] as const;
 const GRUPOS_KEY = ["grupos-clientes"] as const;
@@ -31,7 +38,11 @@ export function useGrupos() {
   return useQuery({
     queryKey: GRUPOS_KEY,
     queryFn: async (): Promise<GrupoCliente[]> => {
-      const { data, error } = await supabase.from("grupos_clientes").select("*").is("deleted_at", null).order("nome");
+      const { data, error } = await supabase
+        .from("grupos_clientes")
+        .select("*")
+        .is("deleted_at", null)
+        .order("nome");
       if (error) throw error;
       return (data ?? []) as GrupoCliente[];
     },
@@ -65,7 +76,9 @@ export function useAtendimentos(clienteId?: string) {
     queryFn: async (): Promise<Atendimento[]> => {
       let query = supabase
         .from("atendimentos")
-        .select("id, user_id, cliente_id, assunto, descricao, status, prioridade, aberto_em, concluido_em, deleted_at, created_at, updated_at, cliente:clientes(razao_social, telefone)")
+        .select(
+          "id, user_id, cliente_id, assunto, descricao, status, prioridade, aberto_em, concluido_em, deleted_at, created_at, updated_at, cliente:clientes(razao_social, telefone)",
+        )
         .is("deleted_at", null)
         .order("aberto_em", { ascending: false });
 
@@ -86,22 +99,30 @@ export function useClienteMutations() {
   const refreshGrupos = () => queryClient.invalidateQueries({ queryKey: GRUPOS_KEY });
 
   const saveCliente = useMutation({
-    mutationFn: async ({ id, values }: { id?: string; values: ClienteInput }) => {
+    mutationFn: async ({ id, values }: { id?: string; values: ClienteInput }): Promise<string> => {
       if (id) {
         const { error } = await supabase.from("clientes").update(values).eq("id", id);
         if (error) throw error;
-        return;
+        return id;
       }
       const user_id = await currentUserId();
-      const { error } = await supabase.from("clientes").insert({ ...values, user_id });
+      const { data, error } = await supabase
+        .from("clientes")
+        .insert({ ...values, user_id })
+        .select("id")
+        .single();
       if (error) throw error;
+      return (data as { id: string }).id;
     },
     onSuccess: refresh,
   });
 
   const softDeleteCliente = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("clientes").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      const { error } = await supabase
+        .from("clientes")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: refresh,
@@ -118,7 +139,11 @@ export function useClienteMutations() {
   const createGrupo = useMutation({
     mutationFn: async (nome: string) => {
       const user_id = await currentUserId();
-      const { data, error } = await supabase.from("grupos_clientes").insert({ user_id, nome: nome.trim().toUpperCase() }).select("*").single();
+      const { data, error } = await supabase
+        .from("grupos_clientes")
+        .insert({ user_id, nome: nome.trim().toUpperCase() })
+        .select("*")
+        .single();
       if (error) throw error;
       return data as GrupoCliente;
     },
@@ -158,7 +183,10 @@ export function useAtendimentoMutations() {
   const setStatusAtendimento = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Atendimento["status"] }) => {
       const concluido_em = status === "CONCLUÍDO" ? new Date().toISOString() : null;
-      const { error } = await supabase.from("atendimentos").update({ status, concluido_em }).eq("id", id);
+      const { error } = await supabase
+        .from("atendimentos")
+        .update({ status, concluido_em })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: refresh,
@@ -166,7 +194,10 @@ export function useAtendimentoMutations() {
 
   const softDeleteAtendimento = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("atendimentos").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      const { error } = await supabase
+        .from("atendimentos")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: refresh,

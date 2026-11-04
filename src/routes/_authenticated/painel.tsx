@@ -40,6 +40,10 @@ import { Graficos } from "@/components/fincontrol/graficos";
 import { ImportDialog } from "@/components/fincontrol/import-dialog";
 import { AreaImpressao } from "@/components/fincontrol/impressao";
 import { KpiCards } from "@/components/fincontrol/kpi-cards";
+import {
+  NovaAssinaturaDialog,
+  type NovaAssinaturaValues,
+} from "@/components/fincontrol/nova-assinatura-dialog";
 import { RecorrenciaDialog } from "@/components/fincontrol/recorrencia-dialog";
 import { RelatorioDialog } from "@/components/fincontrol/relatorio-dialog";
 import { TituloDialog } from "@/components/fincontrol/titulo-dialog";
@@ -47,12 +51,14 @@ import { TitulosTable } from "@/components/fincontrol/titulos-table";
 import { WhatsAppDialog } from "@/components/fincontrol/whatsapp-dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { emptyCliente } from "@/lib/clientes";
 import { exportTitulos } from "@/lib/excel";
 import {
   chaveClienteDoTitulo,
   clienteIdDoTitulo,
   computeRow,
   currentMesAno,
+  emptyTitulo,
   getDiasVencido,
   isActiveSubscription,
   isTituloAVencer,
@@ -64,7 +70,7 @@ import {
   type TituloInput,
 } from "@/lib/fincontrol";
 import { calcularTotais } from "@/lib/totais";
-import { useClientes } from "@/lib/use-clientes";
+import { useClienteMutations, useClientes } from "@/lib/use-clientes";
 import { useTituloMutations, useTitulos } from "@/lib/use-titulos";
 
 export const Route = createFileRoute("/_authenticated/painel")({
@@ -98,6 +104,7 @@ function Painel() {
   const { data: todos = [], isLoading } = useTitulos();
   const { data: clientesCadastrados = [] } = useClientes();
   const { saveTitulo, insertMany, patchMany, removeMany } = useTituloMutations();
+  const { saveCliente } = useClienteMutations();
 
   const [filtros, setFiltros] = useState<FiltrosState>({
     busca: "",
@@ -111,6 +118,7 @@ function Painel() {
   const [tituloOpen, setTituloOpen] = useState(false);
   const [whats, setWhats] = useState<Titulo | null>(null);
   const [assOpen, setAssOpen] = useState(false);
+  const [novaAssOpen, setNovaAssOpen] = useState(false);
   const [recOpen, setRecOpen] = useState(false);
   const [impOpen, setImpOpen] = useState(false);
   const [relOpen, setRelOpen] = useState(false);
@@ -238,6 +246,76 @@ function Painel() {
       },
       onError: erro,
     });
+  }
+
+  async function onNovaAssinatura(values: NovaAssinaturaValues) {
+    try {
+      const cnpjDigitos = values.cnpj.replace(/\D/g, "");
+      const clienteEncontrado =
+        (values.clienteId
+          ? clientesCadastrados.find((cliente) => cliente.id === values.clienteId)
+          : undefined) ??
+        clientesCadastrados.find(
+          (cliente) =>
+            cliente.razao_social.trim().toUpperCase() === values.cliente.trim().toUpperCase(),
+        ) ??
+        clientesCadastrados.find(
+          (cliente) => cnpjDigitos !== "" && cliente.cnpj.replace(/\D/g, "") === cnpjDigitos,
+        );
+
+      let clienteId = clienteEncontrado?.id ?? values.clienteId;
+      if (!clienteId) {
+        clienteId = await saveCliente.mutateAsync({
+          values: {
+            ...emptyCliente(),
+            razao_social: values.cliente,
+            cnpj: values.cnpj,
+            telefone: values.telefone.replace(/\D/g, ""),
+            valor_base: values.valor,
+            vencimento: values.vencimento,
+            status: "ATIVO",
+            observacoes: "Cliente criado pelo painel de assinaturas recorrentes.",
+          },
+        });
+      }
+
+      await saveTitulo.mutateAsync({
+        values: {
+          ...emptyTitulo(),
+          cliente_id: clienteId,
+          cliente: clienteEncontrado?.razao_social ?? values.cliente,
+          cnpj: clienteEncontrado?.cnpj ?? values.cnpj,
+          telefone: (clienteEncontrado?.telefone ?? values.telefone).replace(/\D/g, ""),
+          mensal_site: values.valor,
+          mensal_real: values.valor,
+          vencimento: values.vencimento,
+          mes_ano: values.mesAno,
+          tipo_cobranca: "RECORRENTE",
+          status_assinatura: values.status,
+          situacao: "ABERTO",
+        },
+      });
+
+      toast.success(
+        clienteEncontrado
+          ? "Assinatura adicionada ao cliente."
+          : "Cliente e assinatura adicionados.",
+      );
+      setNovaAssOpen(false);
+      setAssOpen(true);
+    } catch (error) {
+      erro(error);
+    }
+  }
+
+  function abrirNovaAssinatura() {
+    setAssOpen(false);
+    setNovaAssOpen(true);
+  }
+
+  function alterarNovaAssinatura(open: boolean) {
+    setNovaAssOpen(open);
+    if (!open) setAssOpen(true);
   }
 
   function onGerar(mesAnoInicial: string, quantidade: number) {
@@ -614,6 +692,14 @@ function Painel() {
             { onError: erro },
           )
         }
+        onNovaAssinatura={abrirNovaAssinatura}
+      />
+      <NovaAssinaturaDialog
+        open={novaAssOpen}
+        clientes={clientesCadastrados}
+        saving={saveCliente.isPending || saveTitulo.isPending}
+        onOpenChange={alterarNovaAssinatura}
+        onSave={onNovaAssinatura}
       />
       <RecorrenciaDialog
         open={recOpen}
