@@ -106,7 +106,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
               onClick={fecharNoMobile}
               className="flex min-w-0 flex-1 items-center gap-2.5 group-data-[collapsible=icon]:flex-none"
             >
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-sidebar-highlight text-sidebar-highlight-foreground shadow-lg shadow-sidebar-highlight/30">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-[#0f4c9c] shadow-lg shadow-black/20">
                 <CloudCheck className="size-5" />
               </span>
               <span className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
@@ -132,7 +132,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
                     : "Expandir menu lateral"
               }
               aria-expanded={aberto}
-              className="size-8 shrink-0 rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="size-8 shrink-0 rounded-lg text-white/80 hover:bg-sidebar-accent hover:text-white"
             >
               {aberto ? (
                 <PanelLeftClose className="size-4" />
@@ -273,7 +273,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
         <SidebarSeparator />
         <SidebarFooter className="gap-2 p-2.5">
           <div className="flex items-center gap-2.5 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-1.5">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-highlight text-xs font-bold uppercase text-sidebar-highlight-foreground">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white text-xs font-bold uppercase text-[#0f4c9c]">
               {inicial}
             </span>
             <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
@@ -287,7 +287,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
               onClick={sair}
               title="Sair"
               aria-label="Sair"
-              className="size-8 shrink-0 rounded-lg text-sidebar-foreground/60 hover:bg-red-50 hover:text-red-600"
+              className="size-8 shrink-0 rounded-lg text-white/80 hover:bg-red-500/20 hover:text-white"
             >
               <LogOut className="size-4" />
             </Button>

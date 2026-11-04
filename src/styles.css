@@ -135,17 +135,17 @@
   --chart-3: #7c3aed;
   --chart-4: #d97706;
   --chart-5: #dc2626;
-  /* Sidebar clara com destaque azul (#0F4C9C). */
-  --sidebar: #ffffff;
-  --sidebar-foreground: #1e293b;
-  --sidebar-primary: #0f4c9c;
-  --sidebar-primary-foreground: #f8fafc;
-  --sidebar-accent: #e8f0fd;
-  --sidebar-accent-foreground: #16438a;
-  --sidebar-border: #d3dfee;
-  --sidebar-ring: #0f4c9c;
-  --sidebar-highlight: #0f4c9c;
-  --sidebar-highlight-foreground: #f8fafc;
+  /* Sidebar: fundo azul sólido (#0F4C9C) com textos e ícones brancos. */
+  --sidebar: #0f4c9c;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #0f4c9c;
+  --sidebar-accent: rgb(255 255 255 / 0.1);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.18);
+  --sidebar-ring: #ffffff;
+  --sidebar-highlight: #ffffff;
+  --sidebar-highlight-foreground: #0f4c9c;
 }
 
 @layer base {

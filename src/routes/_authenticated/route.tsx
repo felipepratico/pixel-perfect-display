@@ -30,7 +30,7 @@ function AuthenticatedLayout() {
             className="text-foreground hover:bg-accent hover:text-accent-foreground"
           />
           <Link to="/painel" className="flex items-center gap-2 text-sm font-extrabold">
-            <span className="grid size-7 place-items-center rounded-lg bg-sidebar-highlight text-sidebar-highlight-foreground">
+            <span className="grid size-7 place-items-center rounded-lg bg-[#0f4c9c] text-white">
               <CloudCheck className="size-4" />
             </span>
             UPSYSTEM FINCONTROL
