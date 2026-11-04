@@ -266,7 +266,7 @@ export const MOCK_CLIENTES: Cliente[] = [
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-export type RegraBackup = "lt_5" | "lt_10" | "gt_7" | "gt_10" | "gt_30" | "todos";
+export type RegraBackup = "lt_5" | "lt_10" | "gt_7" | "gt_10" | "gt_30" | "sem_registro" | "todos";
 export type DiasRegraBackup = RegraBackup;
 
 export const OPCOES_FILTRO_BACKUP: { label: string; value: RegraBackup }[] = [
@@ -275,6 +275,7 @@ export const OPCOES_FILTRO_BACKUP: { label: string; value: RegraBackup }[] = [
   { label: "Mais de 7 dias", value: "gt_7" },
   { label: "Mais de 10 dias", value: "gt_10" },
   { label: "Mais de 30 dias", value: "gt_30" },
+  { label: "Sem registro", value: "sem_registro" },
   { label: "Todos os clientes", value: "todos" },
 ];
 
@@ -294,7 +295,11 @@ function encodeWhatsApp(tel: string, msg: string) {
 }
 
 // ─── Aba Backup ───────────────────────────────────────────────────────────────
-type AbaBackupProps = { clientes: Cliente[]; onEditar: (cliente: Cliente) => void; onExcluir: (cliente: Cliente) => void };
+type AbaBackupProps = {
+  clientes: Cliente[];
+  onEditar: (cliente: Cliente) => void;
+  onExcluir: (cliente: Cliente) => void;
+};
 
 function BadgeDias({ dias }: { dias: number | null }) {
   if (dias === null)
@@ -344,16 +349,20 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
           if (dias === null || dias >= 10) return false;
           break;
         case "gt_7":
-          // Clientes com mais de 7 dias sem backup (ou sem backup registrado)
+          // Mais de 7 dias sem backup — exclui quem tem registro recente
           if (dias !== null && dias <= 7) return false;
           break;
         case "gt_10":
-          // Clientes com mais de 10 dias sem backup (ou sem backup registrado)
+          // Mais de 10 dias sem backup — exclui quem tem registro recente
           if (dias !== null && dias <= 10) return false;
           break;
         case "gt_30":
-          // Clientes com mais de 30 dias sem backup (ou sem backup registrado)
+          // Mais de 30 dias sem backup — exclui quem tem registro recente
           if (dias !== null && dias <= 30) return false;
+          break;
+        case "sem_registro":
+          // Apenas clientes sem data de último backup (dias === null)
+          if (dias !== null) return false;
           break;
         case "todos":
         default:
@@ -412,12 +421,16 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
           <strong className="text-foreground">{filtrados.length}</strong>{" "}
           {diasRegra.startsWith("lt_")
             ? "cliente(s) com backup recente"
-            : diasRegra === "todos"
-            ? "cliente(s) no total"
-            : "cliente(s) com backup em atraso"}
+            : diasRegra === "sem_registro"
+              ? "cliente(s) sem registro de backup"
+              : diasRegra === "todos"
+                ? "cliente(s) no total"
+                : "cliente(s) com backup em atraso"}
         </span>
       </div>
-      <p className="text-xs text-muted-foreground">Clique em um cliente e pressione Enter para editar.</p>
+      <p className="text-xs text-muted-foreground">
+        Clique em um cliente e pressione Enter para editar.
+      </p>
 
       {/* Tabela */}
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
@@ -442,7 +455,9 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                       <p className="font-semibold text-foreground">
                         {diasRegra.startsWith("lt_")
                           ? "Nenhum cliente com backup recente encontrado"
-                          : "Nenhum cliente em atraso"}
+                          : diasRegra === "sem_registro"
+                            ? "Nenhum cliente sem registro de backup"
+                            : "Nenhum cliente em atraso"}
                       </p>
                       <p className="text-xs">Ajuste os filtros para ampliar a busca.</p>
                     </div>
@@ -464,7 +479,8 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                       onClick={() => setSelecionado(c.id)}
                       onKeyDown={(e) => {
                         if (e.key !== "Enter" || exemplo) return;
-                        if ((e.target as HTMLElement).closest("a,button,input,select,textarea")) return;
+                        if ((e.target as HTMLElement).closest("a,button,input,select,textarea"))
+                          return;
                         e.preventDefault();
                         onEditar(c);
                       }}
@@ -477,7 +493,9 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                       </td>
                       <td className="px-4 py-3">
                         <p className="font-mono text-xs text-foreground">{c.cnpj || "—"}</p>
-                        <p className="text-xs text-muted-foreground">{c.telefone || "Sem WhatsApp"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {c.telefone || "Sem WhatsApp"}
+                        </p>
                       </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-1.5 text-xs">
@@ -504,7 +522,10 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                             className="size-8"
                             title="Editar cliente"
                             disabled={exemplo}
-                            onClick={(e) => { e.stopPropagation(); onEditar(c); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditar(c);
+                            }}
                           >
                             <Pencil className="size-4" />
                           </Button>
@@ -514,7 +535,10 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                             className="size-8 text-destructive"
                             title="Mover para a lixeira"
                             disabled={exemplo}
-                            onClick={(e) => { e.stopPropagation(); onExcluir(c); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onExcluir(c);
+                            }}
                           >
                             <Trash2 className="size-4" />
                           </Button>
@@ -552,7 +576,11 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
 }
 
 // ─── Aba Certificado ──────────────────────────────────────────────────────────
-type AbaCertificadoProps = { clientes: Cliente[]; onEditar: (cliente: Cliente) => void; onExcluir: (cliente: Cliente) => void };
+type AbaCertificadoProps = {
+  clientes: Cliente[];
+  onEditar: (cliente: Cliente) => void;
+  onExcluir: (cliente: Cliente) => void;
+};
 
 function BadgeCertificado({ dias }: { dias: number | null }) {
   if (dias === null)
@@ -645,11 +673,13 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <ShieldAlert className="size-4 text-yellow-400" />
         <span>
-          <strong className="text-foreground">{filtrados.length}</strong> cliente(s)
-          com certificado vencido ou a vencer
+          <strong className="text-foreground">{filtrados.length}</strong> cliente(s) com certificado
+          vencido ou a vencer
         </span>
       </div>
-      <p className="text-xs text-muted-foreground">Clique em um cliente e pressione Enter para editar.</p>
+      <p className="text-xs text-muted-foreground">
+        Clique em um cliente e pressione Enter para editar.
+      </p>
 
       {/* Tabela */}
       <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
@@ -683,8 +713,8 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
                     dias === null
                       ? "não informado"
                       : dias < 0
-                      ? `vencido há ${Math.abs(dias)} dias`
-                      : `a vencer em ${dias} dias`;
+                        ? `vencido há ${Math.abs(dias)} dias`
+                        : `a vencer em ${dias} dias`;
                   const msgWhats = `Olá ${c.nome_fantasia || c.razao_social}, verificamos que o seu certificado digital ${c.tipo_certificado || ""} ${dias !== null && dias < 0 ? `está VENCIDO desde ${formatData(c.validade_certificado)}` : `vence em ${formatData(c.validade_certificado)} (em ${dias} dias)`}. Para evitar problemas na emissão de notas fiscais e operações fiscais, recomendamos a renovação o quanto antes. Qualquer dúvida, estamos à disposição!`;
                   return (
                     <tr
@@ -694,14 +724,17 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
                       onClick={() => setSelecionado(c.id)}
                       onKeyDown={(e) => {
                         if (e.key !== "Enter" || exemplo) return;
-                        if ((e.target as HTMLElement).closest("a,button,input,select,textarea")) return;
+                        if ((e.target as HTMLElement).closest("a,button,input,select,textarea"))
+                          return;
                         e.preventDefault();
                         onEditar(c);
                       }}
                     >
                       <td className="px-2 py-2">
                         <p className="font-semibold text-foreground">{c.razao_social}</p>
-                        <p className="font-mono text-xs text-muted-foreground">{c.cnpj || "CNPJ não informado"}</p>
+                        <p className="font-mono text-xs text-muted-foreground">
+                          {c.cnpj || "CNPJ não informado"}
+                        </p>
                       </td>
                       <td className="px-2 py-2 text-center">
                         {c.tipo_certificado ? (
@@ -736,7 +769,10 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
                             className="size-8"
                             title="Editar cliente"
                             disabled={exemplo}
-                            onClick={(e) => { e.stopPropagation(); onEditar(c); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditar(c);
+                            }}
                           >
                             <Pencil className="size-4" />
                           </Button>
@@ -746,7 +782,10 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
                             className="size-8 text-destructive"
                             title="Mover para a lixeira"
                             disabled={exemplo}
-                            onClick={(e) => { e.stopPropagation(); onExcluir(c); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onExcluir(c);
+                            }}
                           >
                             <Trash2 className="size-4" />
                           </Button>
@@ -800,7 +839,13 @@ export function MonitoramentoTecnico({ clientes = MOCK_CLIENTES }: Monitoramento
 
   function salvar(values: ClienteInput, id?: string) {
     const payload = id ? { id, values } : { values };
-    saveCliente.mutate(payload, { onSuccess: () => { toast.success("Cliente salvo."); setOpen(false); }, onError: (e) => toast.error(e.message) });
+    saveCliente.mutate(payload, {
+      onSuccess: () => {
+        toast.success("Cliente salvo.");
+        setOpen(false);
+      },
+      onError: (e) => toast.error(e.message),
+    });
   }
 
   function editar(cliente: Cliente) {
@@ -810,7 +855,10 @@ export function MonitoramentoTecnico({ clientes = MOCK_CLIENTES }: Monitoramento
 
   function excluir(cliente: Cliente) {
     if (!confirm(`Mover ${cliente.razao_social} para a lixeira?`)) return;
-    softDeleteCliente.mutate(cliente.id, { onSuccess: () => toast.success("Cliente movido para a lixeira."), onError: (e) => toast.error(e.message) });
+    softDeleteCliente.mutate(cliente.id, {
+      onSuccess: () => toast.success("Cliente movido para a lixeira."),
+      onError: (e) => toast.error(e.message),
+    });
   }
 
   const totalBackupAtrasado = useMemo(
@@ -880,7 +928,15 @@ export function MonitoramentoTecnico({ clientes = MOCK_CLIENTES }: Monitoramento
           )}
         </div>
       </div>
-      <ClienteDialog open={open} cliente={editando} grupos={grupos} saving={saveCliente.isPending} onOpenChange={setOpen} onCreateGrupo={(nome) => createGrupo.mutateAsync(nome)} onSave={salvar} />
+      <ClienteDialog
+        open={open}
+        cliente={editando}
+        grupos={grupos}
+        saving={saveCliente.isPending}
+        onOpenChange={setOpen}
+        onCreateGrupo={(nome) => createGrupo.mutateAsync(nome)}
+        onSave={salvar}
+      />
     </div>
   );
 }
@@ -907,7 +963,9 @@ function StatCard({
   };
   const cls = colors[tone] ?? colors["orange"];
   return (
-    <div className={`flex items-center gap-4 rounded-xl border bg-gradient-to-br to-card p-4 ${cls}`}>
+    <div
+      className={`flex items-center gap-4 rounded-xl border bg-gradient-to-br to-card p-4 ${cls}`}
+    >
       <div className={`rounded-lg bg-card/80 p-3 ${cls}`}>
         <Icon className="size-6" />
       </div>
@@ -952,7 +1010,9 @@ function TabBtn({
       {icon}
       <span>{label}</span>
       {badge > 0 && (
-        <span className={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black text-white ${badgeColor}`}>
+        <span
+          className={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black text-white ${badgeColor}`}
+        >
           {badge}
         </span>
       )}
