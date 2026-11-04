@@ -23,7 +23,7 @@ export function Graficos({
   titulos: Titulo[];
   totais: Totais;
   valoresVisiveis: boolean;
-  }) {
+}) {
   const top = [...titulos]
     .map((titulo) => {
       const calc = computeRow(titulo);
@@ -58,10 +58,15 @@ export function Graficos({
   return (
     <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-3">
       {/* Gráfico 1: Distribuição Financeira por Cliente (2/3 da largura) */}
-      <div className="card-panel flex flex-col justify-between p-4 lg:col-span-2 bg-white">
+      <div
+        className="card-panel flex flex-col justify-between p-4 lg:col-span-2 bg-white animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg"
+        style={{ animationDelay: "350ms" }}
+      >
         <div className="mb-2 flex items-start justify-between gap-2">
           <div>
-            <h2 className="text-sm font-bold text-foreground">Distribuição financeira por cliente</h2>
+            <h2 className="text-sm font-bold text-foreground">
+              Distribuição financeira por cliente
+            </h2>
             <p className="text-xs text-muted-foreground">
               Mensal site x lucro Felipe x Francisco x custo do boleto
             </p>
@@ -101,10 +106,37 @@ export function Graficos({
                   iconType="circle"
                   iconSize={8}
                 />
-                <Bar dataKey="Mensal site" fill="#0284c7" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Lucro Felipe" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Lucro Francisco" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Custo boleto" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="Mensal site"
+                  fill="#0284c7"
+                  radius={[4, 4, 0, 0]}
+                  animationDuration={800}
+                  animationEasing="ease-out"
+                />
+                <Bar
+                  dataKey="Lucro Felipe"
+                  fill="#10b981"
+                  radius={[4, 4, 0, 0]}
+                  animationDuration={800}
+                  animationBegin={80}
+                  animationEasing="ease-out"
+                />
+                <Bar
+                  dataKey="Lucro Francisco"
+                  fill="#8b5cf6"
+                  radius={[4, 4, 0, 0]}
+                  animationDuration={800}
+                  animationBegin={160}
+                  animationEasing="ease-out"
+                />
+                <Bar
+                  dataKey="Custo boleto"
+                  fill="#f59e0b"
+                  radius={[4, 4, 0, 0]}
+                  animationDuration={800}
+                  animationBegin={240}
+                  animationEasing="ease-out"
+                />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -112,7 +144,10 @@ export function Graficos({
       </div>
 
       {/* Gráfico 2: Situação das Cobranças (1/3 da largura) */}
-      <div className="card-panel flex flex-col justify-between p-4 bg-white">
+      <div
+        className="card-panel flex flex-col justify-between p-4 bg-white animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg"
+        style={{ animationDelay: "410ms" }}
+      >
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-bold text-foreground">Situação das cobranças</h2>
           <Clock className="size-4 text-muted-foreground/80" />
@@ -131,6 +166,8 @@ export function Graficos({
                   outerRadius={72}
                   paddingAngle={3}
                   stroke="none"
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 >
                   {situacao.map((item) => (
                     <Cell key={item.name} fill={item.color} />

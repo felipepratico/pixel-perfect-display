@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   CalendarPlus,
+  ChevronDown,
   ChevronRight,
   CloudCheck,
   Download,
@@ -53,10 +54,10 @@ const menuItems: {
 ];
 
 const botaoMenu =
-  "h-9 gap-2.5 rounded-lg px-2.5 text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-highlight data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-auto";
+  "h-9 gap-2.5 rounded-lg px-2.5 text-sidebar-foreground/75 transition-all duration-300 ease-in-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:translate-x-1 active:scale-95 data-[active=true]:bg-sidebar-highlight data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-auto";
 
 const botaoSubmenu =
-  "h-8 gap-2 rounded-md pl-2.5 text-[13px] text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-highlight data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground";
+  "h-8 gap-2 rounded-md pl-2.5 text-[13px] text-sidebar-foreground/65 transition-all duration-300 ease-in-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:translate-x-1 active:scale-95 data-[active=true]:bg-sidebar-highlight data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground";
 
 type AppSidebarProps = {
   email?: string | null | undefined;
@@ -132,7 +133,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
                     : "Expandir menu lateral"
               }
               aria-expanded={aberto}
-              className="size-8 shrink-0 rounded-lg text-white/80 hover:bg-sidebar-accent hover:text-white"
+              className="size-8 shrink-0 rounded-lg text-white/80 transition-all duration-300 ease-in-out hover:bg-sidebar-accent hover:text-white active:scale-95"
             >
               {aberto ? (
                 <PanelLeftClose className="size-4" />
@@ -161,17 +162,17 @@ export function AppSidebar({ email }: AppSidebarProps) {
                           financeiroAberto && !financeiroAtivo && "bg-sidebar-accent",
                         )}
                       >
-                        <Wallet className="size-4" />
+                        <Wallet className="size-4 transition-transform duration-300 ease-in-out" />
                         <span>Financeiro</span>
-                        <ChevronRight
+                        <ChevronDown
                           className={cn(
-                            "ml-auto size-4 shrink-0 text-sidebar-foreground/40 transition-transform duration-200 group-data-[collapsible=icon]:hidden",
-                            financeiroAberto && "rotate-90",
+                            "ml-auto size-4 shrink-0 text-sidebar-foreground/60 transition-transform duration-300 ease-in-out group-data-[collapsible=icon]:hidden",
+                            financeiroAberto && "rotate-180",
                           )}
                         />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                    <CollapsibleContent className="overflow-hidden origin-top data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild className={botaoSubmenu}>
@@ -287,7 +288,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
               onClick={sair}
               title="Sair"
               aria-label="Sair"
-              className="size-8 shrink-0 rounded-lg text-white/80 hover:bg-red-500/20 hover:text-white"
+              className="size-8 shrink-0 rounded-lg text-white/80 transition-all duration-300 ease-in-out hover:bg-red-500/20 hover:text-white active:scale-95"
             >
               <LogOut className="size-4" />
             </Button>
