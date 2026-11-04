@@ -392,7 +392,7 @@ function Painel() {
   return (
     <div className="min-h-screen bg-background">
       {/* Toolbar superior de ações (alinhada com a imagem) */}
-      <div className="border-b border-border/60 bg-card/70 backdrop-blur-md print:hidden">
+      <div className="border-b border-border/60 bg-white/80 backdrop-blur-md print:hidden">
         <div className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-4">
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -587,7 +587,7 @@ function Painel() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 border-emerald-500/30 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 gap-1 text-xs"
+                  className="h-7 border-emerald-600/40 bg-white text-emerald-700 hover:bg-emerald-50 gap-1 text-xs"
                   onClick={() => setLoteOpen(true)}
                 >
                   <MessageCircle className="size-3.5" />

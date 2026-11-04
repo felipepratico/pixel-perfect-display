@@ -58,7 +58,7 @@ export function Graficos({
   return (
     <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-3">
       {/* Gráfico 1: Distribuição Financeira por Cliente (2/3 da largura) */}
-      <div className="card-panel flex flex-col justify-between p-4 lg:col-span-2 bg-card/70">
+      <div className="card-panel flex flex-col justify-between p-4 lg:col-span-2 bg-white">
         <div className="mb-2 flex items-start justify-between gap-2">
           <div>
             <h2 className="text-sm font-bold text-foreground">Distribuição financeira por cliente</h2>
@@ -89,8 +89,9 @@ export function Graficos({
                 <Tooltip
                   formatter={(value: number) => formatCurrency(value)}
                   contentStyle={{
-                    backgroundColor: "oklch(0.18 0.025 260)",
-                    borderColor: "oklch(0.3 0.028 260)",
+                    backgroundColor: "#ffffff",
+                    color: "#1e293b",
+                    borderColor: "#d3dfee",
                     borderRadius: 10,
                     fontSize: 12,
                   }}
@@ -111,7 +112,7 @@ export function Graficos({
       </div>
 
       {/* Gráfico 2: Situação das Cobranças (1/3 da largura) */}
-      <div className="card-panel flex flex-col justify-between p-4 bg-card/70">
+      <div className="card-panel flex flex-col justify-between p-4 bg-white">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-bold text-foreground">Situação das cobranças</h2>
           <Clock className="size-4 text-muted-foreground/80" />
@@ -137,8 +138,9 @@ export function Graficos({
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "oklch(0.18 0.025 260)",
-                    borderColor: "oklch(0.3 0.028 260)",
+                    backgroundColor: "#ffffff",
+                    color: "#1e293b",
+                    borderColor: "#d3dfee",
                     borderRadius: 10,
                     fontSize: 12,
                   }}
@@ -148,10 +150,10 @@ export function Graficos({
           )}
         </div>
         <div className="grid grid-cols-2 gap-2 border-t border-border/50 pt-3 text-center text-xs">
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/40 py-1.5 font-bold text-emerald-400">
+          <div className="rounded-lg border border-emerald-500/40 bg-emerald-50 py-1.5 font-bold text-emerald-700">
             {totais.pagos} pagos
           </div>
-          <div className="rounded-lg border border-amber-500/30 bg-amber-950/40 py-1.5 font-bold text-amber-400">
+          <div className="rounded-lg border border-amber-500/40 bg-amber-50 py-1.5 font-bold text-amber-700">
             {totais.abertos} abertos
           </div>
         </div>

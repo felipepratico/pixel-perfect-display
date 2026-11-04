@@ -39,7 +39,7 @@ function MonitoramentoPage() {
             </p>
           </div>
           {(!clientes || clientes.length === 0) && (
-            <span className="rounded-full border border-yellow-500/30 bg-yellow-950/30 px-3 py-1 text-xs font-semibold text-yellow-400">
+            <span className="rounded-full border border-yellow-600/40 bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700">
               Exibindo mock data — conecte clientes reais para ver dados ao vivo
             </span>
           )}

@@ -416,21 +416,21 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-5xl w-full p-0 overflow-hidden bg-zinc-950 border-zinc-800 text-zinc-100 flex flex-col"
+        className="max-w-5xl w-full p-0 overflow-hidden bg-white border-zinc-300 text-zinc-800 flex flex-col"
         style={{ maxHeight: "95vh" }}
         aria-describedby={undefined}
       >
         {/* Barra de ações */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 bg-zinc-900/90 px-5 py-3 shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-5 py-3 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <FileText className="size-5" />
             </div>
             <div>
-              <DialogTitle className="text-base font-bold text-zinc-100">
+              <DialogTitle className="text-base font-bold text-zinc-800">
                 Contrato de Prestação de Serviços
               </DialogTitle>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-500">
                 Prático Sistemas · {cliente.razao_social}
               </p>
             </div>
@@ -441,25 +441,25 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
             <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={onLogoChange} />
             <Button type="button" variant="outline" size="sm"
               onClick={() => logoInputRef.current?.click()}
-              className="gap-1.5 border-zinc-700 bg-zinc-800/80 text-xs text-zinc-300 hover:bg-zinc-700">
+              className="gap-1.5 border-zinc-300 bg-white text-xs text-zinc-700 hover:bg-zinc-100">
               <ImageIcon className="size-3.5" />
               {logoUrl ? "Trocar logo" : "Adicionar logo"}
             </Button>
             {logoUrl && (
               <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl(null)}
-                className="gap-1 px-2 text-xs text-zinc-400 hover:text-zinc-200 border border-zinc-700">
+                className="gap-1 px-2 text-xs text-zinc-500 hover:text-zinc-800 border border-zinc-300">
                 <X className="size-3" /> Logo
               </Button>
             )}
             {clausulasEditadas && (
               <Button type="button" variant="outline" size="sm" onClick={resetarEdicao}
-                className="gap-1.5 border-zinc-700 bg-zinc-800/80 text-xs text-amber-400 hover:bg-zinc-700">
+                className="gap-1.5 border-zinc-300 bg-white text-xs text-amber-700 hover:bg-zinc-100">
                 <RotateCcw className="size-3.5" /> Restaurar
               </Button>
             )}
             <Button type="button" variant="outline" size="sm" onClick={copiarTexto}
-              className="gap-1.5 border-zinc-700 bg-zinc-800/80 text-xs text-zinc-200 hover:bg-zinc-700">
-              {copiado ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+              className="gap-1.5 border-zinc-300 bg-white text-xs text-zinc-700 hover:bg-zinc-100">
+              {copiado ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
               {copiado ? "Copiado!" : "Copiar"}
             </Button>
             <Button type="button" size="sm" onClick={imprimir}
@@ -471,11 +471,11 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
         </div>
 
         {/* Banner editar cláusulas */}
-        <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-b border-amber-900/40 bg-amber-950/30 px-5 py-1.5 text-xs text-amber-300">
+        <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-b border-amber-300 bg-amber-50 px-5 py-1.5 text-xs text-amber-700">
           <span>📄 Clique em <strong>Imprimir / PDF</strong> para gerar o documento formatado com todos os dados.</span>
           <button type="button"
             onClick={() => setPanelAberto((v) => !v)}
-            className="flex items-center gap-1 font-semibold text-amber-400 hover:text-amber-200">
+            className="flex items-center gap-1 font-semibold text-amber-700 hover:text-amber-800">
             {panelAberto ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
             {panelAberto ? "Fechar editor" : "Editar cláusulas"}
           </button>
@@ -483,23 +483,23 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
 
         {/* Painel editor de cláusulas */}
         {panelAberto && (
-          <div className="shrink-0 border-b border-zinc-800 bg-zinc-900/80 px-5 py-4 max-h-80 overflow-y-auto">
+          <div className="shrink-0 border-b border-zinc-200 bg-zinc-50 px-5 py-4 max-h-80 overflow-y-auto">
             {editandoIdx !== null ? (
               <div className="space-y-3">
-                <p className="text-xs font-semibold text-zinc-300">
+                <p className="text-xs font-semibold text-zinc-600">
                   Editando: <span className="text-primary">{clausulas[editandoIdx].titulo}</span>
                 </p>
                 <input
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-zinc-100 outline-none focus:border-primary"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-800 outline-none focus:border-primary"
                   value={tituloEd}
                   onChange={(e) => setTituloEd(e.target.value)}
                   placeholder="Título da seção"
                 />
-                <div className="text-[11px] text-zinc-400">
+                <div className="text-[11px] text-zinc-500">
                   Conteúdo (uma linha por parágrafo; comece com "• " para bullet):
                 </div>
                 <textarea
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-zinc-100 outline-none focus:border-primary font-mono leading-relaxed"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-800 outline-none focus:border-primary font-mono leading-relaxed"
                   rows={8}
                   value={itensEd}
                   onChange={(e) => setItensEd(e.target.value)}
@@ -509,7 +509,7 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
                     <Check className="size-3.5" /> Salvar
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setEditandoIdx(null)}
-                    className="text-xs border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700">
+                    className="text-xs border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100">
                     Cancelar
                   </Button>
                 </div>
@@ -518,8 +518,8 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
               <div className="space-y-1.5">
                 {clausulas.map((c, i) => (
                   <div key={i}
-                    className="flex items-center justify-between gap-3 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 hover:border-zinc-600 transition-colors">
-                    <span className="text-xs text-zinc-300 truncate">{c.titulo}</span>
+                    className="flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-white px-3 py-2 hover:border-zinc-400 transition-colors">
+                    <span className="text-xs text-zinc-700 truncate">{c.titulo}</span>
                     <button type="button" onClick={() => abrirEdicao(i)}
                       className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary/80">
                       <Pencil className="size-3" /> Editar
@@ -532,7 +532,7 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
         )}
 
         {/* ── Prévia do documento ─────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto bg-zinc-900/40 p-4 sm:p-8">
+        <div className="flex-1 overflow-y-auto bg-zinc-50 p-4 sm:p-8">
           <article
             className="mx-auto max-w-[760px] bg-white shadow-2xl rounded-sm border border-zinc-200"
             style={{ padding: "32px 44px", fontFamily: "Arial, Helvetica, sans-serif", fontSize: "12px", lineHeight: "1.7", color: "#111" }}

@@ -53,10 +53,10 @@ const menuItems: {
 ];
 
 const botaoMenu =
-  "h-9 gap-2.5 rounded-lg px-2.5 text-sidebar-foreground/75 hover:bg-sidebar-highlight/20 hover:text-sidebar-highlight-foreground data-[active=true]:bg-sidebar-highlight data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground data-[state=open]:hover:bg-sidebar-highlight/25 data-[state=open]:hover:text-sidebar-highlight-foreground group-data-[collapsible=icon]:mx-auto";
+  "h-9 gap-2.5 rounded-lg px-2.5 text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-highlight data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-auto";
 
 const botaoSubmenu =
-  "h-8 gap-2 rounded-md pl-2.5 text-[13px] text-sidebar-foreground/65 hover:bg-sidebar-highlight/20 hover:text-sidebar-highlight-foreground data-[active=true]:bg-sidebar-highlight/30 data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground";
+  "h-8 gap-2 rounded-md pl-2.5 text-[13px] text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-highlight data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground";
 
 type AppSidebarProps = {
   email?: string | null | undefined;
@@ -132,7 +132,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
                     : "Expandir menu lateral"
               }
               aria-expanded={aberto}
-              className="size-8 shrink-0 rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground"
+              className="size-8 shrink-0 rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
               {aberto ? (
                 <PanelLeftClose className="size-4" />
@@ -158,7 +158,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
                         tooltip="Financeiro"
                         className={cn(
                           botaoMenu,
-                          financeiroAberto && !financeiroAtivo && "bg-sidebar-foreground/[0.06]",
+                          financeiroAberto && !financeiroAtivo && "bg-sidebar-accent",
                         )}
                       >
                         <Wallet className="size-4" />
@@ -273,7 +273,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
         <SidebarSeparator />
         <SidebarFooter className="gap-2 p-2.5">
           <div className="flex items-center gap-2.5 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-1.5">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-highlight/25 text-xs font-bold uppercase text-sidebar-foreground">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-highlight text-xs font-bold uppercase text-sidebar-highlight-foreground">
               {inicial}
             </span>
             <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
@@ -287,7 +287,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
               onClick={sair}
               title="Sair"
               aria-label="Sair"
-              className="size-8 shrink-0 rounded-lg text-sidebar-foreground/60 hover:bg-red-500/15 hover:text-red-400"
+              className="size-8 shrink-0 rounded-lg text-sidebar-foreground/60 hover:bg-red-50 hover:text-red-600"
             >
               <LogOut className="size-4" />
             </Button>

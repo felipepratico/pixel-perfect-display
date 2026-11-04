@@ -463,7 +463,7 @@ export function GeminiInsightsDialog({
                         <Copy className="size-3" /> Copiar
                       </Button>
                     </div>
-                    <div className="rounded-xl border bg-emerald-950/20 border-emerald-900/40 p-3.5 font-mono text-xs whitespace-pre-wrap text-emerald-100">
+                    <div className="rounded-xl border border-emerald-600/40 bg-emerald-50 p-3.5 font-mono text-xs whitespace-pre-wrap text-emerald-900">
                       {mensagemGerada.textoWhatsapp}
                     </div>
                   </div>

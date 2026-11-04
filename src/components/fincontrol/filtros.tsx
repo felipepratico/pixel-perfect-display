@@ -108,8 +108,8 @@ export function Filtros({
             title="Títulos em aberto com vencimento hoje ou em data futura"
             className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
               state.status === "AVENCER"
-                ? "border-amber-500 bg-amber-500 text-amber-950"
-                : "border-amber-500/40 bg-amber-950/40 text-amber-400 hover:bg-amber-900/50"
+                ? "border-amber-500 bg-amber-500 text-white"
+                : "border-amber-500/50 bg-white text-amber-700 hover:bg-amber-50"
             }`}
           >
             <span>A vencer</span>

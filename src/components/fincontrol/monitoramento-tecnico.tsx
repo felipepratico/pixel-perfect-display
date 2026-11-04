@@ -299,24 +299,24 @@ type AbaBackupProps = { clientes: Cliente[]; onEditar: (cliente: Cliente) => voi
 function BadgeDias({ dias }: { dias: number | null }) {
   if (dias === null)
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs font-bold text-zinc-400">
+      <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-bold text-zinc-600 ring-1 ring-zinc-300">
         <WifiOff className="size-3" /> Sem registro
       </span>
     );
   if (dias > 30)
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-950/70 px-2.5 py-0.5 text-xs font-bold text-red-400 ring-1 ring-red-500/30">
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700 ring-1 ring-red-500/40">
         <AlertTriangle className="size-3" /> {dias} dias
       </span>
     );
   if (dias > 10)
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-orange-950/70 px-2.5 py-0.5 text-xs font-bold text-orange-400 ring-1 ring-orange-500/30">
+      <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-bold text-orange-700 ring-1 ring-orange-500/40">
         <AlertTriangle className="size-3" /> {dias} dias
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-950/70 px-2.5 py-0.5 text-xs font-bold text-emerald-400">
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
       {dias} dias
     </span>
   );
@@ -491,7 +491,7 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                       <td className="px-4 py-3">
                         <Badge
                           variant="outline"
-                          className="font-mono text-xs border-zinc-700 text-zinc-400"
+                          className="font-mono text-xs border-zinc-300 bg-white text-zinc-600"
                         >
                           {c.versao_instalada || "Não informada"}
                         </Badge>
@@ -557,24 +557,24 @@ type AbaCertificadoProps = { clientes: Cliente[]; onEditar: (cliente: Cliente) =
 function BadgeCertificado({ dias }: { dias: number | null }) {
   if (dias === null)
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs font-bold text-zinc-400">
+      <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-bold text-zinc-600 ring-1 ring-zinc-300">
         <Shield className="size-3" /> Não informado
       </span>
     );
   if (dias < 0)
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-950/70 px-2.5 py-0.5 text-xs font-bold text-red-400 ring-1 ring-red-500/30">
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700 ring-1 ring-red-500/40">
         <ShieldOff className="size-3" /> Vencido há {Math.abs(dias)} dias
       </span>
     );
   if (dias <= 30)
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-950/70 px-2.5 py-0.5 text-xs font-bold text-yellow-400 ring-1 ring-yellow-500/30">
+      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-bold text-yellow-700 ring-1 ring-yellow-500/40">
         <ShieldAlert className="size-3" /> Vence em {dias} dias
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-950/70 px-2.5 py-0.5 text-xs font-bold text-emerald-400">
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
       <ShieldCheck className="size-3" /> {dias} dias
     </span>
   );
@@ -631,7 +631,7 @@ function AbaCertificado({ clientes, onEditar, onExcluir }: AbaCertificadoProps) 
           onClick={() => setApenasAlerta((v) => !v)}
           className={`h-9 rounded-md border px-3 text-sm font-semibold transition-colors ${
             apenasAlerta
-              ? "border-yellow-500/40 bg-yellow-950/40 text-yellow-400"
+              ? "border-yellow-600/50 bg-yellow-50 text-yellow-700"
               : "border-border/60 bg-card text-muted-foreground hover:text-foreground"
           }`}
           aria-pressed={apenasAlerta}
@@ -900,10 +900,10 @@ function StatCard({
   desc: string;
 }) {
   const colors: Record<string, string> = {
-    orange: "from-orange-950/60 border-orange-500/20 text-orange-400",
-    yellow: "from-yellow-950/60 border-yellow-500/20 text-yellow-400",
-    red: "from-red-950/60 border-red-500/20 text-red-400",
-    emerald: "from-emerald-950/60 border-emerald-500/20 text-emerald-400",
+    orange: "from-orange-50 border-orange-500/40 text-orange-700",
+    yellow: "from-yellow-50 border-yellow-500/40 text-yellow-700",
+    red: "from-red-50 border-red-500/40 text-red-700",
+    emerald: "from-emerald-50 border-emerald-500/40 text-emerald-700",
   };
   const cls = colors[tone] ?? colors["orange"];
   return (

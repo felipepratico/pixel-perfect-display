@@ -102,20 +102,20 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-2xl p-0 overflow-hidden bg-zinc-950 border-zinc-800 text-zinc-100"
+        className="max-w-2xl p-0 overflow-hidden bg-white border-zinc-300 text-zinc-800"
         aria-describedby={undefined}
       >
         {/* Barra superior com controles */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 bg-zinc-900/90 px-5 py-3.5 print:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-5 py-3.5 print:hidden">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-700">
               <Receipt className="size-5" />
             </div>
             <div>
-              <DialogTitle className="text-base font-bold text-zinc-100">
+              <DialogTitle className="text-base font-bold text-zinc-800">
                 Recibo de Pagamento
               </DialogTitle>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-500">
                 {cliente.razao_social} · Recibo #{dados.numeroRecibo}
               </p>
             </div>
@@ -127,9 +127,9 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
               variant="outline"
               size="sm"
               onClick={copiarTexto}
-              className="gap-1.5 border-zinc-700 bg-zinc-800/80 text-xs text-zinc-200 hover:bg-zinc-700"
+              className="gap-1.5 border-zinc-300 bg-white text-xs text-zinc-700 hover:bg-zinc-100"
             >
-              {copiado ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+              {copiado ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
               {copiado ? "Copiado!" : "Copiar"}
             </Button>
             <Button
@@ -145,16 +145,16 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
         </div>
 
         {/* Seletor de Formato: A4 vs Térmica */}
-        <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/60 px-5 py-2 text-xs print:hidden">
-          <span className="text-zinc-400">Formato de impressão:</span>
-          <div className="flex rounded-lg border border-zinc-700 bg-zinc-800/80 p-0.5">
+        <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-5 py-2 text-xs print:hidden">
+          <span className="text-zinc-500">Formato de impressão:</span>
+          <div className="flex rounded-lg border border-zinc-300 bg-zinc-100 p-0.5">
             <button
               type="button"
               onClick={() => setFormato("a4")}
               className={`rounded-md px-3 py-1 font-medium transition-colors ${
                 formato === "a4"
-                  ? "bg-zinc-700 text-zinc-100 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-800"
               }`}
             >
               A4 / Folha Padrão
@@ -164,8 +164,8 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
               onClick={() => setFormato("termica")}
               className={`rounded-md px-3 py-1 font-medium transition-colors ${
                 formato === "termica"
-                  ? "bg-zinc-700 text-zinc-100 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-800"
               }`}
             >
               Térmica (80mm)
@@ -174,7 +174,7 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
         </div>
 
         {/* Visualização do Recibo */}
-        <div className="max-h-[75vh] overflow-y-auto bg-zinc-900/40 p-4 sm:p-8 print:p-0 print:m-0 print:max-h-none print:bg-transparent">
+        <div className="max-h-[75vh] overflow-y-auto bg-zinc-50 p-4 sm:p-8 print:p-0 print:m-0 print:max-h-none print:bg-transparent">
           {formato === "a4" ? (
             /* Recibo A4 / Padrão */
             <article

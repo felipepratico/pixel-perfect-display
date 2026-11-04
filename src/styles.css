@@ -5,10 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * FinControl design system.
- * Header/navigation uses the deep slate surface, money figures use semantic
- * tokens: brand (emerald = Felipe), partner (purple = Francisco),
- * info (blue = faturamento), warning (amber = custos), danger (rose).
+ * FinControl design system (Light Mode).
+ * Surface: ice-gray app background (#E3EAF5) with white panels.
+ * Money figures use semantic tokens: brand (emerald = Felipe),
+ * partner (purple = Francisco), info (blue = faturamento),
+ * warning (amber = custos), danger (rose).
  */
 
 @theme inline {
@@ -81,67 +82,67 @@
 
 :root {
   --radius: 0.875rem;
-  color-scheme: dark;
-  --background: oklch(0.145 0.022 260);
-  --foreground: oklch(0.94 0.01 255);
-  --card: oklch(0.195 0.025 260);
-  --card-foreground: oklch(0.96 0.008 255);
-  --popover: oklch(0.19 0.027 260);
-  --popover-foreground: oklch(0.96 0.008 255);
-  --primary: oklch(0.66 0.176 255);
-  --primary-foreground: oklch(0.985 0.004 255);
-  --secondary: oklch(0.245 0.028 260);
-  --secondary-foreground: oklch(0.94 0.01 255);
-  --muted: oklch(0.23 0.025 260);
-  --muted-foreground: oklch(0.7 0.025 255);
-  --accent: oklch(0.275 0.035 260);
-  --accent-foreground: oklch(0.97 0.008 255);
-  --destructive: oklch(0.65 0.205 20);
-  --destructive-foreground: oklch(0.985 0.004 255);
-  --border: oklch(0.3 0.028 260);
-  --input: oklch(0.34 0.03 260);
-  --ring: oklch(0.66 0.176 255);
+  color-scheme: light;
+  --background: #e3eaf5;
+  --foreground: #1e293b;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2fb;
+  --secondary-foreground: #1e293b;
+  --muted: #eef2fb;
+  --muted-foreground: #5b6b82;
+  --accent: #e8f0fd;
+  --accent-foreground: #16438a;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #d3dfee;
+  --input: #c9d6ea;
+  --ring: #2563eb;
 
-  --shell: oklch(0.105 0.022 260);
-  --shell-foreground: oklch(0.985 0.003 247.9);
-  --shell-muted: oklch(0.72 0.026 256.8);
-  --shell-border: oklch(0.26 0.03 259.7);
+  --shell: #16438a;
+  --shell-foreground: #f8fafc;
+  --shell-muted: #bfdcf2;
+  --shell-border: #0f4c9c;
 
-  --brand: oklch(0.63 0.152 162.5);
-  --brand-foreground: oklch(0.99 0.01 162.5);
-  --brand-soft: oklch(0.25 0.055 162.5);
-  --brand-border: oklch(0.42 0.09 162.5);
+  --brand: #059669;
+  --brand-foreground: #ffffff;
+  --brand-soft: #e7f7f1;
+  --brand-border: #b9e4d5;
 
-  --partner: oklch(0.52 0.226 292);
-  --partner-foreground: oklch(0.99 0.01 292);
-  --partner-soft: oklch(0.25 0.055 292);
-  --partner-border: oklch(0.42 0.1 292);
+  --partner: #7c3aed;
+  --partner-foreground: #ffffff;
+  --partner-soft: #f3eafd;
+  --partner-border: #ddd0fa;
 
-  --info: oklch(0.546 0.215 262.9);
-  --info-foreground: oklch(0.99 0.003 262.9);
-  --info-soft: oklch(0.25 0.055 262.9);
+  --info: #1d6fd1;
+  --info-foreground: #ffffff;
+  --info-soft: #e8f2fd;
 
-  --warning: oklch(0.62 0.155 62.5);
-  --warning-foreground: oklch(0.99 0.01 62.5);
-  --warning-soft: oklch(0.27 0.055 80);
-  --warning-border: oklch(0.46 0.09 75);
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --warning-soft: #fdf3e3;
+  --warning-border: #f3ddba;
 
-  --danger: oklch(0.586 0.221 17.4);
-  --danger-soft: oklch(0.25 0.055 17.4);
+  --danger: #dc2626;
+  --danger-soft: #fdecec;
 
-  --chart-1: oklch(0.546 0.215 262.9);
-  --chart-2: oklch(0.63 0.152 162.5);
-  --chart-3: oklch(0.52 0.226 292);
-  --chart-4: oklch(0.72 0.15 75);
-  --chart-5: oklch(0.586 0.221 17.4);
-  /* Sidebar: grafite escuro com destaque azul (#0F4C9C). */
-  --sidebar: oklch(0.165 0.02 261);
-  --sidebar-foreground: oklch(0.985 0.003 247.9);
+  --chart-1: #2563eb;
+  --chart-2: #059669;
+  --chart-3: #7c3aed;
+  --chart-4: #d97706;
+  --chart-5: #dc2626;
+  /* Sidebar clara com destaque azul (#0F4C9C). */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1e293b;
   --sidebar-primary: #0f4c9c;
   --sidebar-primary-foreground: #f8fafc;
-  --sidebar-accent: oklch(0.25 0.035 259.7);
-  --sidebar-accent-foreground: oklch(0.985 0.003 247.9);
-  --sidebar-border: oklch(0.28 0.032 259.7);
+  --sidebar-accent: #e8f0fd;
+  --sidebar-accent-foreground: #16438a;
+  --sidebar-border: #d3dfee;
   --sidebar-ring: #0f4c9c;
   --sidebar-highlight: #0f4c9c;
   --sidebar-highlight-foreground: #f8fafc;
@@ -183,7 +184,7 @@
   background-color: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-2xl);
-  box-shadow: 0 1px 2px 0 oklch(0.243 0.033 263.5 / 6%);
+  box-shadow: 0 1px 2px 0 rgb(23 42 90 / 6%);
 }
 
 @media print {

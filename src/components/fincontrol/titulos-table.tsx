@@ -51,7 +51,7 @@ export function TitulosTable({
   const moeda = (valor: number) => (valoresVisiveis ? formatCurrency(valor) : "R$ ••••••");
 
   return (
-    <div className="card-panel overflow-hidden bg-card/70 border border-border/60">
+    <div className="card-panel overflow-hidden bg-white border border-border">
       <div className="scroll-slim overflow-x-auto">
         <table className="w-full whitespace-nowrap text-left text-xs">
           <thead className="bg-card/90 border-b border-border/60 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -119,7 +119,7 @@ export function TitulosTable({
                         <span
                           className={
                             ativa
-                              ? "inline-flex items-center gap-1 rounded bg-indigo-950/70 border border-indigo-500/40 px-1.5 py-0.2 text-[9px] font-semibold text-indigo-300"
+                              ? "inline-flex items-center gap-1 rounded bg-indigo-50 border border-indigo-500/40 px-1.5 py-0.2 text-[9px] font-semibold text-indigo-700"
                               : "inline-flex items-center gap-1 rounded bg-destructive/20 border border-destructive/40 px-1.5 py-0.2 text-[9px] font-semibold text-destructive"
                           }
                         >
@@ -139,19 +139,19 @@ export function TitulosTable({
                       onClick={() => onAlternarSituacao(titulo)}
                       className={
                         titulo.situacao === "PAGO"
-                          ? "inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-950/50 px-2.5 py-1 text-[10px] font-bold text-emerald-400 hover:bg-emerald-900/50 transition-colors"
+                          ? "inline-flex items-center gap-1 rounded-full border border-emerald-600/40 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
                           : vencido
-                          ? "inline-flex items-center gap-1 rounded-full border border-rose-500/40 bg-rose-950/50 px-2.5 py-1 text-[10px] font-black text-rose-400 hover:bg-rose-900/50 transition-colors"
-                          : "inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-950/50 px-2.5 py-1 text-[10px] font-bold text-amber-400 hover:bg-amber-900/50 transition-colors"
+                          ? "inline-flex items-center gap-1 rounded-full border border-rose-600/40 bg-rose-50 px-2.5 py-1 text-[10px] font-black text-rose-700 hover:bg-rose-100 transition-colors"
+                          : "inline-flex items-center gap-1 rounded-full border border-amber-600/40 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700 hover:bg-amber-100 transition-colors"
                       }
                     >
                       <span
                         className={`size-1.5 rounded-full ${
                           titulo.situacao === "PAGO"
-                            ? "bg-emerald-400"
+                            ? "bg-emerald-600"
                             : vencido
-                            ? "bg-rose-400 animate-pulse"
-                            : "bg-amber-400"
+                            ? "bg-rose-600 animate-pulse"
+                            : "bg-amber-600"
                         }`}
                       />
                       {titulo.situacao === "PAGO"
@@ -167,7 +167,7 @@ export function TitulosTable({
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="h-6 gap-1 rounded-full border-emerald-500/40 bg-emerald-950/40 px-2.5 text-[10px] font-bold text-emerald-400 hover:bg-emerald-900/50 hover:text-emerald-300"
+                        className="h-6 gap-1 rounded-full border-emerald-600/40 bg-white px-2.5 text-[10px] font-bold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
                         title="Cobrar no WhatsApp"
                         onClick={() => onWhatsApp(titulo)}
                       >

@@ -91,8 +91,8 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-shell text-shell-foreground">
-      <header className="border-b border-shell-border">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <header className="border-b border-border bg-white/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <Link to="/" className="flex items-center gap-3">
             <div className="rounded-2xl bg-brand p-2.5 text-brand-foreground shadow-md">

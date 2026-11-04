@@ -15,7 +15,7 @@ export function KpiCards({ totais, valoresVisiveis }: { totais: Totais; valoresV
       <Card
         label="MENSAL SITE TOTAL"
         icon={<Globe className="size-3.5" />}
-        iconClass="bg-sky-500/15 text-sky-400"
+        iconClass="bg-sky-500/15 text-sky-700"
         value={moeda(totais.mensalSite)}
         hint={`${totais.quantidade} lançamentos`}
       />
@@ -24,54 +24,54 @@ export function KpiCards({ totais, valoresVisiveis }: { totais: Totais; valoresV
       <Card
         label="LUCRO FELIPE (LÍQUIDO)"
         icon={<Wallet className="size-3.5" />}
-        iconClass="bg-emerald-500 text-black font-bold"
+        iconClass="bg-emerald-600 text-white font-bold"
         value={moeda(totais.lucroFelipe)}
-        valueClass="text-emerald-400"
+        valueClass="text-emerald-700"
         hint={valoresVisiveis ? `${pctFelipe}% do total` : "Percentual oculto"}
-        hintClass="text-emerald-400/90 font-medium"
-        className="border-emerald-500/35 bg-emerald-950/25 shadow-sm shadow-emerald-950/30"
+        hintClass="text-emerald-700 font-medium"
+        className="border-emerald-500/40 bg-white shadow-sm"
       />
 
       {/* 3. LUCRO FRANCISCO - Roxo */}
       <Card
         label="LUCRO FRANCISCO"
         icon={<UserRound className="size-3.5" />}
-        iconClass="bg-purple-500/20 text-purple-400"
+        iconClass="bg-purple-500/15 text-purple-700"
         value={moeda(totais.lucroFrancisco)}
-        valueClass="text-purple-400"
+        valueClass="text-purple-700"
         hint="Comissão repassada"
-        className="border-purple-500/20 bg-card/70"
+        className="border-purple-500/25 bg-white"
       />
 
       {/* 4. CUSTOS (BLT X FRA) - Âmbar */}
       <Card
         label="CUSTOS (BLT X FRA)"
         icon={<Receipt className="size-3.5" />}
-        iconClass="bg-amber-500/20 text-amber-400"
+        iconClass="bg-amber-500/15 text-amber-700"
         value={moeda(totais.custoBltFra)}
         hint={valoresVisiveis ? `Boletos: ${formatCurrency(totais.custoBoleto)}` : "Boletos: R$ ••••••"}
-        className="border-amber-500/20 bg-card/70"
+        className="border-amber-500/25 bg-white"
       />
 
       {/* 5. MRR (ASSINATURAS) - Roxo */}
       <Card
         label="MRR (ASSINATURAS)"
         icon={<Repeat className="size-3.5" />}
-        iconClass="bg-purple-500/20 text-purple-400"
+        iconClass="bg-purple-500/15 text-purple-700"
         value={`${totais.assinaturasAtivas} ativas`}
-        valueClass="text-purple-400"
+        valueClass="text-purple-700"
         hint={`${moeda(totais.mrr)} /mês`}
-        hintClass="text-purple-400/80 font-medium"
-        className="border-purple-500/20 bg-card/70"
+        hintClass="text-purple-700 font-medium"
+        className="border-purple-500/25 bg-white"
       />
 
       {/* 6. SITUAÇÃO PAGAMENTOS */}
-      <div className="card-panel flex flex-col justify-between p-3.5 bg-card/70">
+      <div className="card-panel flex flex-col justify-between p-3.5 bg-white">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
             SITUAÇÃO PAGAMENTOS
           </p>
-          <div className="rounded-lg bg-sky-500/20 p-1.5 text-sky-400">
+          <div className="rounded-lg bg-sky-500/15 p-1.5 text-sky-700">
             <Clock className="size-3.5" />
           </div>
         </div>
@@ -117,7 +117,7 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`card-panel flex flex-col justify-between p-3.5 bg-card/70 ${className ?? ""}`}>
+    <div className={`card-panel flex flex-col justify-between p-3.5 bg-white ${className ?? ""}`}>
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
           {label}
