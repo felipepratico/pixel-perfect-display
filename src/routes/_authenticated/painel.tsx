@@ -52,6 +52,7 @@ import {
   chaveClienteDoTitulo,
   clienteIdDoTitulo,
   computeRow,
+  currentMesAno,
   getDiasVencido,
   isActiveSubscription,
   isTituloAVencer,
@@ -101,7 +102,7 @@ function Painel() {
   const [filtros, setFiltros] = useState<FiltrosState>({
     busca: "",
     status: "all",
-    mesAno: "all",
+    mesAno: currentMesAno(),
     vencimento: "all",
     ordenacao: "clienteAsc",
   });
@@ -139,10 +140,28 @@ function Painel() {
 
   const countAVencer = useMemo(() => todos.filter(isTituloAVencer).length, [todos]);
 
-  const mesesDisponiveis = useMemo(
-    () => [...new Set(todos.map((t) => t.mes_ano).filter(Boolean))].sort(),
-    [todos],
-  );
+  // Mês atual + histórico contínuo de meses anteriores. Também mantém meses futuros
+  // que já existam nos dados (ex.: gerados por recorrência) para não esconder títulos.
+  const mesesDisponiveis = useMemo(() => {
+    const atualRank = mesAnoRank(currentMesAno()) ?? 0;
+    let menorRank = atualRank;
+    let maiorRank = atualRank;
+
+    for (const titulo of todos) {
+      const rank = mesAnoRank(titulo.mes_ano);
+      if (rank === null) continue;
+      if (rank < menorRank) menorRank = rank;
+      if (rank > maiorRank) maiorRank = rank;
+    }
+
+    const meses: string[] = [];
+    for (let rank = maiorRank; rank >= menorRank; rank -= 1) {
+      const mes = ((rank - 1) % 12) + 1;
+      const ano = Math.floor((rank - 1) / 12);
+      meses.push(`${String(mes).padStart(2, "0")}/${ano}`);
+    }
+    return meses;
+  }, [todos]);
 
   const filtrados = useMemo(() => {
     const busca = filtros.busca.trim().toUpperCase();
