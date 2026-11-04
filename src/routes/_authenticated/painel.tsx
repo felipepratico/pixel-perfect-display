@@ -50,11 +50,15 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { exportTitulos } from "@/lib/excel";
 import {
+  chaveClienteDoTitulo,
+  clienteIdDoTitulo,
   computeRow,
   getDiasVencido,
   isActiveSubscription,
   isTituloAVencer,
   isTituloVencido,
+  mesAnoRank,
+  normalizeMesAno,
   shiftMesAno,
   type Titulo,
   type TituloInput,
@@ -189,16 +193,35 @@ function Painel() {
   }
 
   function onGerar(mesAnoInicial: string, quantidade: number) {
+    const mesBase = normalizeMesAno(mesAnoInicial);
+    if (!mesBase) {
+      toast.error("Informe o mês/ano no formato MM/AAAA.");
+      return;
+    }
+
     const base = new Map<string, Titulo>();
-    for (const t of todos) if (isActiveSubscription(t)) base.set(t.cliente, t);
-    const existentes = new Set(todos.map((t) => `${t.cliente}|${t.mes_ano}`));
+    for (const t of todos) {
+      if (!isActiveSubscription(t)) continue;
+      const chave = chaveClienteDoTitulo(t, clientesCadastrados);
+      const atual = base.get(chave);
+      // Usa a assinatura mais recente como referência de valor e vencimento.
+      if (!atual || (mesAnoRank(t.mes_ano) ?? 0) > (mesAnoRank(atual.mes_ano) ?? 0)) {
+        base.set(chave, t);
+      }
+    }
+    const existentes = new Set(
+      todos.map((t) => {
+        const mes = normalizeMesAno(t.mes_ano) ?? t.mes_ano;
+        return `${chaveClienteDoTitulo(t, clientesCadastrados)}|${mes}`;
+      }),
+    );
     const rows: TituloInput[] = [];
 
     for (let i = 0; i < quantidade; i++) {
-      const mes = shiftMesAno(mesAnoInicial, i);
+      const mes = shiftMesAno(mesBase, i);
       if (!mes) continue;
       for (const t of base.values()) {
-        if (existentes.has(`${t.cliente}|${mes}`)) continue;
+        if (existentes.has(`${chaveClienteDoTitulo(t, clientesCadastrados)}|${mes}`)) continue;
         const {
           id: _id,
           deleted_at: _deletedAt,
@@ -208,18 +231,12 @@ function Painel() {
           ...rest
         } = t;
 
-        // Auto link with customer record if missing
-        let cId = rest.cliente_id;
-        if (!cId) {
-          const match = clientesCadastrados.find(
-            (c) =>
-              (c.cnpj && c.cnpj.replace(/\D/g, "") === rest.cnpj.replace(/\D/g, "")) ||
-              c.razao_social.trim().toUpperCase() === rest.cliente.trim().toUpperCase(),
-          );
-          if (match) cId = match.id;
-        }
-
-        rows.push({ ...rest, cliente_id: cId, mes_ano: mes, situacao: "ABERTO" });
+        rows.push({
+          ...rest,
+          cliente_id: clienteIdDoTitulo(rest, clientesCadastrados),
+          mes_ano: mes,
+          situacao: "ABERTO",
+        });
       }
     }
     if (!rows.length) {
@@ -541,7 +558,8 @@ function Painel() {
       />
       <AssinaturasDialog
         open={assOpen}
-        titulos={clientesVisiveis}
+        titulos={todos}
+        clientes={clientesCadastrados}
         valoresVisiveis={valoresVisiveis}
         onOpenChange={setAssOpen}
         onAlternar={(i, ativar) =>
@@ -554,6 +572,7 @@ function Painel() {
       <RecorrenciaDialog
         open={recOpen}
         titulos={todos}
+        clientes={clientesCadastrados}
         gerando={insertMany.isPending}
         onOpenChange={setRecOpen}
         onGerar={onGerar}

@@ -1,4 +1,4 @@
-import { Building2, Coins, Link2 } from "lucide-react";
+import { Building2, Coins, Link2, RotateCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -225,6 +225,13 @@ export function TituloDialog({
                 <option value="PAGO">Pago / quitado</option>
               </select>
             </div>
+            {form.tipo_cobranca === "RECORRENTE" && form.status_assinatura === "ATIVO" ? (
+              <p className="flex items-start gap-2 rounded-xl border border-partner-border bg-partner-soft p-3 text-[11px] text-partner sm:col-span-2">
+                <RotateCw className="mt-0.5 size-3.5 shrink-0" />
+                Este lançamento entra nos próximos lotes de mensalidades. Para uma cobrança única,
+                escolha "Cobrança única / avulsa" no tipo de cobrança.
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-3 rounded-2xl border border-border bg-muted/50 p-3.5">

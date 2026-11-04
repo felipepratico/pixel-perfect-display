@@ -6,25 +6,36 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { computeRow, formatCurrency, type Titulo } from "@/lib/fincontrol";
+import {
+  chaveClienteDoTitulo,
+  computeRow,
+  formatCurrency,
+  mesAnoRank,
+  type ClienteRef,
+  type Titulo,
+} from "@/lib/fincontrol";
 
 type Linha = {
+  chave: string;
   cliente: string;
   valor: number;
   vencimento: number;
   ativa: boolean;
+  rank: number;
   ids: string[];
 };
 
 export function AssinaturasDialog({
   open,
   titulos,
+  clientes,
   valoresVisiveis,
   onOpenChange,
   onAlternar,
 }: {
   open: boolean;
   titulos: Titulo[];
+  clientes: ClienteRef[];
   valoresVisiveis: boolean;
   onOpenChange: (open: boolean) => void;
   onAlternar: (ids: string[], ativar: boolean) => void;
@@ -32,19 +43,27 @@ export function AssinaturasDialog({
   const porCliente = new Map<string, Linha>();
   for (const titulo of titulos) {
     if (titulo.tipo_cobranca !== "RECORRENTE") continue;
-    const atual = porCliente.get(titulo.cliente);
-    const linha: Linha = atual ?? {
+    const chave = chaveClienteDoTitulo(titulo, clientes);
+    const rank = mesAnoRank(titulo.mes_ano) ?? 0;
+    const linha: Linha = porCliente.get(chave) ?? {
+      chave,
       cliente: titulo.cliente,
       valor: computeRow(titulo).mensalSite,
       vencimento: titulo.vencimento,
-      ativa: titulo.status_assinatura === "ATIVO",
+      ativa: false,
+      rank: -1,
       ids: [],
     };
-    linha.valor = computeRow(titulo).mensalSite;
-    linha.vencimento = titulo.vencimento;
+    // Valor e vencimento vêm do mês mais recente do cliente.
+    if (rank >= linha.rank) {
+      linha.rank = rank;
+      linha.cliente = titulo.cliente;
+      linha.valor = computeRow(titulo).mensalSite;
+      linha.vencimento = titulo.vencimento;
+    }
     linha.ativa = linha.ativa || titulo.status_assinatura === "ATIVO";
     linha.ids.push(titulo.id);
-    porCliente.set(titulo.cliente, linha);
+    porCliente.set(chave, linha);
   }
 
   const linhas = [...porCliente.values()].sort((a, b) => a.cliente.localeCompare(b.cliente));
@@ -57,7 +76,8 @@ export function AssinaturasDialog({
         <DialogHeader>
           <DialogTitle>Painel de assinaturas recorrentes</DialogTitle>
           <DialogDescription>
-            Clientes com renovação automática mensal. Cancelar impede a geração de novos meses.
+            Clientes com renovação automática mensal. O status vale para todos os meses do
+            cliente, mesmo com filtros aplicados na tela. Cancelar impede a geração de novos meses.
           </DialogDescription>
         </DialogHeader>
 
@@ -86,7 +106,7 @@ export function AssinaturasDialog({
             </thead>
             <tbody className="divide-y divide-border bg-card">
               {linhas.map((linha) => (
-                <tr key={linha.cliente}>
+                <tr key={linha.chave}>
                   <td className="p-3 font-bold">{linha.cliente}</td>
                   <td className="p-3 text-right">
                     {valoresVisiveis ? formatCurrency(linha.valor) : "R$ ••••••"}

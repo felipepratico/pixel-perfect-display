@@ -93,12 +93,31 @@ export function nextMesAno(date = new Date()): string {
   return currentMesAno(d);
 }
 
+/** Accepts "M/AAAA" or "MM/AAAA" (extra spaces allowed) and returns "MM/AAAA", or null when invalid. */
+export function normalizeMesAno(value: string): string | null {
+  const match = /^\s*(\d{1,2})\s*\/\s*(\d{4})\s*$/.exec(value ?? "");
+  if (!match) return null;
+  const mes = Number(match[1]);
+  const ano = Number(match[2]);
+  if (!mes || mes < 1 || mes > 12 || !ano) return null;
+  return `${String(mes).padStart(2, "0")}/${ano}`;
+}
+
+/** Chronological rank of "MM/AAAA" (e.g. 11/2026 => 24323), for comparing months. Null when invalid. */
+export function mesAnoRank(mesAno: string): number | null {
+  const normalized = normalizeMesAno(mesAno);
+  if (!normalized) return null;
+  const [m, y] = normalized.split("/");
+  return Number(y) * 12 + Number(m);
+}
+
 /** "11/2026" + 3 => "02/2027" */
 export function shiftMesAno(mesAno: string, offset: number): string | null {
-  const [mRaw, yRaw] = mesAno.split("/");
+  const normalized = normalizeMesAno(mesAno);
+  if (!normalized) return null;
+  const [mRaw, yRaw] = normalized.split("/");
   const m = Number.parseInt(mRaw ?? "", 10);
   const y = Number.parseInt(yRaw ?? "", 10);
-  if (!m || !y || m < 1 || m > 12) return null;
   const total = m - 1 + offset;
   const month = ((total % 12) + 12) % 12;
   const year = y + Math.floor(total / 12);
@@ -107,6 +126,34 @@ export function shiftMesAno(mesAno: string, offset: number): string | null {
 
 export function isActiveSubscription(t: Titulo): boolean {
   return t.tipo_cobranca === "RECORRENTE" && t.status_assinatura === "ATIVO";
+}
+
+/** Minimal customer reference used to link titles to customer records. */
+export type ClienteRef = { id: string; cnpj: string; razao_social: string };
+
+/** Resolves the customer record of a title by cliente_id, CNPJ or razão social. */
+export function clienteIdDoTitulo(
+  t: Pick<Titulo, "cliente_id" | "cliente" | "cnpj">,
+  clientes: ClienteRef[] = [],
+): string | null {
+  if (t.cliente_id) return t.cliente_id;
+  const cnpj = (t.cnpj ?? "").replace(/\D/g, "");
+  const nome = (t.cliente ?? "").trim().toUpperCase();
+  if (!cnpj && !nome) return null;
+  const match = clientes.find(
+    (c) =>
+      (cnpj !== "" && (c.cnpj ?? "").replace(/\D/g, "") === cnpj) ||
+      (nome !== "" && (c.razao_social ?? "").trim().toUpperCase() === nome),
+  );
+  return match?.id ?? null;
+}
+
+/** Stable key per customer: linked customer id when known, otherwise the normalized name. */
+export function chaveClienteDoTitulo(
+  t: Pick<Titulo, "cliente_id" | "cliente" | "cnpj">,
+  clientes: ClienteRef[] = [],
+): string {
+  return clienteIdDoTitulo(t, clientes) ?? `nome:${(t.cliente ?? "").trim().toUpperCase()}`;
 }
 
 export function normalizePhone(phone: string): string {

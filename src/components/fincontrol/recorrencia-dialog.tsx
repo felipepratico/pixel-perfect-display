@@ -12,17 +12,26 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { isActiveSubscription, nextMesAno, type Titulo } from "@/lib/fincontrol";
+import {
+  chaveClienteDoTitulo,
+  isActiveSubscription,
+  nextMesAno,
+  normalizeMesAno,
+  type ClienteRef,
+  type Titulo,
+} from "@/lib/fincontrol";
 
 export function RecorrenciaDialog({
   open,
   titulos,
+  clientes,
   gerando,
   onOpenChange,
   onGerar,
 }: {
   open: boolean;
   titulos: Titulo[];
+  clientes: ClienteRef[];
   gerando: boolean;
   onOpenChange: (open: boolean) => void;
   onGerar: (mesAnoInicial: string, quantidade: number) => void;
@@ -34,7 +43,11 @@ export function RecorrenciaDialog({
     if (open) setMesAno(nextMesAno());
   }, [open]);
 
-  const ativas = new Set(titulos.filter(isActiveSubscription).map((t) => t.cliente));
+  const ativas = new Set(
+    titulos.filter(isActiveSubscription).map((t) => chaveClienteDoTitulo(t, clientes)),
+  );
+  const mesAnoNormalizado = normalizeMesAno(mesAno);
+  const mesAnoInvalido = mesAno.trim().length > 0 && !mesAnoNormalizado;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -42,8 +55,9 @@ export function RecorrenciaDialog({
         <DialogHeader>
           <DialogTitle>Gerar mensalidades em lote</DialogTitle>
           <DialogDescription>
-            Cria as cobranças pendentes das assinaturas ativas. Assinaturas canceladas são
-            ignoradas.
+            Cria as cobranças dos meses escolhidos para as assinaturas ativas. Assinaturas
+            canceladas são ignoradas e meses já gerados não são duplicados. O status da assinatura
+            é controlado no painel Assinaturas.
           </DialogDescription>
         </DialogHeader>
 
@@ -54,9 +68,30 @@ export function RecorrenciaDialog({
               id="mesAnoInicial"
               value={mesAno}
               onChange={(event) => setMesAno(event.target.value)}
+              onBlur={() => {
+                const normalizado = normalizeMesAno(mesAno);
+                if (normalizado) setMesAno(normalizado);
+              }}
               placeholder="Ex: 11/2026"
-              className="font-bold"
+              aria-invalid={mesAnoInvalido}
+              aria-describedby="mesAnoInicial-ajuda"
+              className={`font-bold ${
+                mesAnoInvalido ? "border-destructive focus-visible:ring-destructive" : ""
+              }`}
             />
+            {mesAnoInvalido ? (
+              <p
+                id="mesAnoInicial-ajuda"
+                role="alert"
+                className="text-[11px] font-semibold text-destructive"
+              >
+                Formato inválido. Use MM/AAAA, por exemplo 11/2026.
+              </p>
+            ) : (
+              <p id="mesAnoInicial-ajuda" className="text-[11px] text-muted-foreground">
+                Formato MM/AAAA. O campo já vem preenchido com o próximo mês.
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -67,10 +102,11 @@ export function RecorrenciaDialog({
               value={quantidade}
               onChange={(event) => setQuantidade(Number(event.target.value))}
             >
-              <option value={1}>1 mês</option>
-              <option value={3}>3 meses consecutivos</option>
-              <option value={6}>6 meses (semestre)</option>
-              <option value={12}>12 meses (ano completo)</option>
+              {Array.from({ length: 12 }, (_, index) => index + 1).map((meses) => (
+                <option key={meses} value={meses}>
+                  {meses === 1 ? "1 mês" : `${meses} meses`}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -85,7 +121,13 @@ export function RecorrenciaDialog({
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button type="button" disabled={gerando} onClick={() => onGerar(mesAno, quantidade)}>
+          <Button
+            type="button"
+            disabled={gerando || !mesAnoNormalizado}
+            onClick={() => {
+              if (mesAnoNormalizado) onGerar(mesAnoNormalizado, quantidade);
+            }}
+          >
             Gerar novas mensalidades
           </Button>
         </DialogFooter>
