@@ -4,7 +4,6 @@ import { RotateCcw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { AppHeader } from "@/components/fincontrol/app-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +61,6 @@ function AuditoriaPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader />
       <main className="w-full space-y-6 px-3 py-6 sm:px-4">
         <div>
           <h1 className="text-2xl font-extrabold">Histórico e auditoria</h1>

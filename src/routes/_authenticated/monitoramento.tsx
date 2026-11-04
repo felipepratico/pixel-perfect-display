@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { AppHeader } from "@/components/fincontrol/app-header";
 import { MonitoramentoTecnico, MOCK_CLIENTES } from "@/components/fincontrol/monitoramento-tecnico";
 import { useClientes } from "@/lib/use-clientes";
 
@@ -31,7 +30,6 @@ function MonitoramentoPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader />
       <main className="w-full space-y-6 px-3 py-6 sm:px-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>

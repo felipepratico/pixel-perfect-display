@@ -14,7 +14,6 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { AppHeader } from "@/components/fincontrol/app-header";
 import { ClienteDialog } from "@/components/fincontrol/cliente-dialog";
 import { ContratoModal } from "@/components/fincontrol/contrato-modal";
 import { ReciboModal } from "@/components/fincontrol/recibo-modal";
@@ -90,7 +89,6 @@ function OperacaoPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader />
       <main className="w-full space-y-6 px-3 py-6 sm:px-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -295,16 +293,8 @@ function OperacaoPage() {
         onCreateGrupo={(nome) => createGrupo.mutateAsync(nome)}
         onSave={salvar}
       />
-      <ContratoModal
-        open={contratoOpen}
-        cliente={clienteContrato}
-        onOpenChange={setContratoOpen}
-      />
-      <ReciboModal
-        open={reciboOpen}
-        cliente={clienteRecibo}
-        onOpenChange={setReciboOpen}
-      />
+      <ContratoModal open={contratoOpen} cliente={clienteContrato} onOpenChange={setContratoOpen} />
+      <ReciboModal open={reciboOpen} cliente={clienteRecibo} onOpenChange={setReciboOpen} />
     </div>
   );
 }
