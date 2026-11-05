@@ -8,7 +8,7 @@ import {
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -76,6 +76,12 @@ export function MarcarComoPagoDialog({
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, []);
+
+  // Inicializa a data com hoje ao abrir o modal, para que o botão de confirmação
+  // não fique desabilitado até o usuário interagir com o input.
+  useEffect(() => {
+    if (open) setPagoEm(hoje);
+  }, [open, hoje]);
 
   const vencimentoRef = tituloUm ? getVencimentoDate(tituloUm) : null;
 
