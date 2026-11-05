@@ -1,4 +1,4 @@
-import { CalendarDays, UserPlus } from "lucide-react";
+import { CalendarDays, CheckCircle2, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,7 @@ export function NovaAssinaturaDialog({
   open,
   clientes,
   titulos,
+  clienteInicial,
   saving,
   onOpenChange,
   onSave,
@@ -61,6 +62,8 @@ export function NovaAssinaturaDialog({
   open: boolean;
   clientes: Cliente[];
   titulos: Titulo[];
+  /** Cliente já cadastrado que deve abrir o formulário pré-preenchido. */
+  clienteInicial?: Cliente | null;
   saving: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (values: NovaAssinaturaValues) => void | Promise<void>;
@@ -72,11 +75,25 @@ export function NovaAssinaturaDialog({
 
   useEffect(() => {
     if (!open) return;
-    setForm(formInicial());
+    const base = formInicial();
+    if (clienteInicial) {
+      // Abre a confirmação com os dados do cadastro já preenchidos.
+      setForm({
+        ...base,
+        clienteId: clienteInicial.id,
+        cliente: clienteInicial.razao_social,
+        cnpj: clienteInicial.cnpj,
+        telefone: clienteInicial.telefone,
+        valor: valorContrato(clienteInicial),
+        vencimento: clienteInicial.vencimento,
+      });
+    } else {
+      setForm(base);
+    }
     setErro("");
     setFiltroCliente("TODOS");
     setOrdenacaoCliente("NOME");
-  }, [open]);
+  }, [open, clienteInicial]);
 
   /** Mês de referência digitado no formulário (fallback: mês atual). */
   const mesAnoReferencia = normalizeMesAno(form.mesAno) ?? currentMesAno();
@@ -223,6 +240,16 @@ export function NovaAssinaturaDialog({
             Cadastre um novo cliente ou vincule um cliente já existente ao fluxo de cobrança mensal.
           </DialogDescription>
         </DialogHeader>
+
+        {clienteInicial ? (
+          <div className="flex items-start gap-2 rounded-xl border border-partner-border bg-partner-soft p-3 text-[11px] font-semibold text-partner">
+            <CheckCircle2 className="mt-0.5 size-3.5 shrink-0" />
+            <span>
+              Dados de <strong>{clienteInicial.razao_social}</strong> carregados do cadastro
+              (CNPJ/CPF, mensalidade e vencimento). Confira e confirme para criar a assinatura.
+            </span>
+          </div>
+        ) : null}
 
         <form onSubmit={submit} className="space-y-4 text-sm">
           <div className="grid grid-cols-1 gap-3 rounded-2xl border border-border bg-muted/40 p-3.5 sm:grid-cols-2">

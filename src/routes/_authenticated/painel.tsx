@@ -51,7 +51,7 @@ import { TitulosTable } from "@/components/fincontrol/titulos-table";
 import { WhatsAppDialog } from "@/components/fincontrol/whatsapp-dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { emptyCliente } from "@/lib/clientes";
+import { emptyCliente, type Cliente } from "@/lib/clientes";
 import { exportTitulos } from "@/lib/excel";
 import {
   chaveClienteDoTitulo,
@@ -122,6 +122,7 @@ function Painel() {
   const [whats, setWhats] = useState<Titulo | null>(null);
   const [assOpen, setAssOpen] = useState(false);
   const [novaAssOpen, setNovaAssOpen] = useState(false);
+  const [novaAssClienteInicial, setNovaAssClienteInicial] = useState<Cliente | null>(null);
   const [recOpen, setRecOpen] = useState(false);
   const [impOpen, setImpOpen] = useState(false);
   const [relOpen, setRelOpen] = useState(false);
@@ -336,9 +337,20 @@ function Painel() {
     setNovaAssOpen(true);
   }
 
+  function abrirNovaAssinaturaParaCliente(clienteId: string) {
+    const cliente = clientesCadastrados.find((item) => item.id === clienteId);
+    if (!cliente) return;
+    setNovaAssClienteInicial(cliente);
+    setAssOpen(false);
+    setNovaAssOpen(true);
+  }
+
   function alterarNovaAssinatura(open: boolean) {
     setNovaAssOpen(open);
-    if (!open) setAssOpen(true);
+    if (!open) {
+      setAssOpen(true);
+      setNovaAssClienteInicial(null);
+    }
   }
 
   function onGerar(mesAnoInicial: string, quantidade: number) {
@@ -819,10 +831,12 @@ function Painel() {
         }
         onNovaAssinatura={abrirNovaAssinatura}
         onGerarTitulo={gerarTituloDoCliente}
+        onCriarAssinaturaParaCliente={abrirNovaAssinaturaParaCliente}
       />
       <NovaAssinaturaDialog
         open={novaAssOpen}
         clientes={clientesCadastrados}
+        clienteInicial={novaAssClienteInicial}
         titulos={todos}
         saving={saveCliente.isPending || saveTitulo.isPending}
         onOpenChange={alterarNovaAssinatura}
