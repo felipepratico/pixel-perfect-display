@@ -175,9 +175,7 @@ export function chaveClienteDoTitulo(
 }
 
 /** Chave estável de um cliente (cadastro) para uso em mapas de assinatura. */
-export function chaveDoCliente(
-  cliente: Pick<ClienteRef, "id" | "cnpj" | "razao_social">,
-): string {
+export function chaveDoCliente(cliente: Pick<ClienteRef, "id" | "cnpj" | "razao_social">): string {
   // id é sempre string quando vindo do cadastro; fallback sintético garante
   // estabilidade quando um registro vier sem id.
   const id = (cliente.id ?? "").trim();

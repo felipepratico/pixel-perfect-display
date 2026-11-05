@@ -52,9 +52,7 @@ export function RecorrenciaDialog({
       .map((t) => chaveClienteDoTitulo(t, clientes)),
   );
   const ativas = new Set<string>([
-    ...titulos
-      .filter(isActiveSubscription)
-      .map((t) => chaveClienteDoTitulo(t, clientes)),
+    ...titulos.filter(isActiveSubscription).map((t) => chaveClienteDoTitulo(t, clientes)),
     ...clientes
       .filter((c) => c.status === "ATIVO" && !chavesComTitulo.has(chaveDoCliente(c)))
       .map((c) => chaveDoCliente(c)),
@@ -69,8 +67,8 @@ export function RecorrenciaDialog({
           <DialogTitle>Gerar mensalidades em lote</DialogTitle>
           <DialogDescription>
             Cria as cobranças dos meses escolhidos para as assinaturas ativas. Assinaturas
-            canceladas são ignoradas e meses já gerados não são duplicados. O status da assinatura
-            é controlado no painel Assinaturas.
+            canceladas são ignoradas e meses já gerados não são duplicados. O status da assinatura é
+            controlado no painel Assinaturas.
           </DialogDescription>
         </DialogHeader>
 

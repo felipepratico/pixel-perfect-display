@@ -33,6 +33,9 @@ export type NovaAssinaturaValues = {
   status: "ATIVO" | "CANCELADO";
 };
 
+type FiltroCliente = "TODOS" | "ATIVOS" | "INATIVOS" | "SEM_TITULO";
+type OrdenacaoCliente = "NOME" | "VENCIMENTO" | "VALOR";
+
 const selectClass =
   "h-10 w-full rounded-xl border border-input bg-card px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-ring";
 
@@ -64,39 +67,70 @@ export function NovaAssinaturaDialog({
 }) {
   const [form, setForm] = useState<NovaAssinaturaValues>(formInicial);
   const [erro, setErro] = useState("");
-  const [somenteSemTitulo, setSomenteSemTitulo] = useState(false);
+  const [filtroCliente, setFiltroCliente] = useState<FiltroCliente>("TODOS");
+  const [ordenacaoCliente, setOrdenacaoCliente] = useState<OrdenacaoCliente>("NOME");
 
   useEffect(() => {
     if (!open) return;
     setForm(formInicial());
     setErro("");
-    setSomenteSemTitulo(false);
+    setFiltroCliente("TODOS");
+    setOrdenacaoCliente("NOME");
   }, [open]);
 
   /** Mês de referência digitado no formulário (fallback: mês atual). */
   const mesAnoReferencia = normalizeMesAno(form.mesAno) ?? currentMesAno();
 
-  /** Clientes ATIVOS sem título no mês de referência (ainda não possuem cobrança). */
-  const clientesSemTitulo = useMemo(() => {
-    const chavesComTituloNoMes = new Set(
+  /** Chaves de clientes que já possuem algum título no mês de referência. */
+  const chavesComTituloNoMes = useMemo(() => {
+    return new Set(
       titulos
-        .filter(
-          (t) => (normalizeMesAno(t.mes_ano) ?? t.mes_ano) === mesAnoReferencia,
-        )
+        .filter((t) => (normalizeMesAno(t.mes_ano) ?? t.mes_ano) === mesAnoReferencia)
         .map((t) => chaveClienteDoTitulo(t, clientes)),
     );
-    return clientes.filter((cliente) => {
-      if (cliente.status !== "ATIVO") return false;
-      const chave = chaveClienteDoTitulo(
-        { cliente_id: cliente.id, cliente: cliente.razao_social, cnpj: cliente.cnpj },
-        clientes,
-      );
-      return !chavesComTituloNoMes.has(chave);
+  }, [titulos, clientes, mesAnoReferencia]);
+
+  /** Testa se o cliente já tem título gerado no mês de referência. */
+  function temTituloNoMes(cliente: Cliente): boolean {
+    const chave = chaveClienteDoTitulo(
+      { cliente_id: cliente.id, cliente: cliente.razao_social, cnpj: cliente.cnpj },
+      clientes,
+    );
+    return chavesComTituloNoMes.has(chave);
+  }
+
+  /** Clientes ATIVOS sem título no mês de referência (ainda não possuem cobrança). */
+  const clientesSemTitulo = useMemo(
+    () => clientes.filter((cliente) => cliente.status === "ATIVO" && !temTituloNoMes(cliente)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [clientes, chavesComTituloNoMes],
+  );
+
+  const clientesParaListar = useMemo(() => {
+    const filtrados = clientes.filter((cliente) => {
+      switch (filtroCliente) {
+        case "ATIVOS":
+          return cliente.status === "ATIVO";
+        case "INATIVOS":
+          return cliente.status === "INATIVO";
+        case "SEM_TITULO":
+          return cliente.status === "ATIVO" && !temTituloNoMes(cliente);
+        default:
+          return true;
+      }
+    });
+    return filtrados.sort((a, b) => {
+      switch (ordenacaoCliente) {
+        case "VENCIMENTO":
+          return a.vencimento - b.vencimento || a.razao_social.localeCompare(b.razao_social);
+        case "VALOR":
+          return valorContrato(b) - valorContrato(a);
+        default:
+          return a.razao_social.localeCompare(b.razao_social);
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientes, titulos, mesAnoReferencia]);
-
-  const clientesParaListar = somenteSemTitulo ? clientesSemTitulo : clientes;
+  }, [clientes, filtroCliente, ordenacaoCliente, chavesComTituloNoMes]);
 
   function update<K extends keyof NovaAssinaturaValues>(key: K, value: NovaAssinaturaValues[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -105,15 +139,18 @@ export function NovaAssinaturaDialog({
   function buscarClientePorNome(nome: string): Cliente | undefined {
     const normalizado = nome.trim().toUpperCase();
     if (!normalizado) return undefined;
-    return clientesParaListar.find(
-      (cliente) => cliente.razao_social.trim().toUpperCase() === normalizado,
-    );
+    const comparar = (cliente: Cliente) =>
+      cliente.razao_social.trim().toUpperCase() === normalizado;
+    // Prioriza a lista filtrada, mas ainda encontra um cliente fora do filtro
+    // atual para não bloquear o auto-preenchimento (ex.: filtro "sem título").
+    return clientesParaListar.find(comparar) ?? clientes.find(comparar);
   }
 
   function buscarClientePorCnpj(cnpj: string): Cliente | undefined {
     const digitos = onlyDigits(cnpj);
     if (digitos.length < 11) return undefined;
-    return clientesParaListar.find((cliente) => onlyDigits(cliente.cnpj) === digitos);
+    const comparar = (cliente: Cliente) => onlyDigits(cliente.cnpj) === digitos;
+    return clientesParaListar.find(comparar) ?? clientes.find(comparar);
   }
 
   /**
@@ -121,19 +158,6 @@ export function NovaAssinaturaDialog({
    * CNPJ/CPF (se houver), telefone, valor mensal (contrato) e dia de
    * vencimento com os dados do cadastro.
    */
-  function aplicarCliente(encontrado: Cliente, campo: "cliente" | "cnpj", valor: string) {
-    setForm((prev) => ({
-      ...prev,
-      [campo]: campo === "cliente" ? encontrado.razao_social : valor,
-      clienteId: encontrado.id,
-      cliente: encontrado.razao_social,
-      cnpj: encontrado.cnpj || prev.cnpj,
-      telefone: encontrado.telefone || prev.telefone,
-      valor: valorContrato(encontrado),
-      vencimento: encontrado.vencimento,
-    }));
-  }
-
   function atualizarIdentificacao(campo: "cliente" | "cnpj", valor: string) {
     setForm((prev) => {
       const proximo = { ...prev, [campo]: valor, clienteId: null };
@@ -221,14 +245,21 @@ export function NovaAssinaturaDialog({
                   </option>
                 ))}
               </datalist>
+              <p className="text-[11px] font-semibold text-muted-foreground">
+                {clientesParaListar.length}{" "}
+                {clientesParaListar.length === 1 ? "cliente na lista" : "clientes na lista"} ·{" "}
+                {clientesSemTitulo.length} sem título em {mesAnoReferencia}
+              </p>
               <label
                 htmlFor="somenteSemTitulo"
                 className="flex cursor-pointer items-center gap-2 rounded-xl border border-partner-border bg-partner-soft px-3 py-2 text-[12px] font-bold text-partner"
               >
                 <Checkbox
                   id="somenteSemTitulo"
-                  checked={somenteSemTitulo}
-                  onCheckedChange={(checked) => setSomenteSemTitulo(checked === true)}
+                  checked={filtroCliente === "SEM_TITULO"}
+                  onCheckedChange={(checked) =>
+                    setFiltroCliente(checked === true ? "SEM_TITULO" : "TODOS")
+                  }
                 />
                 <span>
                   Somente “Sem título gerado” — {clientesSemTitulo.length}{" "}
@@ -236,9 +267,44 @@ export function NovaAssinaturaDialog({
                   {mesAnoReferencia}
                 </span>
               </label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="filtroClientes" className="text-[11px] text-muted-foreground">
+                    Mostrar
+                  </Label>
+                  <select
+                    id="filtroClientes"
+                    className={selectClass}
+                    value={filtroCliente}
+                    onChange={(event) => setFiltroCliente(event.target.value as FiltroCliente)}
+                  >
+                    <option value="TODOS">Todos os clientes</option>
+                    <option value="ATIVOS">Somente ativos</option>
+                    <option value="INATIVOS">Somente inativos</option>
+                    <option value="SEM_TITULO">Sem título gerado no mês</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="ordenacaoClientes" className="text-[11px] text-muted-foreground">
+                    Ordenar por
+                  </Label>
+                  <select
+                    id="ordenacaoClientes"
+                    className={selectClass}
+                    value={ordenacaoCliente}
+                    onChange={(event) =>
+                      setOrdenacaoCliente(event.target.value as OrdenacaoCliente)
+                    }
+                  >
+                    <option value="NOME">Nome (A–Z)</option>
+                    <option value="VENCIMENTO">Dia de vencimento</option>
+                    <option value="VALOR">Maior mensalidade</option>
+                  </select>
+                </div>
+              </div>
               <p className="text-[11px] text-muted-foreground">
-                {somenteSemTitulo
-                  ? "A lista mostra prioritariamente os clientes ativos que ainda não possuem cobrança no mês de referência. Ao escolher um cliente, CNPJ/CPF, mensalidade e vencimento são preenchidos a partir do cadastro."
+                {filtroCliente === "SEM_TITULO"
+                  ? "A lista mostra apenas os clientes ativos que ainda não possuem cobrança no mês de referência. Ao escolher um cliente, CNPJ/CPF, mensalidade e vencimento são preenchidos a partir do cadastro."
                   : "Digite o nome ou o CNPJ para localizar um cliente já cadastrado. Se não encontrar, um novo cadastro será criado."}
               </p>
             </div>

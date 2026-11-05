@@ -110,8 +110,8 @@ export function AssinaturasDialog({
           <DialogTitle>Painel de assinaturas recorrentes</DialogTitle>
           <DialogDescription>
             Reflete diretamente os clientes ATIVOS do cadastro (Clientes e contratos), mesmo sem
-            título gerado ainda. Cancelar só afeta títulos existentes; meses futuros são gerados
-            via “Gerar meses”.
+            título gerado ainda. Cancelar só afeta títulos existentes; meses futuros são gerados via
+            “Gerar meses”.
           </DialogDescription>
         </DialogHeader>
 
@@ -186,7 +186,9 @@ export function AssinaturasDialog({
                         size="sm"
                         variant={linha.ativa ? "outline" : "default"}
                         className="h-7 text-xs"
-                        onClick={() => onAlternar(linha.ids, !linha.ativa, linha.clienteId ?? undefined)}
+                        onClick={() =>
+                          onAlternar(linha.ids, !linha.ativa, linha.clienteId ?? undefined)
+                        }
                       >
                         {linha.ativa ? "Cancelar" : "Reativar"}
                       </Button>
