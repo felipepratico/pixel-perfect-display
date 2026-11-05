@@ -103,6 +103,25 @@ export type CredenciaisEfi = {
 };
 
 /**
+ * Monta o objeto de credenciais para um ambiente/par informado manualmente
+ * (usado pelas credenciais cadastradas na tela do sistema).
+ */
+export function criarCredenciais(dados: {
+  ambiente: EfiAmbiente;
+  clientId: string;
+  clientSecret: string;
+}): CredenciaisEfi {
+  return {
+    ambiente: dados.ambiente,
+    sandbox: dados.ambiente === "HOMOLOGACAO",
+    baseUrl: EFI_URLS[dados.ambiente],
+    clientId: dados.clientId,
+    clientSecret: dados.clientSecret,
+    fetchSeguro: fetchComCertificado(),
+  };
+}
+
+/**
  * Resolve as credenciais do ambiente ativo. Aceita os nomes documentados
  * (EFI_CLIENT_ID/EFI_CLIENT_SECRET) e também os sufixados por ambiente
  * (EFI_CLIENT_ID_HOMOLOGACAO, EFI_CLIENT_SECRET_PRODUCAO, ...).
@@ -123,19 +142,18 @@ export function lerCredenciais(): CredenciaisEfi {
     "EFI_CLIENT_SECRET",
     "GERENCIANET_CLIENT_SECRET",
   );
-  return {
-    ambiente,
-    sandbox,
-    baseUrl: EFI_URLS[ambiente],
-    clientId,
-    clientSecret,
-    fetchSeguro: fetchComCertificado(),
-  };
+  return criarCredenciais({ ambiente, clientId, clientSecret });
 }
 
 /** Situação da configuração, usada pela interface para exibir o ambiente real. */
-export function diagnosticoEfi(): EfiDiagnostico {
-  const credenciais = lerCredenciais();
+export function diagnosticoEfi(
+  credenciais: CredenciaisEfi,
+  extra: {
+    origem: "SISTEMA" | "AMBIENTE" | "NENHUMA";
+    webhookConfigurado: boolean;
+    clientIdMascarado: string;
+  },
+): EfiDiagnostico {
   const faltando: string[] = [];
   if (!credenciais.clientId) faltando.push("EFI_CLIENT_ID");
   if (!credenciais.clientSecret) faltando.push("EFI_CLIENT_SECRET");
@@ -146,8 +164,11 @@ export function diagnosticoEfi(): EfiDiagnostico {
     credenciaisConfiguradas: faltando.length === 0,
     certificadoConfigurado: credenciais.fetchSeguro !== null,
     faltando,
-    webhookConfigurado: tokenWebhook() !== "",
+    webhookConfigurado: extra.webhookConfigurado,
     webhookPath: CAMINHO_WEBHOOK,
+    origemCredenciais: extra.origem,
+    clientIdMascarado: extra.clientIdMascarado,
+    clientSecretConfigurado: Boolean(credenciais.clientSecret),
   };
 }
 
@@ -165,20 +186,26 @@ export function tokenWebhook(): string {
  * Testa a conexão real com a API de Cobranças autenticando via OAuth2.
  * Nunca lança: devolve o resultado traduzido para a interface.
  */
-export async function testarConexaoEfi(): Promise<ResultadoTesteEfi> {
-  const credenciais = lerCredenciais();
+export async function testarConexaoEfi(
+  credenciais: CredenciaisEfi,
+  origem: "SISTEMA" | "AMBIENTE" | "NENHUMA" = "AMBIENTE",
+): Promise<ResultadoTesteEfi> {
   const base = {
     ambiente: credenciais.ambiente,
     baseUrl: credenciais.baseUrl,
     certificado: credenciais.fetchSeguro !== null,
+    origem,
   };
   if (!credenciais.clientId || !credenciais.clientSecret) {
     return {
       ...base,
       ok: false,
-      mensagem: credenciais.sandbox
-        ? "Credenciais de homologação ausentes. Defina EFI_CLIENT_ID e EFI_CLIENT_SECRET (ou as variantes _HOMOLOGACAO)."
-        : "Credenciais de produção ausentes. Defina EFI_CLIENT_ID e EFI_CLIENT_SECRET (ou as variantes _PRODUCAO).",
+      mensagem:
+        origem === "NENHUMA"
+          ? "Nenhuma credencial Efí configurada. Cadastre o Client ID e o Client Secret na tela de Cobranças Efí."
+          : credenciais.sandbox
+            ? "Credenciais de homologação ausentes. Confira o Client ID e o Client Secret."
+            : "Credenciais de produção ausentes. Confira o Client ID e o Client Secret.",
     };
   }
   try {

@@ -8,6 +8,7 @@ import {
   CloudCheck,
   Eye,
   EyeOff,
+  KeyRound,
   Loader2,
   MessageCircle,
   QrCode,
@@ -32,6 +33,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  EfiCredenciaisDialog,
+  type CredenciaisEfiValues,
+} from "@/components/fincontrol/efi-credenciais-dialog";
 import { valorContrato } from "@/lib/clientes";
 import {
   CnpjError,
@@ -40,7 +45,13 @@ import {
   isValidCnpj,
   onlyDigits,
 } from "@/lib/cnpj";
-import { emitirAssinaturaEfi, statusEfi, testarConexaoEfi } from "@/lib/efi.functions";
+import {
+  emitirAssinaturaEfi,
+  removerCredenciaisEfi,
+  salvarCredenciaisEfi,
+  statusEfi,
+  testarConexaoEfi,
+} from "@/lib/efi.functions";
 import { assinaturaEfiSchema, type CobrancaEfi } from "@/lib/efi";
 import { formatCurrency, normalizePhone } from "@/lib/fincontrol";
 import { useClientes } from "@/lib/use-clientes";
@@ -72,6 +83,8 @@ function CobrancasEfi() {
   const emitir = useServerFn(emitirAssinaturaEfi);
   const obterStatusEfi = useServerFn(statusEfi);
   const testarEfi = useServerFn(testarConexaoEfi);
+  const salvarCredenciaisFn = useServerFn(salvarCredenciaisEfi);
+  const removerCredenciaisFn = useServerFn(removerCredenciaisEfi);
   const queryClient = useQueryClient();
   const { data: efiStatus } = useQuery({
     queryKey: ["efi-status"],
@@ -103,6 +116,9 @@ function CobrancasEfi() {
   const [consultando, setConsultando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [testando, setTestando] = useState(false);
+  const [credOpen, setCredOpen] = useState(false);
+  const [salvandoCred, setSalvandoCred] = useState(false);
+  const [removendoCred, setRemovendoCred] = useState(false);
   const cnpjConsultado = useRef("");
 
   const cliente = clientes.find((item) => item.id === clienteId);
@@ -175,6 +191,38 @@ function CobrancasEfi() {
       }
     } finally {
       setConsultando(false);
+    }
+  }
+
+  async function salvarCredenciaisEfiAction(values: CredenciaisEfiValues) {
+    setSalvandoCred(true);
+    try {
+      await salvarCredenciaisFn({ data: values });
+      toast.success("Credenciais Efí salvas com segurança no servidor.");
+      await queryClient.invalidateQueries({ queryKey: ["efi-status"] });
+      setCredOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível salvar as credenciais Efí.",
+      );
+    } finally {
+      setSalvandoCred(false);
+    }
+  }
+
+  async function removerCredenciaisEfiAction() {
+    setRemovendoCred(true);
+    try {
+      await removerCredenciaisFn();
+      toast.success("Credenciais removidas. A integração volta a usar o ambiente do servidor.");
+      await queryClient.invalidateQueries({ queryKey: ["efi-status"] });
+      setCredOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível remover as credenciais Efí.",
+      );
+    } finally {
+      setRemovendoCred(false);
     }
   }
 
@@ -269,6 +317,10 @@ function CobrancasEfi() {
               <ShieldCheck className="mr-1 size-3.5" />
               {producao ? "Produção" : "Homologação"}
             </Badge>
+            <Button variant="outline" onClick={() => setCredOpen(true)}>
+              <KeyRound className="size-4" />
+              Credenciais
+            </Button>
             <Button variant="outline" onClick={testarConexao} disabled={testando}>
               {testando ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -289,8 +341,8 @@ function CobrancasEfi() {
             <ShieldAlert className="mt-0.5 size-4 shrink-0" />
             <span>
               A integração Efí não está configurada em {producao ? "produção" : "homologação"}.
-              Defina {efiStatus.faltando.join(" e ")} no ambiente do servidor para liberar a
-              emissão.
+              Clique em <strong>Credenciais</strong> e informe o Client ID e o Client Secret, ou
+              defina {efiStatus.faltando.join(" e ")} no ambiente do servidor.
             </span>
           </div>
         ) : null}
@@ -314,7 +366,7 @@ function CobrancasEfi() {
             >
               {efiStatus.webhookConfigurado
                 ? "Token do webhook configurado"
-                : "Defina EFI_WEBHOOK_TOKEN"}
+                : "Cadastre o token em Credenciais"}
             </Badge>
           </div>
         ) : null}
@@ -637,6 +689,18 @@ function CobrancasEfi() {
           )}
         </section>
       </main>
+
+      <EfiCredenciaisDialog
+        open={credOpen}
+        diagnostico={efiStatus}
+        saving={salvandoCred}
+        removendo={removendoCred}
+        testando={testando}
+        onOpenChange={setCredOpen}
+        onSalvar={salvarCredenciaisEfiAction}
+        onRemover={removerCredenciaisEfiAction}
+        onTestar={testarConexao}
+      />
     </div>
   );
 }

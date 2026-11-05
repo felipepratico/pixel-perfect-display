@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assinaturaEfiSchema } from "@/lib/efi";
+import { assinaturaEfiSchema, credenciaisEfiSchema } from "@/lib/efi";
 import type { AssinaturaEfiDados, EfiDiagnostico } from "@/lib/efi";
 
 async function idempotencyKey(parts: string[]): Promise<string> {
@@ -49,20 +49,52 @@ function montarPayloadAssinatura(data: AssinaturaEfiDados) {
   };
 }
 
+/** Carrega as credenciais em uso (sistema → ambiente) já prontas para a API. */
+async function credenciaisDoUsuario(userId: string) {
+  const api = await import("@/lib/efi-api.server");
+  const { resolverCredenciais } = await import("@/lib/efi-credenciais.server");
+  const resolvidas = await resolverCredenciais(userId);
+  return { api, resolvidas, credenciais: api.criarCredenciais(resolvidas) };
+}
+
 /** Situação real da integração (ambiente, credenciais e certificado) para a interface. */
 export const statusEfi = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<EfiDiagnostico> => {
-    const { diagnosticoEfi } = await import("@/lib/efi-api.server");
-    return diagnosticoEfi();
+  .handler(async ({ context }): Promise<EfiDiagnostico> => {
+    const { mascarar } = await import("@/lib/efi-credenciais.server");
+    const { api, resolvidas, credenciais } = await credenciaisDoUsuario(context.userId);
+    return api.diagnosticoEfi(credenciais, {
+      origem: resolvidas.origem,
+      webhookConfigurado: Boolean(resolvidas.webhookToken),
+      clientIdMascarado: mascarar(resolvidas.clientId),
+    });
   });
 
 /** Testa de verdade a autenticação OAuth2 com a Efí (sem emitir cobranças). */
 export const testarConexaoEfi = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
-    const { testarConexaoEfi: testar } = await import("@/lib/efi-api.server");
-    return testar();
+  .handler(async ({ context }) => {
+    const { api, resolvidas, credenciais } = await credenciaisDoUsuario(context.userId);
+    return api.testarConexaoEfi(credenciais, resolvidas.origem);
+  });
+
+/** Salva as credenciais Efí do usuário (segredos cifrados no servidor). */
+export const salvarCredenciaisEfi = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => credenciaisEfiSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { salvarCredenciaisSalvas } = await import("@/lib/efi-credenciais.server");
+    await salvarCredenciaisSalvas(context.userId, data);
+    return { ok: true as const };
+  });
+
+/** Remove as credenciais salvas (volta a usar as variáveis de ambiente do servidor). */
+export const removerCredenciaisEfi = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { removerCredenciaisSalvas } = await import("@/lib/efi-credenciais.server");
+    await removerCredenciaisSalvas(context.userId);
+    return { ok: true as const };
   });
 
 export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
@@ -82,12 +114,12 @@ export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
     }
 
     const api = await import("@/lib/efi-api.server");
-    const credenciais = api.lerCredenciais();
+    const { resolverCredenciais } = await import("@/lib/efi-credenciais.server");
+    const resolvidas = await resolverCredenciais(userId);
+    const credenciais = api.criarCredenciais(resolvidas);
     if (!credenciais.clientId || !credenciais.clientSecret) {
       throw new Error(
-        credenciais.sandbox
-          ? "Credenciais de homologação da Efí não configuradas. Defina EFI_CLIENT_ID e EFI_CLIENT_SECRET no servidor."
-          : "Credenciais de produção da Efí não configuradas. Defina EFI_CLIENT_ID e EFI_CLIENT_SECRET no servidor.",
+        "Credenciais Efí não configuradas. Cadastre o Client ID e o Client Secret na tela de Cobranças Efí.",
       );
     }
 

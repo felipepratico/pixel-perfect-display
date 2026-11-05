@@ -327,6 +327,36 @@ export type Database = {
         }
         Relationships: []
       }
+      efi_credenciais: {
+        Row: {
+          ambiente: string
+          client_id: string
+          client_secret_cifrado: string
+          created_at: string
+          updated_at: string
+          user_id: string
+          webhook_token_cifrado: string
+        }
+        Insert: {
+          ambiente?: string
+          client_id?: string
+          client_secret_cifrado?: string
+          created_at?: string
+          updated_at?: string
+          user_id: string
+          webhook_token_cifrado?: string
+        }
+        Update: {
+          ambiente?: string
+          client_id?: string
+          client_secret_cifrado?: string
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+          webhook_token_cifrado?: string
+        }
+        Relationships: []
+      }
       efi_webhook_eventos: {
         Row: {
           chave: string

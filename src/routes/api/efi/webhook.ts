@@ -32,8 +32,6 @@ type ResultadoProcessamento = {
   erros: number;
 };
 
-const NOMES_TOKEN = ["EFI_WEBHOOK_TOKEN", "EFI_WEBHOOK_SECRET", "EFI_NOTIFICATION_TOKEN"];
-
 const MAPA_STATUS: Record<string, string> = {
   new: "PENDENTE",
   waiting: "AGUARDANDO",
@@ -55,14 +53,6 @@ function json(payload: unknown, status = 200): Response {
   });
 }
 
-function tokenEsperado(): string {
-  for (const nome of NOMES_TOKEN) {
-    const bruto = process.env[nome];
-    if (typeof bruto === "string" && bruto.trim()) return bruto.trim();
-  }
-  return "";
-}
-
 function tokenRecebido(request: Request, url: URL): string {
   return (
     url.searchParams.get("token") ??
@@ -72,23 +62,6 @@ function tokenRecebido(request: Request, url: URL): string {
     request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
     ""
   );
-}
-
-/** Comparação em tempo constante (compara digests SHA-256). */
-async function tokensIguais(a: string, b: string): Promise<boolean> {
-  if (!a || !b) return false;
-  const encoder = new TextEncoder();
-  const [digestA, digestB] = await Promise.all([
-    crypto.subtle.digest("SHA-256", encoder.encode(a)),
-    crypto.subtle.digest("SHA-256", encoder.encode(b)),
-  ]);
-  const bytesA = new Uint8Array(digestA);
-  const bytesB = new Uint8Array(digestB);
-  let diferenca = 0;
-  for (let i = 0; i < bytesA.length; i += 1) {
-    diferenca |= (bytesA[i] ?? 0) ^ (bytesB[i] ?? 0);
-  }
-  return diferenca === 0;
 }
 
 async function hashChave(partes: string[]): Promise<string> {
@@ -178,19 +151,24 @@ function coletarEventos(payload: unknown): EventoNormalizado[] {
 }
 
 async function processar(request: Request, url: URL): Promise<Response> {
-  const esperado = tokenEsperado();
-  if (!esperado) {
+  const { existeTokenWebhookConfigurado, usuarioDoTokenWebhook } =
+    await import("@/lib/efi-credenciais.server");
+
+  if (!(await existeTokenWebhookConfigurado())) {
     return json(
       {
         ok: false,
-        erro: "Webhook não configurado. Defina EFI_WEBHOOK_TOKEN no ambiente do servidor.",
+        erro: "Webhook não configurado. Cadastre o token na tela de Cobranças Efí.",
       },
       503,
     );
   }
-  if (!(await tokensIguais(esperado, tokenRecebido(request, url)))) {
+
+  const autenticacao = await usuarioDoTokenWebhook(tokenRecebido(request, url));
+  if (!autenticacao.valido) {
     return json({ ok: false, erro: "Token inválido." }, 401);
   }
+  const usuarioDoToken = autenticacao.userId;
 
   let corpo: unknown;
   try {
@@ -235,12 +213,13 @@ async function processar(request: Request, url: URL): Promise<Response> {
       evento.statusOriginal.toLowerCase(),
     ]);
 
-    const { data: cobranca, error: cobrancaError } = await supabaseAdmin
+    let consulta = supabaseAdmin
       .from("cobrancas_efi")
       .select("id, user_id, titulo_id, status")
       .eq("efi_charge_id", evento.chargeId as number)
-      .is("deleted_at", null)
-      .maybeSingle();
+      .is("deleted_at", null);
+    if (usuarioDoToken) consulta = consulta.eq("user_id", usuarioDoToken);
+    const { data: cobranca, error: cobrancaError } = await consulta.maybeSingle();
 
     if (cobrancaError) {
       resultado.erros += 1;
@@ -314,12 +293,14 @@ async function processar(request: Request, url: URL): Promise<Response> {
 export const Route = createFileRoute("/api/efi/webhook")({
   server: {
     handlers: {
-      GET: async () =>
-        json({
+      GET: async () => {
+        const { existeTokenWebhookConfigurado } = await import("@/lib/efi-credenciais.server");
+        return json({
           ok: true,
           endpoint: "efi-webhook",
-          configurado: tokenEsperado() !== "",
-        }),
+          configurado: await existeTokenWebhookConfigurado(),
+        });
+      },
       POST: async ({ request }) => {
         const url = new URL(request.url);
         try {

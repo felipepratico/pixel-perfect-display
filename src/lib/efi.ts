@@ -59,6 +59,19 @@ export const assinaturaEfiSchema = z
 export type AssinaturaEfiInput = z.input<typeof assinaturaEfiSchema>;
 export type AssinaturaEfiDados = z.output<typeof assinaturaEfiSchema>;
 
+/**
+ * Credenciais cadastradas na própria tela de Cobranças Efí.
+ * Campos vazios/omitidos preservam o valor já salvo no servidor.
+ */
+export const credenciaisEfiSchema = z.object({
+  ambiente: z.enum(["HOMOLOGACAO", "PRODUCAO"]),
+  clientId: z.string().trim().max(255).optional(),
+  clientSecret: z.string().trim().max(500).optional(),
+  webhookToken: z.string().trim().max(500).optional(),
+});
+
+export type CredenciaisEfiInput = z.input<typeof credenciaisEfiSchema>;
+
 /** Ambiente da API Cobranças do Efí. */
 export type EfiAmbiente = "HOMOLOGACAO" | "PRODUCAO";
 
@@ -74,6 +87,12 @@ export type EfiDiagnostico = {
   webhookConfigurado: boolean;
   /** Caminho do endpoint que recebe as notificações da Efí. */
   webhookPath: string;
+  /** De onde vêm as credenciais em uso. */
+  origemCredenciais: "SISTEMA" | "AMBIENTE" | "NENHUMA";
+  /** Client ID mascarado (nunca o valor completo). */
+  clientIdMascarado: string;
+  /** Indica se há Client Secret salvo (o valor nunca é devolvido). */
+  clientSecretConfigurado: boolean;
 };
 
 /** Resultado do teste de conexão (autenticação OAuth2) com a Efí. */
@@ -83,6 +102,7 @@ export type ResultadoTesteEfi = {
   baseUrl: string;
   certificado: boolean;
   mensagem: string;
+  origem: "SISTEMA" | "AMBIENTE" | "NENHUMA";
 };
 
 /** Dados normalizados devolvidos pela Efí ao criar uma assinatura. */
