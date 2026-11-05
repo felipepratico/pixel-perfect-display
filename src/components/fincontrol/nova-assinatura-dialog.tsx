@@ -1,7 +1,8 @@
 import { CalendarDays, UserPlus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { valorContrato, type Cliente } from "@/lib/clientes";
 import { onlyDigits } from "@/lib/cnpj";
-import { currentMesAno, normalizeMesAno } from "@/lib/fincontrol";
+import {
+  chaveClienteDoTitulo,
+  currentMesAno,
+  normalizeMesAno,
+  type Titulo,
+} from "@/lib/fincontrol";
 
 export type NovaAssinaturaValues = {
   clienteId: string | null;
@@ -44,24 +50,53 @@ const formInicial = (): NovaAssinaturaValues => ({
 export function NovaAssinaturaDialog({
   open,
   clientes,
+  titulos,
   saving,
   onOpenChange,
   onSave,
 }: {
   open: boolean;
   clientes: Cliente[];
+  titulos: Titulo[];
   saving: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (values: NovaAssinaturaValues) => void | Promise<void>;
 }) {
   const [form, setForm] = useState<NovaAssinaturaValues>(formInicial);
   const [erro, setErro] = useState("");
+  const [somenteSemTitulo, setSomenteSemTitulo] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setForm(formInicial());
     setErro("");
+    setSomenteSemTitulo(false);
   }, [open]);
+
+  /** Mês de referência digitado no formulário (fallback: mês atual). */
+  const mesAnoReferencia = normalizeMesAno(form.mesAno) ?? currentMesAno();
+
+  /** Clientes ATIVOS sem título no mês de referência (ainda não possuem cobrança). */
+  const clientesSemTitulo = useMemo(() => {
+    const chavesComTituloNoMes = new Set(
+      titulos
+        .filter(
+          (t) => (normalizeMesAno(t.mes_ano) ?? t.mes_ano) === mesAnoReferencia,
+        )
+        .map((t) => chaveClienteDoTitulo(t, clientes)),
+    );
+    return clientes.filter((cliente) => {
+      if (cliente.status !== "ATIVO") return false;
+      const chave = chaveClienteDoTitulo(
+        { cliente_id: cliente.id, cliente: cliente.razao_social, cnpj: cliente.cnpj },
+        clientes,
+      );
+      return !chavesComTituloNoMes.has(chave);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientes, titulos, mesAnoReferencia]);
+
+  const clientesParaListar = somenteSemTitulo ? clientesSemTitulo : clientes;
 
   function update<K extends keyof NovaAssinaturaValues>(key: K, value: NovaAssinaturaValues[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -70,13 +105,33 @@ export function NovaAssinaturaDialog({
   function buscarClientePorNome(nome: string): Cliente | undefined {
     const normalizado = nome.trim().toUpperCase();
     if (!normalizado) return undefined;
-    return clientes.find((cliente) => cliente.razao_social.trim().toUpperCase() === normalizado);
+    return clientesParaListar.find(
+      (cliente) => cliente.razao_social.trim().toUpperCase() === normalizado,
+    );
   }
 
   function buscarClientePorCnpj(cnpj: string): Cliente | undefined {
     const digitos = onlyDigits(cnpj);
     if (digitos.length < 11) return undefined;
-    return clientes.find((cliente) => onlyDigits(cliente.cnpj) === digitos);
+    return clientesParaListar.find((cliente) => onlyDigits(cliente.cnpj) === digitos);
+  }
+
+  /**
+   * Auto-preenchimento: ao selecionar um cliente já cadastrado, preenche
+   * CNPJ/CPF (se houver), telefone, valor mensal (contrato) e dia de
+   * vencimento com os dados do cadastro.
+   */
+  function aplicarCliente(encontrado: Cliente, campo: "cliente" | "cnpj", valor: string) {
+    setForm((prev) => ({
+      ...prev,
+      [campo]: campo === "cliente" ? encontrado.razao_social : valor,
+      clienteId: encontrado.id,
+      cliente: encontrado.razao_social,
+      cnpj: encontrado.cnpj || prev.cnpj,
+      telefone: encontrado.telefone || prev.telefone,
+      valor: valorContrato(encontrado),
+      vencimento: encontrado.vencimento,
+    }));
   }
 
   function atualizarIdentificacao(campo: "cliente" | "cnpj", valor: string) {
@@ -158,7 +213,7 @@ export function NovaAssinaturaDialog({
                 placeholder="Digite para buscar ou cadastrar um novo cliente"
               />
               <datalist id="nova-assinatura-clientes">
-                {clientes.map((cliente) => (
+                {clientesParaListar.map((cliente) => (
                   <option key={cliente.id} value={cliente.razao_social}>
                     {cliente.cnpj
                       ? `${cliente.razao_social} — ${cliente.cnpj}`
@@ -166,9 +221,25 @@ export function NovaAssinaturaDialog({
                   </option>
                 ))}
               </datalist>
+              <label
+                htmlFor="somenteSemTitulo"
+                className="flex cursor-pointer items-center gap-2 rounded-xl border border-partner-border bg-partner-soft px-3 py-2 text-[12px] font-bold text-partner"
+              >
+                <Checkbox
+                  id="somenteSemTitulo"
+                  checked={somenteSemTitulo}
+                  onCheckedChange={(checked) => setSomenteSemTitulo(checked === true)}
+                />
+                <span>
+                  Somente “Sem título gerado” — {clientesSemTitulo.length}{" "}
+                  {clientesSemTitulo.length === 1 ? "cliente" : "clientes"} ativo(s) sem título em{" "}
+                  {mesAnoReferencia}
+                </span>
+              </label>
               <p className="text-[11px] text-muted-foreground">
-                Digite o nome ou o CNPJ para localizar um cliente já cadastrado. Se não encontrar,
-                um novo cadastro será criado.
+                {somenteSemTitulo
+                  ? "A lista mostra prioritariamente os clientes ativos que ainda não possuem cobrança no mês de referência. Ao escolher um cliente, CNPJ/CPF, mensalidade e vencimento são preenchidos a partir do cadastro."
+                  : "Digite o nome ou o CNPJ para localizar um cliente já cadastrado. Se não encontrar, um novo cadastro será criado."}
               </p>
             </div>
 

@@ -778,6 +778,7 @@ function Painel() {
       <NovaAssinaturaDialog
         open={novaAssOpen}
         clientes={clientesCadastrados}
+        titulos={todos}
         saving={saveCliente.isPending || saveTitulo.isPending}
         onOpenChange={alterarNovaAssinatura}
         onSave={onNovaAssinatura}
