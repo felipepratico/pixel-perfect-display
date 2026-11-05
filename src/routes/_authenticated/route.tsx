@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router"
 import { CloudCheck } from "lucide-react";
 
 import { AppSidebar } from "@/components/fincontrol/app-sidebar";
+import { FullscreenToggle } from "@/components/fincontrol/fullscreen-toggle";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,6 +36,9 @@ function AuthenticatedLayout() {
             </span>
             UPSYSTEM FINCONTROL
           </Link>
+          <span className="ml-auto">
+            <FullscreenToggle />
+          </span>
         </header>
         <Outlet />
       </div>

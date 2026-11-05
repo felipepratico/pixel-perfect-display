@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { FullscreenToggle } from "@/components/fincontrol/fullscreen-toggle";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -141,6 +142,7 @@ export function AppSidebar({ email }: AppSidebarProps) {
                 <PanelLeftOpen className="size-4" />
               )}
             </Button>
+            <FullscreenToggle />
           </div>
         </SidebarHeader>
 
