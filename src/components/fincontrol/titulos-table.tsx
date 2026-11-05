@@ -53,10 +53,10 @@ export function TitulosTable({
   return (
     <div className="card-panel overflow-hidden bg-white border border-border">
       <div className="scroll-slim overflow-x-auto">
-        <table className="w-full whitespace-nowrap text-left text-xs">
-          <thead className="bg-card/90 border-b border-border/60 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <table className="w-full whitespace-nowrap text-left text-sm">
+          <thead className="bg-card/90 border-b border-border/60 text-sm font-bold uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="px-3.5 py-3 text-center w-10">
+              <th className="px-4 py-4 text-center w-10">
                 <Checkbox
                   checked={todosMarcados}
                   onCheckedChange={(checked) => onToggleTodos(checked === true)}
@@ -64,18 +64,18 @@ export function TitulosTable({
                   className="rounded-full"
                 />
               </th>
-              <th className="px-3.5 py-3">CLIENTE / ASSINATURA</th>
-              <th className="px-3 py-3 text-center">SITUAÇÃO</th>
-              <th className="px-3 py-3 text-center">AÇÕES</th>
-              <th className="px-3.5 py-3">CNPJ / TELEFONE</th>
-              <th className="px-3 py-3 text-right">MENSAL SITE</th>
-              <th className="px-3 py-3 text-right">MENSAL REAL</th>
-              <th className="px-3 py-3 text-right">CUSTO BOLETO</th>
-              <th className="px-3 py-3 text-center">% FRANCISCO</th>
-              <th className="px-3 py-3 text-right">LUCRO FRANCISCO</th>
-              <th className="px-3 py-3 text-right">CUSTO (BLT X FRA)</th>
-              <th className="px-3 py-3 text-right">LUCRO FELIPE</th>
-              <th className="px-3 py-3 text-center">VENCIMENTO</th>
+              <th className="px-4 py-4">CLIENTE / ASSINATURA</th>
+              <th className="px-4 py-4 text-center">SITUAÇÃO</th>
+              <th className="px-4 py-4 text-center">AÇÕES</th>
+              <th className="px-4 py-4">CNPJ / TELEFONE</th>
+              <th className="px-4 py-4 text-right">MENSAL SITE</th>
+              <th className="px-4 py-4 text-right">MENSAL REAL</th>
+              <th className="px-4 py-4 text-right">CUSTO BOLETO</th>
+              <th className="px-4 py-4 text-center">% FRANCISCO</th>
+              <th className="px-4 py-4 text-right">LUCRO FRANCISCO</th>
+              <th className="px-4 py-4 text-right">CUSTO (BLT X FRA)</th>
+              <th className="px-4 py-4 text-right">LUCRO FELIPE</th>
+              <th className="px-4 py-4 text-center">VENCIMENTO</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
@@ -93,7 +93,7 @@ export function TitulosTable({
                       : "hover:bg-muted/40"
                   }`}
                 >
-                  <td className="px-3.5 py-2.5 text-center">
+                  <td className="px-4 py-3.5 text-center">
                     <Checkbox
                       checked={selecionados.has(titulo.id)}
                       onCheckedChange={() => onToggle(titulo.id)}
@@ -101,137 +101,139 @@ export function TitulosTable({
                       className="rounded-full"
                     />
                   </td>
-                  <td className="px-3.5 py-2.5">
-                    <div className="flex items-center gap-1.5">
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-2">
                       <p className="font-bold text-foreground tracking-tight">{titulo.cliente}</p>
                       {titulo.cliente_id && (
                         <span
                           title="Vinculado ao cadastro de clientes"
-                          className="inline-flex items-center gap-0.5 rounded-full bg-brand-soft px-1.5 py-0.2 text-[9px] font-semibold text-brand"
+                          className="inline-flex items-center gap-0.5 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand"
                         >
-                          <Link2 className="size-2.5" />
+                          <Link2 className="size-3" />
                           Cliente
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1.5 text-[10px]">
+                    <div className="mt-1 flex items-center gap-2 text-xs">
                       {titulo.tipo_cobranca === "RECORRENTE" ? (
                         <span
                           className={
                             ativa
-                              ? "inline-flex items-center gap-1 rounded bg-indigo-50 border border-indigo-500/40 px-1.5 py-0.2 text-[9px] font-semibold text-indigo-700"
-                              : "inline-flex items-center gap-1 rounded bg-destructive/20 border border-destructive/40 px-1.5 py-0.2 text-[9px] font-semibold text-destructive"
+                              ? "inline-flex items-center gap-1 rounded bg-indigo-50 border border-indigo-500/40 px-2 py-0.5 text-xs font-semibold text-indigo-700"
+                              : "inline-flex items-center gap-1 rounded bg-destructive/20 border border-destructive/40 px-2 py-0.5 text-xs font-semibold text-destructive"
                           }
                         >
                           {ativa ? "■ assinatura ativa" : "🔴 cancelada"}
                         </span>
                       ) : (
-                        <span className="rounded bg-muted/60 px-1.5 py-0.2 text-[9px] text-muted-foreground">
+                        <span className="rounded bg-muted/60 px-2 py-0.5 text-xs text-muted-foreground">
                           avulso
                         </span>
                       )}
-                      <span className="text-muted-foreground/80 font-medium">{titulo.mes_ano}</span>
+                      <span className="text-muted-foreground font-medium">{titulo.mes_ano}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2.5 text-center">
+                  <td className="px-4 py-3.5 text-center">
                     <button
                       type="button"
                       onClick={() => onAlternarSituacao(titulo)}
                       className={
                         titulo.situacao === "PAGO"
-                          ? "inline-flex items-center gap-1 rounded-full border border-emerald-600/40 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                          ? "inline-flex items-center gap-1.5 rounded-full border border-emerald-600/40 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
                           : vencido
-                          ? "inline-flex items-center gap-1 rounded-full border border-rose-600/40 bg-rose-50 px-2.5 py-1 text-[10px] font-black text-rose-700 hover:bg-rose-100 transition-colors"
-                          : "inline-flex items-center gap-1 rounded-full border border-amber-600/40 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700 hover:bg-amber-100 transition-colors"
+                            ? "inline-flex items-center gap-1.5 rounded-full border border-rose-600/40 bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-700 hover:bg-rose-100 transition-colors"
+                            : "inline-flex items-center gap-1.5 rounded-full border border-amber-600/40 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors"
                       }
                     >
                       <span
-                        className={`size-1.5 rounded-full ${
+                        className={`size-2 rounded-full ${
                           titulo.situacao === "PAGO"
                             ? "bg-emerald-600"
                             : vencido
-                            ? "bg-rose-600 animate-pulse"
-                            : "bg-amber-600"
+                              ? "bg-rose-600 animate-pulse"
+                              : "bg-amber-600"
                         }`}
                       />
                       {titulo.situacao === "PAGO"
                         ? "PAGO"
                         : vencido
-                        ? `VENCIDO (${diasAtraso}d)`
-                        : "ABERTO"}
+                          ? `VENCIDO (${diasAtraso}d)`
+                          : "ABERTO"}
                     </button>
                   </td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center justify-center gap-1">
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center justify-center gap-1.5">
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="h-6 gap-1 rounded-full border-emerald-600/40 bg-white px-2.5 text-[10px] font-bold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                        className="h-7 gap-1.5 rounded-full border-emerald-600/40 bg-white px-3 text-xs font-bold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
                         title="Cobrar no WhatsApp"
                         onClick={() => onWhatsApp(titulo)}
                       >
-                        <MessageCircle className="size-3 text-emerald-400" />
+                        <MessageCircle className="size-4 text-emerald-400" />
                         Cobrar
                       </Button>
                       <Button
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="size-6 text-muted-foreground/70 hover:text-foreground"
+                        className="size-8 text-muted-foreground/70 hover:text-foreground"
                         title="Relatório do cliente"
                         onClick={() => onRelatorio(titulo)}
                       >
-                        <FileText className="size-3.5" />
+                        <FileText className="size-4" />
                       </Button>
                       <Button
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="size-6 text-muted-foreground/70 hover:text-foreground"
+                        className="size-8 text-muted-foreground/70 hover:text-foreground"
                         title="Editar"
                         onClick={() => onEditar(titulo)}
                       >
-                        <Pencil className="size-3.5" />
+                        <Pencil className="size-4" />
                       </Button>
                       <Button
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="size-6 text-destructive/70 hover:text-destructive"
+                        className="size-8 text-destructive/70 hover:text-destructive"
                         title="Excluir"
                         onClick={() => onExcluir(titulo)}
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
                   </td>
-                  <td className="px-3.5 py-2.5">
-                    <p className="font-mono text-foreground text-[11px]">{titulo.cnpj || "—"}</p>
-                    <p className="text-[10px] text-muted-foreground/70">{titulo.telefone || "sem telefone"}</p>
+                  <td className="px-4 py-3.5">
+                    <p className="font-mono text-foreground text-sm">{titulo.cnpj || "—"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {titulo.telefone || "sem telefone"}
+                    </p>
                   </td>
-                  <td className="px-3 py-2.5 text-right font-bold text-foreground">
+                  <td className="px-4 py-3.5 text-right font-bold text-foreground">
                     {moeda(calc.mensalSite)}
                   </td>
-                  <td className="px-3 py-2.5 text-right text-muted-foreground/90 font-medium">
+                  <td className="px-4 py-3.5 text-right text-muted-foreground font-medium">
                     {moeda(calc.mensalReal)}
                   </td>
-                  <td className="px-3 py-2.5 text-right text-muted-foreground/90">
+                  <td className="px-4 py-3.5 text-right text-muted-foreground">
                     {moeda(calc.custoBoleto)}
                   </td>
-                  <td className="px-3 py-2.5 text-center text-muted-foreground/90">
+                  <td className="px-4 py-3.5 text-center text-muted-foreground">
                     {valoresVisiveis ? `${calc.franciscoPct}%` : "•••"}
                   </td>
-                  <td className="px-3 py-2.5 text-right font-semibold text-purple-400">
+                  <td className="px-4 py-3.5 text-right font-semibold text-purple-700">
                     {moeda(calc.lucroFrancisco)}
                   </td>
-                  <td className="px-3 py-2.5 text-right font-semibold text-amber-400">
+                  <td className="px-4 py-3.5 text-right font-semibold text-amber-700">
                     {moeda(calc.custoBltFra)}
                   </td>
-                  <td className="px-3 py-2.5 text-right font-bold text-emerald-400">
+                  <td className="px-4 py-3.5 text-right font-bold text-emerald-700">
                     {moeda(calc.lucroFelipe)}
                   </td>
-                  <td className="px-3 py-2.5 text-center text-muted-foreground/90 font-medium">
+                  <td className="px-4 py-3.5 text-center text-muted-foreground font-medium">
                     Dia {titulo.vencimento}
                   </td>
                 </tr>
@@ -239,27 +241,19 @@ export function TitulosTable({
             })}
           </tbody>
           {titulos.length > 0 ? (
-            <tfoot className="border-t-2 border-border/80 bg-muted/40 text-xs font-bold">
+            <tfoot className="border-t-2 border-border/80 bg-muted/40 text-sm font-bold">
               <tr>
-                <td className="p-3" colSpan={5}>
+                <td className="p-4" colSpan={5}>
                   TOTAIS (filtrados)
                 </td>
-                <td className="p-3 text-right text-sky-400">{moeda(totais.mensalSite)}</td>
-                <td className="p-3 text-right">{moeda(totais.mensalReal)}</td>
-                <td className="p-3 text-right">{moeda(totais.custoBoleto)}</td>
-                <td className="p-3 text-center text-muted-foreground">--</td>
-                <td className="p-3 text-right text-purple-400">
-                  {moeda(totais.lucroFrancisco)}
-                </td>
-                <td className="p-3 text-right text-amber-400">
-                  {moeda(totais.custoBltFra)}
-                </td>
-                <td className="p-3 text-right text-emerald-400">
-                  {moeda(totais.lucroFelipe)}
-                </td>
-                <td className="p-3 text-center">
-                  --
-                </td>
+                <td className="p-4 text-right text-sky-700">{moeda(totais.mensalSite)}</td>
+                <td className="p-4 text-right">{moeda(totais.mensalReal)}</td>
+                <td className="p-4 text-right">{moeda(totais.custoBoleto)}</td>
+                <td className="p-4 text-center text-muted-foreground">--</td>
+                <td className="p-4 text-right text-purple-700">{moeda(totais.lucroFrancisco)}</td>
+                <td className="p-4 text-right text-amber-700">{moeda(totais.custoBltFra)}</td>
+                <td className="p-4 text-right text-emerald-700">{moeda(totais.lucroFelipe)}</td>
+                <td className="p-4 text-center">--</td>
               </tr>
             </tfoot>
           ) : null}
