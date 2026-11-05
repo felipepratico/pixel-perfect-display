@@ -28,19 +28,28 @@ export function Graficos({
     .map((titulo) => {
       const calc = computeRow(titulo);
       return {
-        cliente: titulo.cliente.length > 14 ? `${titulo.cliente.slice(0, 14)}…` : titulo.cliente,
+        // nome completo para tooltip; rótulo segue truncado no eixo
+        nome: titulo.cliente,
+        cliente: titulo.cliente.length > 18 ? `${titulo.cliente.slice(0, 18)}…` : titulo.cliente,
+        cnpj: titulo.cnpj,
         "Mensal site": Number(calc.mensalSite.toFixed(2)),
         "Lucro Felipe": Number(calc.lucroFelipe.toFixed(2)),
         "Lucro Francisco": Number(calc.lucroFrancisco.toFixed(2)),
-        "Custo boleto": Number(calc.custoBoleto.toFixed(2)),
       };
     })
     .sort((a, b) => b["Mensal site"] - a["Mensal site"])
     .slice(0, 10);
 
+  const valorPago = titulos
+    .filter((t) => t.situacao === "PAGO")
+    .reduce((acc, t) => acc + computeRow(t).mensalSite, 0);
+  const valorAberto = titulos
+    .filter((t) => t.situacao === "ABERTO")
+    .reduce((acc, t) => acc + computeRow(t).mensalSite, 0);
+  const totalValor = valorPago + valorAberto;
   const situacao = [
-    { name: "PAGO", value: totais.pagos, color: "#10b981" },
-    { name: "ABERTO", value: totais.abertos, color: "#f59e0b" },
+    { name: "PAGO", value: totais.pagos, valor: valorPago, color: "#10b981" },
+    { name: "ABERTO", value: totais.abertos, valor: valorAberto, color: "#f59e0b" },
   ].filter((item) => item.value > 0);
 
   if (!valoresVisiveis) {
@@ -75,6 +84,10 @@ export function Graficos({
             Top 10 clientes
           </span>
         </div>
+        <p className="mb-2 text-[11px] text-muted-foreground">
+          Passe o mouse sobre uma barra para ver cliente, CNPJ e composição — sem custo de boleto na
+          barra principal.
+        </p>
         <div className="h-64">
           {top.length === 0 ? (
             <EmptyChart />
@@ -85,14 +98,23 @@ export function Graficos({
                   dataKey="cliente"
                   tick={{ fontSize: 9 }}
                   interval={0}
-                  angle={-20}
+                  angle={-28}
                   textAnchor="end"
-                  height={50}
+                  height={55}
                   stroke="var(--muted-foreground)"
                 />
                 <YAxis tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" />
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: number, name: string) =>
+                    name === "cliente" ? value : formatCurrency(Number(value))
+                  }
+                  labelFormatter={(_, payload) => {
+                    const registro = payload?.[0]?.payload as
+                      { nome?: string; cnpj?: string } | undefined;
+                    return registro
+                      ? `${registro.nome ?? ""}${registro.cnpj ? ` · ${registro.cnpj}` : ""}`
+                      : "";
+                  }}
                   contentStyle={{
                     backgroundColor: "#ffffff",
                     color: "#1e293b",
@@ -129,14 +151,7 @@ export function Graficos({
                   animationBegin={160}
                   animationEasing="ease-out"
                 />
-                <Bar
-                  dataKey="Custo boleto"
-                  fill="#f59e0b"
-                  radius={[4, 4, 0, 0]}
-                  animationDuration={800}
-                  animationBegin={240}
-                  animationEasing="ease-out"
-                />
+                {/* Custo boleto: valores muito baixos. Aparece apenas no total dos cards e no tooltip. */}
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -152,46 +167,61 @@ export function Graficos({
           <h2 className="text-sm font-bold text-foreground">Situação das cobranças</h2>
           <Clock className="size-4 text-muted-foreground/80" />
         </div>
-        <div className="h-48 flex-1">
+        <div className="relative h-48 flex-1">
           {situacao.length === 0 ? (
             <EmptyChart />
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={situacao}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={46}
-                  outerRadius={72}
-                  paddingAngle={3}
-                  stroke="none"
-                  animationDuration={800}
-                  animationEasing="ease-out"
-                >
-                  {situacao.map((item) => (
-                    <Cell key={item.name} fill={item.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#ffffff",
-                    color: "#1e293b",
-                    borderColor: "#d3dfee",
-                    borderRadius: 10,
-                    fontSize: 12,
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={situacao}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={46}
+                    outerRadius={72}
+                    paddingAngle={3}
+                    stroke="none"
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  >
+                    {situacao.map((item) => (
+                      <Cell key={item.name} fill={item.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, name: string) => {
+                      const item = situacao.find((s) => s.name === name);
+                      return [`${value} faturas · ${formatCurrency(item?.valor ?? 0)}`, name];
+                    }}
+                    contentStyle={{
+                      backgroundColor: "#ffffff",
+                      color: "#1e293b",
+                      borderColor: "#d3dfee",
+                      borderRadius: 10,
+                      fontSize: 12,
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              {/* Valor monetário no centro do donut */}
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-base font-black tracking-tight text-foreground">
+                  {formatCurrency(totalValor)}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  total a receber
+                </span>
+              </div>
+            </>
           )}
         </div>
         <div className="grid grid-cols-2 gap-2 border-t border-border/50 pt-3 text-center text-xs">
           <div className="rounded-lg border border-emerald-500/40 bg-emerald-50 py-1.5 font-bold text-emerald-700">
-            {totais.pagos} pagos
+            {totais.pagos} pagos · {formatCurrency(valorPago)}
           </div>
           <div className="rounded-lg border border-amber-500/40 bg-amber-50 py-1.5 font-bold text-amber-700">
-            {totais.abertos} abertos
+            {totais.abertos} abertos · {formatCurrency(valorAberto)}
           </div>
         </div>
       </div>

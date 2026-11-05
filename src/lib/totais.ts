@@ -1,4 +1,4 @@
-import { computeRow, isActiveSubscription, type Titulo } from "@/lib/fincontrol";
+import { computeRow, isActiveSubscription, isTituloVencido, type Titulo } from "@/lib/fincontrol";
 
 export type Totais = {
   quantidade: number;
@@ -10,7 +10,10 @@ export type Totais = {
   lucroFelipe: number;
   pagos: number;
   abertos: number;
+  vencidos: number;
+  valorVencido: number;
   assinaturasAtivas: number;
+  assinaturasCanceladas: number;
   mrr: number;
 };
 
@@ -25,7 +28,10 @@ export function calcularTotais(titulos: Titulo[], todos: Titulo[]): Totais {
     lucroFelipe: 0,
     pagos: 0,
     abertos: 0,
+    vencidos: 0,
+    valorVencido: 0,
     assinaturasAtivas: 0,
+    assinaturasCanceladas: 0,
     mrr: 0,
   };
 
@@ -37,17 +43,32 @@ export function calcularTotais(titulos: Titulo[], todos: Titulo[]): Totais {
     totais.lucroFrancisco += calc.lucroFrancisco;
     totais.custoBltFra += calc.custoBltFra;
     totais.lucroFelipe += calc.lucroFelipe;
-    if (titulo.situacao === "PAGO") totais.pagos += 1;
-    else totais.abertos += 1;
+    if (titulo.situacao === "PAGO") {
+      totais.pagos += 1;
+    } else {
+      totais.abertos += 1;
+      if (isTituloVencido(titulo)) {
+        totais.vencidos += 1;
+        totais.valorVencido += calc.mensalSite;
+      }
+    }
   }
 
   // MRR is a portfolio metric: one value per active client, ignoring filters.
   const porCliente = new Map<string, number>();
+  const cancelados = new Set<string>();
   for (const titulo of todos) {
-    if (!isActiveSubscription(titulo)) continue;
-    porCliente.set(titulo.cliente, computeRow(titulo).mensalSite);
+    if (titulo.tipo_cobranca !== "RECORRENTE") continue;
+    const chave = titulo.cliente_id ?? titulo.cliente;
+    if (isActiveSubscription(titulo)) {
+      porCliente.set(chave, computeRow(titulo).mensalSite);
+      cancelados.delete(chave);
+    } else if (chave) {
+      cancelados.add(chave);
+    }
   }
   totais.assinaturasAtivas = porCliente.size;
+  totais.assinaturasCanceladas = [...cancelados].filter((chave) => !porCliente.has(chave)).length;
   totais.mrr = [...porCliente.values()].reduce((sum, value) => sum + value, 0);
 
   return totais;

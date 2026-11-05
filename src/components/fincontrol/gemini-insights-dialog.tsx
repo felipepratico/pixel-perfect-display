@@ -1,6 +1,7 @@
 import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
+  FileText,
   Bot,
   CheckCircle2,
   Copy,
@@ -31,9 +32,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import type { DiagnosticoGemini, MensagemCobrancaGemini, TituloResumo, TomCobranca } from "@/lib/gemini";
+import type {
+  DiagnosticoGemini,
+  MensagemCobrancaGemini,
+  TituloResumo,
+  TomCobranca,
+} from "@/lib/gemini";
 import { analisarFinanceiroGemini, gerarCobrancaGemini } from "@/lib/gemini.functions";
-import { formatCurrency, normalizePhone, type Titulo } from "@/lib/fincontrol";
+import {
+  calcularHistoricoPagamentos,
+  formatCurrency,
+  gerarResumoFinanceiro,
+  normalizePhone,
+  type Titulo,
+} from "@/lib/fincontrol";
 
 const STORAGE_GEMINI_KEY = "fincontrol_gemini_api_key";
 
@@ -43,6 +55,7 @@ export function GeminiInsightsDialog({
   titulosVencidos,
   totalAberto,
   totalPago,
+  todosTitulos = [],
   onCobrarWhatsapp,
 }: {
   open: boolean;
@@ -50,6 +63,7 @@ export function GeminiInsightsDialog({
   titulosVencidos: (Titulo & { diasAtraso: number })[];
   totalAberto: number;
   totalPago: number;
+  todosTitulos?: Titulo[];
   onCobrarWhatsapp?: (titulo: Titulo) => void;
 }) {
   const analisar = useServerFn(analisarFinanceiroGemini);
@@ -59,6 +73,42 @@ export function GeminiInsightsDialog({
   const [activeTab, setActiveTab] = useState("diagnostico");
   const [carregandoAnalise, setCarregandoAnalise] = useState(false);
   const [analise, setAnalise] = useState<DiagnosticoGemini | null>(null);
+
+  // Resumo / previsão: análise local + histórico para fluxo de caixa
+  const resumo = gerarResumoFinanceiro(todosTitulos, todosTitulos);
+  const historico = calcularHistoricoPagamentos(todosTitulos);
+
+  function textoResumo() {
+    return (
+      `Resumo de Desempenho — ${currentMesAno()}\n` +
+      `Assinaturas ativas: ${resumo.assinaturasAtivas} · MRR ${formatCurrency(resumo.mrr)}/mês (ARPU ${formatCurrency(resumo.arpu)})\n` +
+      `Lucro Felipe ${formatCurrency(resumo.lucroFelipe)} (mensal ${formatCurrency(resumo.mensalSite)}) · Francisco ${formatCurrency(resumo.lucroFrancisco)}\n` +
+      `Pagos ${resumo.pagos} · Abertos ${resumo.abertos} · Vencidos ${resumo.vencidos} (${resumo.taxaInadimplencia.toFixed(1)}%)\n` +
+      `LTV médio ${formatCurrency(resumo.ltvMedio)} · Churn ${resumo.churnRate.toFixed(1)}%`
+    );
+  }
+
+  function gerarResumoPdf() {
+    // Imprime o resumo consolidado em janela de impressão
+    const janela = window.open("", "_blank");
+    if (!janela) {
+      toast.error("Permita pop-ups para gerar o PDF.");
+      return;
+    }
+    janela.document.write(
+      `<pre style="font-family:system-ui;white-space:pre-wrap;padding:24px">${textoResumo()}</pre>`,
+    );
+    janela.document.close();
+    janela.focus();
+    janela.onload = () => {
+      janela.print();
+    };
+  }
+
+  function gerarMensagemResumoWhatsapp() {
+    void navigator.clipboard.writeText(textoResumo());
+    toast.success("Resumo copiado para a área de transferência!");
+  }
 
   // Cobrança IA state
   const [clienteSelecionadoId, setClienteSelecionadoId] = useState<string>("");
@@ -189,7 +239,8 @@ export function GeminiInsightsDialog({
                     UPSYSTEM AI com Google Gemini
                   </DialogTitle>
                   <DialogDescription className="text-xs">
-                    Inteligência artificial para recuperação de boletos vencidos, análise de risco e negociação humana.
+                    Inteligência artificial para recuperação de boletos vencidos, análise de risco e
+                    negociação humana.
                   </DialogDescription>
                 </div>
               </div>
@@ -224,7 +275,8 @@ export function GeminiInsightsDialog({
                 <div>
                   <h3 className="font-extrabold text-sm">Raio-X de Inadimplência e Caixa</h3>
                   <p className="text-xs text-muted-foreground">
-                    Análise heurística e neural com base nos {titulosVencidos.length} títulos vencidos detectados.
+                    Análise heurística e neural com base nos {titulosVencidos.length} títulos
+                    vencidos detectados.
                   </p>
                 </div>
                 <Button
@@ -242,7 +294,9 @@ export function GeminiInsightsDialog({
               {carregandoAnalise ? (
                 <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                   <Loader2 className="size-8 animate-spin text-brand" />
-                  <p className="mt-3 text-sm font-semibold">O Gemini está analisando sua carteira...</p>
+                  <p className="mt-3 text-sm font-semibold">
+                    O Gemini está analisando sua carteira...
+                  </p>
                 </div>
               ) : analise ? (
                 <div className="space-y-4">
@@ -254,19 +308,25 @@ export function GeminiInsightsDialog({
                       </p>
                     </div>
                     <div className="rounded-xl border bg-muted/40 p-3.5">
-                      <p className="text-xs text-muted-foreground font-semibold">Taxa de Inadimplência</p>
-                      <p className="mt-1 text-2xl font-black text-warning">{analise.indiceInadimplencia}</p>
+                      <p className="text-xs text-muted-foreground font-semibold">
+                        Taxa de Inadimplência
+                      </p>
+                      <p className="mt-1 text-2xl font-black text-warning">
+                        {analise.indiceInadimplencia}
+                      </p>
                     </div>
                     <div className="rounded-xl border bg-muted/40 p-3.5">
-                      <p className="text-xs text-muted-foreground font-semibold">Nível de Risco Operacional</p>
+                      <p className="text-xs text-muted-foreground font-semibold">
+                        Nível de Risco Operacional
+                      </p>
                       <Badge
                         variant="outline"
                         className={`mt-2 font-bold ${
                           analise.nivelRisco === "CRÍTICO"
                             ? "border-destructive text-destructive bg-destructive/10"
                             : analise.nivelRisco === "MODERADO"
-                            ? "border-warning text-warning bg-warning/10"
-                            : "border-brand text-brand bg-brand/10"
+                              ? "border-warning text-warning bg-warning/10"
+                              : "border-brand text-brand bg-brand/10"
                         }`}
                       >
                         {analise.nivelRisco}
@@ -314,8 +374,14 @@ export function GeminiInsightsDialog({
                             <div>
                               <p className="font-extrabold text-sm">{item.cliente}</p>
                               <p className="text-muted-foreground mt-0.5">
-                                Atraso: <span className="font-bold text-destructive">{item.diasAtraso} dias</span> ·
-                                Valor: <span className="font-bold text-foreground">{formatCurrency(item.valor)}</span>
+                                Atraso:{" "}
+                                <span className="font-bold text-destructive">
+                                  {item.diasAtraso} dias
+                                </span>{" "}
+                                · Valor:{" "}
+                                <span className="font-bold text-foreground">
+                                  {formatCurrency(item.valor)}
+                                </span>
                               </p>
                               <p className="text-[11px] text-brand font-medium mt-1">
                                 💡 Estratégia: {item.recomendacaoAcao}
@@ -349,9 +415,12 @@ export function GeminiInsightsDialog({
             {/* TAB 2: GERADOR DE MENSAGENS COM IA */}
             <TabsContent value="gerador" className="space-y-4">
               <div>
-                <h3 className="font-extrabold text-sm">Gerador de Mensagem Personalizada com Gemini</h3>
+                <h3 className="font-extrabold text-sm">
+                  Gerador de Mensagem Personalizada com Gemini
+                </h3>
                 <p className="text-xs text-muted-foreground">
-                  A IA redige o texto persuasivo ideal para WhatsApp e e-mail com base no tempo de atraso e tom desejado.
+                  A IA redige o texto persuasivo ideal para WhatsApp e e-mail com base no tempo de
+                  atraso e tom desejado.
                 </p>
               </div>
 
@@ -417,8 +486,8 @@ export function GeminiInsightsDialog({
               {selectedTitulo && (
                 <div className="flex flex-wrap items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs">
                   <span className="text-muted-foreground">
-                    Telefone: <strong>{selectedTitulo.telefone || "Não cadastrado"}</strong> · Vencimento:{" "}
-                    <strong>Dia {selectedTitulo.vencimento}</strong>
+                    Telefone: <strong>{selectedTitulo.telefone || "Não cadastrado"}</strong> ·
+                    Vencimento: <strong>Dia {selectedTitulo.vencimento}</strong>
                   </span>
                   <span className="font-bold text-destructive">
                     {selectedTitulo.diasAtraso} dia(s) em atraso
@@ -494,7 +563,8 @@ export function GeminiInsightsDialog({
               <div>
                 <h3 className="font-extrabold text-sm">Chave de API do Google Gemini</h3>
                 <p className="text-xs text-muted-foreground">
-                  Você pode obter uma chave gratuita no Google AI Studio para usufruir de velocidade máxima e respostas neurais ao vivo.
+                  Você pode obter uma chave gratuita no Google AI Studio para usufruir de velocidade
+                  máxima e respostas neurais ao vivo.
                 </p>
               </div>
 
@@ -516,20 +586,29 @@ export function GeminiInsightsDialog({
                   </Button>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  A chave fica salva com segurança no seu navegador e é transmitida apenas via funções de servidor com criptografia TLS.
+                  A chave fica salva com segurança no seu navegador e é transmitida apenas via
+                  funções de servidor com criptografia TLS.
                 </p>
               </div>
 
               <div className="rounded-xl border border-brand/20 bg-brand/5 p-4 text-xs space-y-2">
                 <p className="font-bold text-foreground">Como obter sua chave gratuita:</p>
                 <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                  <li>Acesse o <strong>Google AI Studio</strong>.</li>
-                  <li>Clique no botão <strong>"Get API key"</strong> no menu lateral.</li>
+                  <li>
+                    Acesse o <strong>Google AI Studio</strong>.
+                  </li>
+                  <li>
+                    Clique no botão <strong>"Get API key"</strong> no menu lateral.
+                  </li>
                   <li>Crie uma nova chave e cole-a no campo acima.</li>
                 </ol>
                 <div className="pt-2">
                   <Button size="sm" variant="outline" asChild className="gap-1.5 text-xs">
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       <ExternalLink className="size-3.5" />
                       Abrir Google AI Studio
                     </a>

@@ -16,6 +16,7 @@ import {
   computeRow,
   formatCurrency,
   getDiasVencido,
+  getVencimentoDate,
   isActiveSubscription,
   isTituloVencido,
   type Titulo,
@@ -66,6 +67,7 @@ export function TitulosTable({
               </th>
               <th className="px-4 py-4">CLIENTE / ASSINATURA</th>
               <th className="px-4 py-4 text-center">SITUAÇÃO</th>
+              <th className="px-4 py-4 text-center">VENCIMENTO</th>
               <th className="px-4 py-4 text-center">AÇÕES</th>
               <th className="px-4 py-4">CNPJ / TELEFONE</th>
               <th className="px-4 py-4 text-right">MENSAL SITE</th>
@@ -75,7 +77,6 @@ export function TitulosTable({
               <th className="px-4 py-4 text-right">LUCRO FRANCISCO</th>
               <th className="px-4 py-4 text-right">CUSTO (BLT X FRA)</th>
               <th className="px-4 py-4 text-right">LUCRO FELIPE</th>
-              <th className="px-4 py-4 text-center">VENCIMENTO</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
@@ -84,6 +85,10 @@ export function TitulosTable({
               const ativa = isActiveSubscription(titulo);
               const vencido = isTituloVencido(titulo);
               const diasAtraso = vencido ? getDiasVencido(titulo) : 0;
+              const dataVencimento = getVencimentoDate(titulo);
+              const dataVencimentoFmt = dataVencimento
+                ? dataVencimento.toLocaleDateString("pt-BR")
+                : "—";
               return (
                 <tr
                   key={titulo.id}
@@ -161,6 +166,17 @@ export function TitulosTable({
                           : "ABERTO"}
                     </button>
                   </td>
+                  <td className="px-4 py-3.5 text-center">
+                    <p
+                      className={`text-sm font-bold ${vencido ? "text-destructive" : "text-foreground"}`}
+                    >
+                      {dataVencimentoFmt}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Dia {titulo.vencimento}
+                      {vencido && diasAtraso ? ` · ${diasAtraso}d atrás` : ""}
+                    </p>
+                  </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-center gap-1.5">
                       <Button
@@ -233,9 +249,6 @@ export function TitulosTable({
                   <td className="px-4 py-3.5 text-right font-bold text-emerald-700">
                     {moeda(calc.lucroFelipe)}
                   </td>
-                  <td className="px-4 py-3.5 text-center text-muted-foreground font-medium">
-                    Dia {titulo.vencimento}
-                  </td>
                 </tr>
               );
             })}
@@ -243,9 +256,11 @@ export function TitulosTable({
           {titulos.length > 0 ? (
             <tfoot className="border-t-2 border-border/80 bg-muted/40 text-sm font-bold">
               <tr>
-                <td className="p-4" colSpan={5}>
+                <td className="p-4" colSpan={3}>
                   TOTAIS (filtrados)
                 </td>
+                <td className="p-4 text-center text-muted-foreground">--</td>
+                <td className="p-4 text-center text-muted-foreground">--</td>
                 <td className="p-4 text-right text-sky-700">{moeda(totais.mensalSite)}</td>
                 <td className="p-4 text-right">{moeda(totais.mensalReal)}</td>
                 <td className="p-4 text-right">{moeda(totais.custoBoleto)}</td>
@@ -253,7 +268,6 @@ export function TitulosTable({
                 <td className="p-4 text-right text-purple-700">{moeda(totais.lucroFrancisco)}</td>
                 <td className="p-4 text-right text-amber-700">{moeda(totais.custoBltFra)}</td>
                 <td className="p-4 text-right text-emerald-700">{moeda(totais.lucroFelipe)}</td>
-                <td className="p-4 text-center">--</td>
               </tr>
             </tfoot>
           ) : null}

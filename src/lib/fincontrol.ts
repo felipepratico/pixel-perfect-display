@@ -23,7 +23,10 @@ export type Titulo = {
   efi_linha_digitavel: string;
 };
 
-export type TituloInput = Omit<Titulo, "id" | "deleted_at" | "efi_status" | "efi_link_pagamento" | "efi_linha_digitavel">;
+export type TituloInput = Omit<
+  Titulo,
+  "id" | "deleted_at" | "efi_status" | "efi_link_pagamento" | "efi_linha_digitavel"
+>;
 
 /** Accepts "R$ 1.234,56", "1234.56", 1234.56, "10%" and returns a number. */
 export function parseNumber(value: unknown): number {
@@ -192,6 +195,8 @@ export function isTituloVencido(t: Pick<Titulo, "situacao" | "vencimento" | "mes
   return Date.now() > dueDate.getTime();
 }
 
+// (ResumoFinanceiro / gerarResumoFinanceiro estão definidos abaixo de calcularLtv.)
+
 /** Título em aberto com vencimento hoje ou em data futura (dia ainda não ultrapassado). */
 export function isTituloAVencer(t: Pick<Titulo, "situacao" | "vencimento" | "mes_ano">): boolean {
   if (t.situacao === "PAGO") return false;
@@ -206,6 +211,175 @@ export function getDiasVencido(t: Pick<Titulo, "situacao" | "vencimento" | "mes_
   const diffMs = Date.now() - dueDate.getTime();
   if (diffMs <= 0) return 0;
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
+
+export type HistoricoPagamento = {
+  /** Média de dias de atraso por cliente (títulos pagos após o vencimento). */
+  diasAtrasoMedios: Map<string, number>;
+  /** Taxa histórica de sucesso (pagos / total de parcelas). */
+  taxaSucesso: Map<string, number>;
+  /** Receita acumulada por cliente (só pagamentos concluídos). */
+  receitaAcumulada: Map<string, number>;
+};
+
+/**
+ * Histórico por cliente para previsão de fluxo de caixa e LTV.
+ * Sem coluna de data de pagamento, usa a própria situação e o vencimento
+ * como aproximação de hábito de atraso.
+ */
+export function calcularHistoricoPagamentos(
+  todos: Titulo[],
+  clientes: { id: string; cnpj: string; razao_social: string }[] = [],
+): HistoricoPagamento {
+  const atrasos = new Map<string, number[]>();
+  const taxa = new Map<string, { pagos: number; total: number }>();
+  const receitaAcumulada = new Map<string, number>();
+
+  for (const titulo of todos) {
+    const chave = chaveClienteDoTitulo(titulo, clientes);
+    const registro = taxa.get(chave) ?? { pagos: 0, total: 0 };
+    registro.total += 1;
+    if (titulo.situacao === "PAGO") {
+      registro.pagos += 1;
+      const valor = computeRow(titulo).mensalSite;
+      receitaAcumulada.set(chave, (receitaAcumulada.get(chave) ?? 0) + valor);
+    }
+    taxa.set(chave, registro);
+
+    // Atraso histórico: só títulos que ficaram vencidos e foram pagos depois.
+    // Como o schema não guarda `pago_em`, aproximamos pelo atraso atual
+    // dos vencidos em aberto.
+    if (isTituloVencido(titulo)) {
+      const dias = getDiasVencido(titulo);
+      const lista = atrasos.get(chave) ?? [];
+      lista.push(dias);
+      atrasos.set(chave, lista);
+    }
+  }
+
+  const diasAtrasoMedios = new Map<string, number>();
+  for (const [chave, lista] of atrasos) {
+    diasAtrasoMedios.set(
+      chave,
+      lista.length > 0 ? lista.reduce((acc, v) => acc + v, 0) / lista.length : 0,
+    );
+  }
+
+  const taxaSucesso = new Map<string, number>();
+  for (const [chave, { pagos, total }] of taxa) {
+    taxaSucesso.set(chave, total > 0 ? pagos / total : 0);
+  }
+
+  return { diasAtrasoMedios, taxaSucesso, receitaAcumulada };
+}
+
+export type LtvCliente = {
+  cliente: string;
+  totalReceita: number;
+  parcelasPagas: number;
+  valorMedioPorParcela: number;
+  ltv: number;
+};
+
+export function calcularLtv(todos: Titulo[]): LtvCliente[] {
+  const porCliente = new Map<string, Titulo[]>();
+  for (const titulo of todos) {
+    const lista = porCliente.get(titulo.cliente) ?? [];
+    lista.push(titulo);
+    porCliente.set(titulo.cliente, lista);
+  }
+
+  const resultado: LtvCliente[] = [];
+  for (const [cliente, titulos] of porCliente) {
+    const pagos = titulos.filter((t) => t.situacao === "PAGO");
+    if (pagos.length === 0) continue;
+    const totalReceita = pagos.reduce((acc, t) => acc + computeRow(t).mensalSite, 0);
+    resultado.push({
+      cliente,
+      totalReceita,
+      parcelasPagas: pagos.length,
+      valorMedioPorParcela: totalReceita / pagos.length,
+      ltv: totalReceita,
+    });
+  }
+  return resultado.sort((a, b) => b.ltv - a.ltv);
+}
+
+export type ResumoFinanceiro = {
+  mensalSite: number;
+  lucroFelipe: number;
+  lucroFrancisco: number;
+  custoBoleto: number;
+  custoBltFra: number;
+  pagos: number;
+  abertos: number;
+  vencidos: number;
+  taxaInadimplencia: number;
+  arpu: number;
+  churnRate: number;
+  ltvMedio: number;
+  mrr: number;
+  assinaturasAtivas: number;
+};
+
+export function gerarResumoFinanceiro(titulos: Titulo[], todos: Titulo[]): ResumoFinanceiro {
+  const calc = (lista: Titulo[]) => {
+    let mensalSite = 0;
+    let lucroFelipe = 0;
+    let lucroFrancisco = 0;
+    let custoBoleto = 0;
+    let custoBltFra = 0;
+    for (const t of lista) {
+      const row = computeRow(t);
+      mensalSite += row.mensalSite;
+      lucroFelipe += row.lucroFelipe;
+      lucroFrancisco += row.lucroFrancisco;
+      custoBoleto += row.custoBoleto;
+      custoBltFra += row.custoBltFra;
+    }
+    return { mensalSite, lucroFelipe, lucroFrancisco, custoBoleto, custoBltFra };
+  };
+
+  const t = calc(titulos);
+  const pagos = titulos.filter((x) => x.situacao === "PAGO").length;
+  const abertos = titulos.filter((x) => x.situacao === "ABERTO").length;
+  const vencidos = titulos.filter((x) => isTituloVencido(x)).length;
+  const taxaInadimplencia = titulos.length > 0 ? (vencidos / titulos.length) * 100 : 0;
+
+  const porCliente = new Map<string, number>();
+  for (const titulo of todos) {
+    if (!isActiveSubscription(titulo)) continue;
+    porCliente.set(titulo.cliente, computeRow(titulo).mensalSite);
+  }
+  const mrr = [...porCliente.values()].reduce((acc, v) => acc + v, 0);
+  const assinaturasAtivas = porCliente.size;
+  const arpu = assinaturasAtivas > 0 ? mrr / assinaturasAtivas : 0;
+
+  const canceladas = new Set<string>();
+  for (const titulo of todos) {
+    if (titulo.tipo_cobranca !== "RECORRENTE") continue;
+    const chave = titulo.cliente_id ?? titulo.cliente;
+    if (!isActiveSubscription(titulo)) canceladas.add(chave);
+  }
+  const canceladasUnicas = [...canceladas].filter((c) => !porCliente.has(c)).length;
+  const totalAssinaturas = assinaturasAtivas + canceladasUnicas;
+  const churnRate = totalAssinaturas > 0 ? (canceladasUnicas / totalAssinaturas) * 100 : 0;
+
+  const ltv = calcularLtv(todos);
+  const ltvMedio = ltv.length > 0 ? ltv.reduce((acc, x) => acc + x.ltv, 0) / ltv.length : 0;
+
+  return {
+    ...t,
+    pagos,
+    abertos,
+    vencidos,
+    taxaInadimplencia,
+    arpu,
+    churnRate,
+    ltvMedio,
+    mrr,
+    assinaturasAtivas,
+  };
 }
 
 export const emptyTitulo = (): TituloInput => ({

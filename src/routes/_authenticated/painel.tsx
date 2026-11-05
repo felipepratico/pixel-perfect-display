@@ -538,7 +538,21 @@ function Painel() {
         ) : (
           <>
             {/* 1. Cartões de KPI */}
-            <KpiCards totais={totais} valoresVisiveis={valoresVisiveis} />
+            <KpiCards
+              totais={totais}
+              valoresVisiveis={valoresVisiveis}
+              onCobrarVencidos={() => {
+                const vencidos = clientesVisiveis.filter((t) => isTituloVencido(t));
+                if (!vencidos.length) {
+                  toast.info("Nenhum título vencido no período atual.");
+                  return;
+                }
+                setSelecionados(new Set(vencidos.map((t) => t.id)));
+                toast.success(
+                  `${vencidos.length} vencido(s) selecionado(s). Use "Cobrar no WhatsApp".`,
+                );
+              }}
+            />
 
             {/* 2. Gráficos */}
             <Graficos
@@ -623,6 +637,52 @@ function Painel() {
                   <Trash2 className="size-3.5" />
                   Excluir
                 </Button>
+                <span className="ml-auto flex flex-wrap items-center gap-1.5">
+                  <select
+                    className="h-7 rounded-md border border-border bg-card px-2 text-xs font-semibold"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const dia = Number(e.target.value);
+                      if (!Number.isFinite(dia) || dia < 1) return;
+                      patchMany.mutate(
+                        { ids, values: { vencimento: dia } },
+                        {
+                          onSuccess: () => toast.success(`Vencimento atualizado para dia ${dia}.`),
+                          onError: erro,
+                        },
+                      );
+                    }}
+                    aria-label="Alterar vencimento em lote"
+                  >
+                    <option value="">Alterar vencimento…</option>
+                    {[5, 10, 15, 20, 25, 30].map((d) => (
+                      <option key={d} value={d}>
+                        Dia {d}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    disabled={!valoresVisiveis}
+                    onClick={() =>
+                      exportTitulos(clientesVisiveis.filter((t) => selecionados.has(t.id)))
+                    }
+                  >
+                    <Download className="size-3.5" />
+                    Exportar seleção
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => setLoteOpen(true)}
+                  >
+                    <CloudCheck className="size-3.5" />
+                    Gerar boletos (lote)
+                  </Button>
+                </span>
               </div>
             )}
 
