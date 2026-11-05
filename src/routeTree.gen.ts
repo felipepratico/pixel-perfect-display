@@ -18,6 +18,7 @@ import { Route as AuthenticatedCobrancasEfiRouteImport } from './routes/_authent
 import { Route as AuthenticatedMonitoramentoRouteImport } from './routes/_authenticated/monitoramento'
 import { Route as AuthenticatedOperacaoRouteImport } from './routes/_authenticated/operacao'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as ApiEfiWebhookRouteImport } from './routes/api/efi/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -65,6 +66,11 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiEfiWebhookRoute = ApiEfiWebhookRouteImport.update({
+  id: '/api/efi/webhook',
+  path: '/api/efi/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/monitoramento': typeof AuthenticatedMonitoramentoRoute
   '/operacao': typeof AuthenticatedOperacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/api/efi/webhook': typeof ApiEfiWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/monitoramento': typeof AuthenticatedMonitoramentoRoute
   '/operacao': typeof AuthenticatedOperacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/api/efi/webhook': typeof ApiEfiWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/_authenticated/monitoramento': typeof AuthenticatedMonitoramentoRoute
   '/_authenticated/operacao': typeof AuthenticatedOperacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/api/efi/webhook': typeof ApiEfiWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/monitoramento'
     | '/operacao'
     | '/painel'
+    | '/api/efi/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/monitoramento'
     | '/operacao'
     | '/painel'
+    | '/api/efi/webhook'
   id:
     | '__root__'
     | '/'
@@ -130,12 +141,14 @@ export interface FileRouteTypes {
     | '/_authenticated/monitoramento'
     | '/_authenticated/operacao'
     | '/_authenticated/painel'
+    | '/api/efi/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiEfiWebhookRoute: typeof ApiEfiWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -203,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/efi/webhook': {
+      id: '/api/efi/webhook'
+      path: '/api/efi/webhook'
+      fullPath: '/api/efi/webhook'
+      preLoaderRoute: typeof ApiEfiWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -231,6 +251,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiEfiWebhookRoute: ApiEfiWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

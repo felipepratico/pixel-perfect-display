@@ -57,6 +57,14 @@ export const statusEfi = createServerFn({ method: "GET" })
     return diagnosticoEfi();
   });
 
+/** Testa de verdade a autenticação OAuth2 com a Efí (sem emitir cobranças). */
+export const testarConexaoEfi = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { testarConexaoEfi: testar } = await import("@/lib/efi-api.server");
+    return testar();
+  });
+
 export const emitirAssinaturaEfi = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => assinaturaEfiSchema.parse(input))

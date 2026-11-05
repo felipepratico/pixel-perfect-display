@@ -9,7 +9,12 @@
  * Este módulo nunca é importado pelo browser: apenas por server functions.
  */
 
-import type { EfiAmbiente, EfiDiagnostico, ResultadoAssinaturaEfi } from "@/lib/efi";
+import type {
+  EfiAmbiente,
+  EfiDiagnostico,
+  ResultadoAssinaturaEfi,
+  ResultadoTesteEfi,
+} from "@/lib/efi";
 
 /** URLs da API de Cobranças por ambiente (confirmado na documentação oficial). */
 const EFI_URLS: Record<EfiAmbiente, string> = {
@@ -141,7 +146,58 @@ export function diagnosticoEfi(): EfiDiagnostico {
     credenciaisConfiguradas: faltando.length === 0,
     certificadoConfigurado: credenciais.fetchSeguro !== null,
     faltando,
+    webhookConfigurado: tokenWebhook() !== "",
+    webhookPath: CAMINHO_WEBHOOK,
   };
+}
+
+/** Caminho público que recebe as notificações da Efí. */
+export const CAMINHO_WEBHOOK = "/api/efi/webhook";
+
+const NOMES_TOKEN_WEBHOOK = ["EFI_WEBHOOK_TOKEN", "EFI_WEBHOOK_SECRET", "EFI_NOTIFICATION_TOKEN"];
+
+/** Token compartilhado com a Efí para validar a origem das notificações. */
+export function tokenWebhook(): string {
+  return valor(...NOMES_TOKEN_WEBHOOK);
+}
+
+/**
+ * Testa a conexão real com a API de Cobranças autenticando via OAuth2.
+ * Nunca lança: devolve o resultado traduzido para a interface.
+ */
+export async function testarConexaoEfi(): Promise<ResultadoTesteEfi> {
+  const credenciais = lerCredenciais();
+  const base = {
+    ambiente: credenciais.ambiente,
+    baseUrl: credenciais.baseUrl,
+    certificado: credenciais.fetchSeguro !== null,
+  };
+  if (!credenciais.clientId || !credenciais.clientSecret) {
+    return {
+      ...base,
+      ok: false,
+      mensagem: credenciais.sandbox
+        ? "Credenciais de homologação ausentes. Defina EFI_CLIENT_ID e EFI_CLIENT_SECRET (ou as variantes _HOMOLOGACAO)."
+        : "Credenciais de produção ausentes. Defina EFI_CLIENT_ID e EFI_CLIENT_SECRET (ou as variantes _PRODUCAO).",
+    };
+  }
+  try {
+    await autenticarEfi(credenciais);
+    return {
+      ...base,
+      ok: true,
+      mensagem: `Conexão autenticada com a Efí em ${credenciais.sandbox ? "homologação" : "produção"}.`,
+    };
+  } catch (erro) {
+    return {
+      ...base,
+      ok: false,
+      mensagem:
+        erro instanceof ErroEfi
+          ? erro.message
+          : "Não foi possível autenticar na Efí. Confira as credenciais configuradas.",
+    };
+  }
 }
 
 export type TipoErroEfi = "credenciais" | "certificado" | "validacao" | "comunicacao" | "incerto";
@@ -333,6 +389,24 @@ export async function autenticarEfi(credenciais: CredenciaisEfi): Promise<string
   const token = texto(corpo["access_token"]);
   if (!resposta.ok || !token) throw erroDeResposta(resposta, "autenticacao");
   return token;
+}
+
+/** Consulta o detalhe de uma notificação (formato clássico `{"notification": "..."}`). */
+export async function consultarNotificacaoEfi(
+  tokenNotificacao: string,
+): Promise<Record<string, unknown>> {
+  const credenciais = lerCredenciais();
+  const token = await autenticarEfi(credenciais);
+  const resposta = await requisicao(
+    credenciais,
+    `/v1/notification/${encodeURIComponent(tokenNotificacao)}`,
+    {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  if (!resposta.ok) throw erroDeResposta(resposta, "cobranca");
+  return jsonSeguro(resposta.corpo);
 }
 
 /** Cria a assinatura em uma única chamada (plano + primeiro boleto). */

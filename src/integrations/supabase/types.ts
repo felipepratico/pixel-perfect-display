@@ -327,6 +327,48 @@ export type Database = {
         }
         Relationships: []
       }
+      efi_webhook_eventos: {
+        Row: {
+          chave: string
+          created_at: string
+          efi_charge_id: number | null
+          efi_subscription_id: number | null
+          erro: string
+          evento: string
+          id: string
+          payload: Json
+          processado: boolean
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          efi_charge_id?: number | null
+          efi_subscription_id?: number | null
+          erro?: string
+          evento?: string
+          id?: string
+          payload?: Json
+          processado?: boolean
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          efi_charge_id?: number | null
+          efi_subscription_id?: number | null
+          erro?: string
+          evento?: string
+          id?: string
+          payload?: Json
+          processado?: boolean
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       grupos_clientes: {
         Row: {
           created_at: string

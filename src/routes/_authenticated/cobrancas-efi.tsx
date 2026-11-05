@@ -40,7 +40,7 @@ import {
   isValidCnpj,
   onlyDigits,
 } from "@/lib/cnpj";
-import { emitirAssinaturaEfi, statusEfi } from "@/lib/efi.functions";
+import { emitirAssinaturaEfi, statusEfi, testarConexaoEfi } from "@/lib/efi.functions";
 import { assinaturaEfiSchema, type CobrancaEfi } from "@/lib/efi";
 import { formatCurrency, normalizePhone } from "@/lib/fincontrol";
 import { useClientes } from "@/lib/use-clientes";
@@ -71,6 +71,7 @@ function CobrancasEfi() {
   const { data: cobrancas = [], isLoading: loadingCobrancas } = useCobrancasEfi();
   const emitir = useServerFn(emitirAssinaturaEfi);
   const obterStatusEfi = useServerFn(statusEfi);
+  const testarEfi = useServerFn(testarConexaoEfi);
   const queryClient = useQueryClient();
   const { data: efiStatus } = useQuery({
     queryKey: ["efi-status"],
@@ -101,6 +102,7 @@ function CobrancasEfi() {
   const [valoresVisiveis, setValoresVisiveis] = useState(false);
   const [consultando, setConsultando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [testando, setTestando] = useState(false);
   const cnpjConsultado = useRef("");
 
   const cliente = clientes.find((item) => item.id === clienteId);
@@ -173,6 +175,23 @@ function CobrancasEfi() {
       }
     } finally {
       setConsultando(false);
+    }
+  }
+
+  async function testarConexao() {
+    setTestando(true);
+    try {
+      const resultado = await testarEfi();
+      if (resultado.ok) {
+        toast.success(resultado.mensagem);
+      } else {
+        toast.error(resultado.mensagem);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["efi-status"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível testar a conexão.");
+    } finally {
+      setTestando(false);
     }
   }
 
@@ -250,6 +269,14 @@ function CobrancasEfi() {
               <ShieldCheck className="mr-1 size-3.5" />
               {producao ? "Produção" : "Homologação"}
             </Badge>
+            <Button variant="outline" onClick={testarConexao} disabled={testando}>
+              {testando ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <CloudCheck className="size-4" />
+              )}
+              {testando ? "Testando..." : "Testar conexão"}
+            </Button>
             <Button variant="outline" onClick={() => setValoresVisiveis((value) => !value)}>
               {valoresVisiveis ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               {valoresVisiveis ? "Ocultar valores" : "Mostrar valores"}
@@ -265,6 +292,30 @@ function CobrancasEfi() {
               Defina {efiStatus.faltando.join(" e ")} no ambiente do servidor para liberar a
               emissão.
             </span>
+          </div>
+        ) : null}
+
+        {efiStatus ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <ShieldCheck className="size-4 shrink-0 text-emerald-500" />
+              Webhook de notificações:{" "}
+              <code className="rounded bg-background px-1.5 py-0.5 font-semibold text-foreground">
+                {efiStatus.webhookPath}?token=…
+              </code>
+            </span>
+            <Badge
+              variant="outline"
+              className={
+                efiStatus.webhookConfigurado
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
+                  : "border-warning-border bg-warning-soft text-warning"
+              }
+            >
+              {efiStatus.webhookConfigurado
+                ? "Token do webhook configurado"
+                : "Defina EFI_WEBHOOK_TOKEN"}
+            </Badge>
           </div>
         ) : null}
 

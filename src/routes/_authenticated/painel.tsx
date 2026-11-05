@@ -239,7 +239,27 @@ function Painel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acao, isLoading]);
 
-  const totais = useMemo(() => calcularTotais(clientesVisiveis, todos), [clientesVisiveis, todos]);
+  const totais = useMemo(
+    () => calcularTotais(clientesVisiveis, todos, clientesCadastrados),
+    [clientesVisiveis, todos, clientesCadastrados],
+  );
+
+  /** Mês de referência dos indicadores de clientes (respeita o filtro do painel). */
+  const mesReferencia =
+    filtros.mesAno && filtros.mesAno !== "all" ? filtros.mesAno : currentMesAno();
+
+  const resumoClientes = useMemo(() => {
+    const ativos = clientesCadastrados.filter((cliente) => cliente.status === "ATIVO");
+    const chavesComTitulo = new Set(
+      todos
+        .filter((t) => (normalizeMesAno(t.mes_ano) ?? t.mes_ano) === mesReferencia)
+        .map((t) => chaveClienteDoTitulo(t, clientesCadastrados)),
+    );
+    return {
+      ativos: ativos.length,
+      semTitulo: ativos.filter((cliente) => !chavesComTitulo.has(chaveDoCliente(cliente))).length,
+    };
+  }, [clientesCadastrados, todos, mesReferencia]);
 
   function onSave(values: TituloInput, id?: string) {
     saveTitulo.mutate(id ? { id, values } : { values }, {
@@ -395,6 +415,24 @@ function Painel() {
         toast.success(`${n} mensalidades geradas.`);
         setRecOpen(false);
       },
+      onError: erro,
+    });
+  }
+
+  /**
+   * Gera o título do mês direto a partir da linha "Sem título gerado" no painel
+   * de assinaturas, preservando vínculo, valor do contrato e dia de vencimento.
+   */
+  function gerarTituloDoCliente(clienteId: string) {
+    const cliente = clientesCadastrados.find((item) => item.id === clienteId);
+    if (!cliente) {
+      toast.error("Cliente não encontrado no cadastro.");
+      return;
+    }
+    const titulo = tituloDeClienteAtivo(cliente, valorContrato(cliente), mesReferencia);
+    insertMany.mutate([titulo], {
+      onSuccess: () =>
+        toast.success(`Título de ${mesReferencia} gerado para ${cliente.razao_social}.`),
       onError: erro,
     });
   }
@@ -562,6 +600,10 @@ function Painel() {
             <KpiCards
               totais={totais}
               valoresVisiveis={valoresVisiveis}
+              clientesAtivos={resumoClientes.ativos}
+              clientesSemTitulo={resumoClientes.semTitulo}
+              mesAnoReferencia={mesReferencia}
+              onVerAssinaturas={() => setAssOpen(true)}
               onCobrarVencidos={() => {
                 const vencidos = clientesVisiveis.filter((t) => isTituloVencido(t));
                 if (!vencidos.length) {
@@ -766,6 +808,8 @@ function Painel() {
         titulos={todos}
         clientes={clientesCadastrados}
         valoresVisiveis={valoresVisiveis}
+        mesAnoReferencia={mesReferencia}
+        gerando={insertMany.isPending}
         onOpenChange={setAssOpen}
         onAlternar={(i, ativar) =>
           patchMany.mutate(
@@ -774,6 +818,7 @@ function Painel() {
           )
         }
         onNovaAssinatura={abrirNovaAssinatura}
+        onGerarTitulo={gerarTituloDoCliente}
       />
       <NovaAssinaturaDialog
         open={novaAssOpen}

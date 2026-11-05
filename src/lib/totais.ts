@@ -1,4 +1,12 @@
-import { computeRow, isActiveSubscription, isTituloVencido, type Titulo } from "@/lib/fincontrol";
+import { valorContrato, type Cliente } from "@/lib/clientes";
+import {
+  chaveClienteDoTitulo,
+  chaveDoCliente,
+  computeRow,
+  isActiveSubscription,
+  isTituloVencido,
+  type Titulo,
+} from "@/lib/fincontrol";
 
 export type Totais = {
   quantidade: number;
@@ -17,7 +25,11 @@ export type Totais = {
   mrr: number;
 };
 
-export function calcularTotais(titulos: Titulo[], todos: Titulo[]): Totais {
+export function calcularTotais(
+  titulos: Titulo[],
+  todos: Titulo[],
+  clientes: Cliente[] = [],
+): Totais {
   const totais: Totais = {
     quantidade: titulos.length,
     mensalSite: 0,
@@ -59,7 +71,7 @@ export function calcularTotais(titulos: Titulo[], todos: Titulo[]): Totais {
   const cancelados = new Set<string>();
   for (const titulo of todos) {
     if (titulo.tipo_cobranca !== "RECORRENTE") continue;
-    const chave = titulo.cliente_id ?? titulo.cliente;
+    const chave = chaveClienteDoTitulo(titulo, clientes);
     if (isActiveSubscription(titulo)) {
       porCliente.set(chave, computeRow(titulo).mensalSite);
       cancelados.delete(chave);
@@ -67,6 +79,23 @@ export function calcularTotais(titulos: Titulo[], todos: Titulo[]): Totais {
       cancelados.add(chave);
     }
   }
+
+  // Sincronização automática com o cadastro: cliente ATIVO sem nenhum título
+  // recorrente também compõe o MRR e o badge de ativas (assinatura virtual,
+  // mesma regra do painel de assinaturas). Cliente com título cancelado pelo
+  // usuário permanece fora e continua contabilizado como cancelado.
+  const chavesComTituloRecorrente = new Set(
+    todos
+      .filter((titulo) => titulo.tipo_cobranca === "RECORRENTE")
+      .map((titulo) => chaveClienteDoTitulo(titulo, clientes)),
+  );
+  for (const cliente of clientes) {
+    if (cliente.status !== "ATIVO" || cliente.deleted_at) continue;
+    const chave = chaveDoCliente(cliente);
+    if (chavesComTituloRecorrente.has(chave) || porCliente.has(chave)) continue;
+    porCliente.set(chave, valorContrato(cliente));
+  }
+
   totais.assinaturasAtivas = porCliente.size;
   totais.assinaturasCanceladas = [...cancelados].filter((chave) => !porCliente.has(chave)).length;
   totais.mrr = [...porCliente.values()].reduce((sum, value) => sum + value, 0);

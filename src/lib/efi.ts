@@ -1,34 +1,60 @@
 import { z } from "zod";
 
-export const assinaturaEfiSchema = z.object({
-  clienteId: z.string().uuid("Selecione um cliente válido."),
-  tipoPessoa: z.enum(["FISICA", "JURIDICA"]),
-  planId: z.coerce.number().int().positive("Informe o ID do plano Efí."),
-  itemName: z.string().trim().min(3, "Informe o nome do serviço.").max(255),
-  valor: z.coerce.number().positive("O valor deve ser maior que zero.").max(999999.99),
-  vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe a data de vencimento."),
-  mensagem: z.string().trim().min(3, "Informe uma instrução para o boleto.").max(255),
-  nome: z.string().trim().max(255),
-  cpf: z.string().transform((value) => value.replace(/\D/g, "")).pipe(z.string().max(11)),
-  razaoSocial: z.string().trim().max(255),
-  cnpj: z.string().transform((value) => value.replace(/\D/g, "")).pipe(z.string().max(14)),
-  email: z.string().trim().email("Informe um e-mail válido.").max(255),
-  telefone: z.string().transform((value) => value.replace(/\D/g, "")).pipe(z.string().min(10, "Informe um telefone válido.").max(15)),
-  endereco: z.string().trim().min(2, "Informe o endereço.").max(255),
-  numeroEndereco: z.string().trim().min(1, "Informe o número do endereço.").max(30),
-  bairro: z.string().trim().min(2, "Informe o bairro.").max(120),
-  cep: z.string().transform((value) => value.replace(/\D/g, "")).pipe(z.string().length(8, "O CEP deve ter 8 dígitos.")),
-  cidade: z.string().trim().min(2, "Informe a cidade.").max(120),
-  uf: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "Informe a UF com 2 letras."),
-}).superRefine((data, context) => {
-  if (data.tipoPessoa === "FISICA") {
-    if (data.nome.length < 2) context.addIssue({ code: "custom", path: ["nome"], message: "Informe o nome completo." });
-    if (data.cpf.length !== 11) context.addIssue({ code: "custom", path: ["cpf"], message: "O CPF deve ter 11 dígitos." });
-    return;
-  }
-  if (data.razaoSocial.length < 2) context.addIssue({ code: "custom", path: ["razaoSocial"], message: "Informe a razão social." });
-  if (data.cnpj.length !== 14) context.addIssue({ code: "custom", path: ["cnpj"], message: "O CNPJ deve ter 14 dígitos." });
-});
+export const assinaturaEfiSchema = z
+  .object({
+    clienteId: z.string().uuid("Selecione um cliente válido."),
+    tipoPessoa: z.enum(["FISICA", "JURIDICA"]),
+    planId: z.coerce.number().int().positive("Informe o ID do plano Efí."),
+    itemName: z.string().trim().min(3, "Informe o nome do serviço.").max(255),
+    valor: z.coerce.number().positive("O valor deve ser maior que zero.").max(999999.99),
+    vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe a data de vencimento."),
+    mensagem: z.string().trim().min(3, "Informe uma instrução para o boleto.").max(255),
+    nome: z.string().trim().max(255),
+    cpf: z
+      .string()
+      .transform((value) => value.replace(/\D/g, ""))
+      .pipe(z.string().max(11)),
+    razaoSocial: z.string().trim().max(255),
+    cnpj: z
+      .string()
+      .transform((value) => value.replace(/\D/g, ""))
+      .pipe(z.string().max(14)),
+    email: z.string().trim().email("Informe um e-mail válido.").max(255),
+    telefone: z
+      .string()
+      .transform((value) => value.replace(/\D/g, ""))
+      .pipe(z.string().min(10, "Informe um telefone válido.").max(15)),
+    endereco: z.string().trim().min(2, "Informe o endereço.").max(255),
+    numeroEndereco: z.string().trim().min(1, "Informe o número do endereço.").max(30),
+    bairro: z.string().trim().min(2, "Informe o bairro.").max(120),
+    cep: z
+      .string()
+      .transform((value) => value.replace(/\D/g, ""))
+      .pipe(z.string().length(8, "O CEP deve ter 8 dígitos.")),
+    cidade: z.string().trim().min(2, "Informe a cidade.").max(120),
+    uf: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{2}$/, "Informe a UF com 2 letras."),
+  })
+  .superRefine((data, context) => {
+    if (data.tipoPessoa === "FISICA") {
+      if (data.nome.length < 2)
+        context.addIssue({ code: "custom", path: ["nome"], message: "Informe o nome completo." });
+      if (data.cpf.length !== 11)
+        context.addIssue({ code: "custom", path: ["cpf"], message: "O CPF deve ter 11 dígitos." });
+      return;
+    }
+    if (data.razaoSocial.length < 2)
+      context.addIssue({
+        code: "custom",
+        path: ["razaoSocial"],
+        message: "Informe a razão social.",
+      });
+    if (data.cnpj.length !== 14)
+      context.addIssue({ code: "custom", path: ["cnpj"], message: "O CNPJ deve ter 14 dígitos." });
+  });
 
 export type AssinaturaEfiInput = z.input<typeof assinaturaEfiSchema>;
 export type AssinaturaEfiDados = z.output<typeof assinaturaEfiSchema>;
@@ -44,6 +70,19 @@ export type EfiDiagnostico = {
   credenciaisConfiguradas: boolean;
   certificadoConfigurado: boolean;
   faltando: string[];
+  /** Token do webhook de notificações configurado no servidor. */
+  webhookConfigurado: boolean;
+  /** Caminho do endpoint que recebe as notificações da Efí. */
+  webhookPath: string;
+};
+
+/** Resultado do teste de conexão (autenticação OAuth2) com a Efí. */
+export type ResultadoTesteEfi = {
+  ok: boolean;
+  ambiente: EfiAmbiente;
+  baseUrl: string;
+  certificado: boolean;
+  mensagem: string;
 };
 
 /** Dados normalizados devolvidos pela Efí ao criar uma assinatura. */

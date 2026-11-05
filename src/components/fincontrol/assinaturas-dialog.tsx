@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { CalendarPlus, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,17 +35,25 @@ export function AssinaturasDialog({
   titulos,
   clientes,
   valoresVisiveis,
+  mesAnoReferencia,
+  gerando,
   onOpenChange,
   onAlternar,
   onNovaAssinatura,
+  onGerarTitulo,
 }: {
   open: boolean;
   titulos: Titulo[];
   clientes: Cliente[];
   valoresVisiveis: boolean;
+  /** Mês de referência exibido no botão de geração rápida. */
+  mesAnoReferencia?: string;
+  gerando?: boolean;
   onOpenChange: (open: boolean) => void;
   onAlternar: (ids: string[], ativar: boolean, clienteId?: string) => void;
   onNovaAssinatura: () => void;
+  /** Gera o título do mês para um cliente ainda sem título. */
+  onGerarTitulo?: (clienteId: string) => void;
 }) {
   const porCliente = new Map<string, Linha>();
   for (const titulo of titulos) {
@@ -177,9 +185,30 @@ export function AssinaturasDialog({
                   </td>
                   <td className="p-3 text-center">
                     {linha.virtual ? (
-                      <span className="text-[11px] text-muted-foreground">
-                        Use “Gerar meses” para criar títulos
-                      </span>
+                      linha.clienteId && onGerarTitulo ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 gap-1 text-xs"
+                            disabled={gerando}
+                            onClick={() => onGerarTitulo(linha.clienteId as string)}
+                          >
+                            <CalendarPlus className="size-3.5" />
+                            Gerar título
+                          </Button>
+                          {mesAnoReferencia ? (
+                            <span className="text-[10px] text-muted-foreground">
+                              {mesAnoReferencia}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground">
+                          Use “Gerar meses” para criar títulos
+                        </span>
+                      )
                     ) : (
                       <Button
                         type="button"

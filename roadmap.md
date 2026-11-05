@@ -5,14 +5,14 @@
 - [x] Add customer domain types, validation, calculations, and data access
 - [x] Build customer, operations, audit, trash, and Efí billing screens
 - [x] Connect titles, filters, reports, WhatsApp, and recurring generation to customers
-- [ ] Add secure Efí sandbox server integration and notification endpoint
+- [x] Add secure Efí sandbox server integration and notification endpoint
 - [ ] Request sandbox credentials securely
 - [x] Integrate the Efí subscription and first-boleto generator into the billing page
 - [x] Add Efí Billing to the initial screen and make its primary actions visible
 - [x] Auto-fill customer registration from CNPJ and expose the monthly due day
 - [x] Apply dark mode consistently across all application screens
 - [x] Support individual customers and CPF billing in Efí subscriptions
-- [ ] Implement secure Efí payment-status webhooks
+- [x] Implement secure Efí payment-status webhooks
 - [x] Validate build and key user flows on desktop and mobile
 - [x] Add overdue titles detection, badge indicator, and quick filter button
 - [x] Integrate Google Gemini AI financial diagnosis and smart collection copywriter
