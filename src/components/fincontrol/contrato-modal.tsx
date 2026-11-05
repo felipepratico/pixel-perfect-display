@@ -209,8 +209,8 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
   }
 
   function abrirEdicao(idx: number) {
-    setTituloEd(clausulas[idx].titulo);
-    setItensEd(clausulas[idx].itens.join("\n"));
+    setTituloEd(clausulas[idx]?.titulo ?? "");
+    setItensEd((clausulas[idx]?.itens ?? []).join("\n"));
     setEditandoIdx(idx);
   }
 
@@ -236,6 +236,7 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
 
   /* ── Impressão via iframe isolado ─────────────────────────────── */
   function imprimir() {
+    if (!cliente) return;
     const iframe = document.createElement("iframe");
     iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:210mm;height:297mm;border:none;";
     document.body.appendChild(iframe);
@@ -487,7 +488,7 @@ export function ContratoModal({ cliente, open, onOpenChange }: ContratoModalProp
             {editandoIdx !== null ? (
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-zinc-600">
-                  Editando: <span className="text-primary">{clausulas[editandoIdx].titulo}</span>
+                  Editando: <span className="text-primary">{clausulas[editandoIdx]?.titulo}</span>
                 </p>
                 <input
                   className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-800 outline-none focus:border-primary"

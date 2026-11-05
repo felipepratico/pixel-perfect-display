@@ -44,14 +44,14 @@ function converterGrupo(n: number): string {
   const u = n % 10;
   const partes: string[] = [];
 
-  if (c > 0) partes.push(centenas[c]);
+  if (c > 0) partes.push(centenas[c] ?? "");
 
   const resto = n % 100;
   if (resto >= 10 && resto <= 19) {
-    partes.push(especiais[resto - 10]);
+    partes.push(especiais[resto - 10] ?? "");
   } else {
-    if (d > 0) partes.push(dezenas[d]);
-    if (u > 0) partes.push(unidades[u]);
+    if (d > 0) partes.push(dezenas[d] ?? "");
+    if (u > 0) partes.push(unidades[u] ?? "");
   }
 
   return partes.join(" e ");
