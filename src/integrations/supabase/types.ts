@@ -327,6 +327,78 @@ export type Database = {
         }
         Relationships: []
       }
+      efi_credenciais: {
+        Row: {
+          ambiente: string
+          client_id: string
+          client_secret_cifrado: string
+          created_at: string
+          updated_at: string
+          user_id: string
+          webhook_token_cifrado: string
+        }
+        Insert: {
+          ambiente?: string
+          client_id?: string
+          client_secret_cifrado?: string
+          created_at?: string
+          updated_at?: string
+          user_id: string
+          webhook_token_cifrado?: string
+        }
+        Update: {
+          ambiente?: string
+          client_id?: string
+          client_secret_cifrado?: string
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+          webhook_token_cifrado?: string
+        }
+        Relationships: []
+      }
+      efi_webhook_eventos: {
+        Row: {
+          chave: string
+          created_at: string
+          efi_charge_id: number | null
+          efi_subscription_id: number | null
+          erro: string
+          evento: string
+          id: string
+          payload: Json
+          processado: boolean
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          efi_charge_id?: number | null
+          efi_subscription_id?: number | null
+          erro?: string
+          evento?: string
+          id?: string
+          payload?: Json
+          processado?: boolean
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          efi_charge_id?: number | null
+          efi_subscription_id?: number | null
+          erro?: string
+          evento?: string
+          id?: string
+          payload?: Json
+          processado?: boolean
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       grupos_clientes: {
         Row: {
           created_at: string
