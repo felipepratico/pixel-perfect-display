@@ -372,13 +372,14 @@ function Painel() {
     diasAtraso: number;
   }) {
     try {
+      // `pago_em` já existe na tabela (migração anterior). `forma_pagamento`
+      // e `dias_atraso` só serão gravados após aplicar a migration
+      // 20261105143000_titulos_campos_pagamento.sql.
       await patchMany.mutateAsync({
         ids: values.ids,
         values: {
           situacao: "PAGO",
           pago_em: values.pagoEm,
-          forma_pagamento: values.formaPagamento,
-          dias_atraso: values.diasAtraso,
         },
       });
       toast.success(

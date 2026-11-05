@@ -6,7 +6,7 @@ import type { Titulo, TituloInput } from "@/lib/fincontrol";
 const KEY = ["titulos"] as const;
 
 const COLUMNS =
-  "id, cliente_id, cliente, cnpj, telefone, mensal_site, mensal_real, custo_boleto, francisco_pct, vencimento, mes_ano, tipo_cobranca, status_assinatura, situacao, deleted_at, pago_em, forma_pagamento, dias_atraso, efi_status, efi_link_pagamento, efi_linha_digitavel";
+  "id, cliente_id, cliente, cnpj, telefone, mensal_site, mensal_real, custo_boleto, francisco_pct, vencimento, mes_ano, tipo_cobranca, status_assinatura, situacao, deleted_at, pago_em, efi_status, efi_link_pagamento, efi_linha_digitavel";
 
 export function useTitulos() {
   return useQuery({
