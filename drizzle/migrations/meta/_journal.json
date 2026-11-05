@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793909202858,
+      "tag": "0000_titulos_forma_pagamento_dias_atraso",
+      "breakpoints": true
+    }
+  ]
+}

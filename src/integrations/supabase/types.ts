@@ -365,9 +365,11 @@ export type Database = {
           created_at: string
           custo_boleto: number
           deleted_at: string | null
+          dias_atraso: number | null
           efi_linha_digitavel: string
           efi_link_pagamento: string
           efi_status: string
+          forma_pagamento: string | null
           francisco_pct: number
           id: string
           mensal_real: number
@@ -389,9 +391,11 @@ export type Database = {
           created_at?: string
           custo_boleto?: number
           deleted_at?: string | null
+          dias_atraso?: number | null
           efi_linha_digitavel?: string
           efi_link_pagamento?: string
           efi_status?: string
+          forma_pagamento?: string | null
           francisco_pct?: number
           id?: string
           mensal_real?: number
@@ -413,9 +417,11 @@ export type Database = {
           created_at?: string
           custo_boleto?: number
           deleted_at?: string | null
+          dias_atraso?: number | null
           efi_linha_digitavel?: string
           efi_link_pagamento?: string
           efi_status?: string
+          forma_pagamento?: string | null
           francisco_pct?: number
           id?: string
           mensal_real?: number
