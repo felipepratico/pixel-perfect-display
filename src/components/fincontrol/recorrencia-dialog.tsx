@@ -14,12 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   chaveClienteDoTitulo,
+  chaveDoCliente,
   isActiveSubscription,
   nextMesAno,
   normalizeMesAno,
-  type ClienteRef,
   type Titulo,
 } from "@/lib/fincontrol";
+import type { Cliente } from "@/lib/clientes";
 
 export function RecorrenciaDialog({
   open,
@@ -31,7 +32,7 @@ export function RecorrenciaDialog({
 }: {
   open: boolean;
   titulos: Titulo[];
-  clientes: ClienteRef[];
+  clientes: Cliente[];
   gerando: boolean;
   onOpenChange: (open: boolean) => void;
   onGerar: (mesAnoInicial: string, quantidade: number) => void;
@@ -43,9 +44,21 @@ export function RecorrenciaDialog({
     if (open) setMesAno(nextMesAno());
   }, [open]);
 
-  const ativas = new Set(
-    titulos.filter(isActiveSubscription).map((t) => chaveClienteDoTitulo(t, clientes)),
+  // Mesma regra do painel de assinaturas: cliente ATIVO sem nenhum título
+  // recorrente conta como ativo (ele será gerado no clique em gerar).
+  const chavesComTitulo = new Set(
+    titulos
+      .filter((t) => t.tipo_cobranca === "RECORRENTE")
+      .map((t) => chaveClienteDoTitulo(t, clientes)),
   );
+  const ativas = new Set<string>([
+    ...titulos
+      .filter(isActiveSubscription)
+      .map((t) => chaveClienteDoTitulo(t, clientes)),
+    ...clientes
+      .filter((c) => c.status === "ATIVO" && !chavesComTitulo.has(chaveDoCliente(c)))
+      .map((c) => chaveDoCliente(c)),
+  ]);
   const mesAnoNormalizado = normalizeMesAno(mesAno);
   const mesAnoInvalido = mesAno.trim().length > 0 && !mesAnoNormalizado;
 

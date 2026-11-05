@@ -55,6 +55,7 @@ import { emptyCliente } from "@/lib/clientes";
 import { exportTitulos } from "@/lib/excel";
 import {
   chaveClienteDoTitulo,
+  chaveDoCliente,
   clienteIdDoTitulo,
   computeRow,
   currentMesAno,
@@ -66,9 +67,11 @@ import {
   mesAnoRank,
   normalizeMesAno,
   shiftMesAno,
+  tituloDeClienteAtivo,
   type Titulo,
   type TituloInput,
 } from "@/lib/fincontrol";
+import { valorContrato } from "@/lib/clientes";
 import { calcularTotais } from "@/lib/totais";
 import { useClienteMutations, useClientes } from "@/lib/use-clientes";
 import { useTituloMutations, useTitulos } from "@/lib/use-titulos";
@@ -341,6 +344,19 @@ function Painel() {
         return `${chaveClienteDoTitulo(t, clientesCadastrados)}|${mes}`;
       }),
     );
+    // Sincronização automática: clientes ATIVOS do cadastro sem nenhum título
+    // recorrente (ainda não são assinaturas com título) entram na geração
+    // usando mensalidade do contrato (valorContrato) e dia de vencimento do
+    // cadastro. Clientes com título cancelado permanecem fora, por decisão
+    // explícita do usuário no painel Assinaturas.
+    const chavesComTitulo = new Set(
+      todos
+        .filter((t) => t.tipo_cobranca === "RECORRENTE")
+        .map((t) => chaveClienteDoTitulo(t, clientesCadastrados)),
+    );
+    const linhasVirtuais = clientesCadastrados.filter(
+      (c) => c.status === "ATIVO" && !chavesComTitulo.has(chaveDoCliente(c)),
+    );
     const rows: TituloInput[] = [];
 
     for (let i = 0; i < quantidade; i++) {
@@ -363,6 +379,11 @@ function Painel() {
           mes_ano: mes,
           situacao: "ABERTO",
         });
+      }
+      for (const cliente of linhasVirtuais) {
+        const chave = chaveDoCliente(cliente);
+        if (existentes.has(`${chave}|${mes}`)) continue;
+        rows.push(tituloDeClienteAtivo(cliente, valorContrato(cliente), mes));
       }
     }
     if (!rows.length) {

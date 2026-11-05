@@ -134,19 +134,34 @@ export function isActiveSubscription(t: Titulo): boolean {
 /** Minimal customer reference used to link titles to customer records. */
 export type ClienteRef = { id: string; cnpj: string; razao_social: string };
 
+/** Nome normalizado para comparação: sem espaços extras, em maiúsculas. */
+function normalizarNome(valor: string | null | undefined): string {
+  return (valor ?? "").trim().replace(/\s+/g, " ").toUpperCase();
+}
+
+/** Chave sintética por nome normalizado (fallback sem id vinculado). */
+function chavePorNome(nome: string | null | undefined): string {
+  return `nome:${normalizarNome(nome)}`;
+}
+
+/** Apenas dígitos (para comparar CNPJ com/sem máscara). */
+function apenasDigitos(valor: string | null | undefined): string {
+  return (valor ?? "").replace(/\D/g, "");
+}
+
 /** Resolves the customer record of a title by cliente_id, CNPJ or razão social. */
 export function clienteIdDoTitulo(
   t: Pick<Titulo, "cliente_id" | "cliente" | "cnpj">,
   clientes: ClienteRef[] = [],
 ): string | null {
   if (t.cliente_id) return t.cliente_id;
-  const cnpj = (t.cnpj ?? "").replace(/\D/g, "");
-  const nome = (t.cliente ?? "").trim().toUpperCase();
+  const cnpj = apenasDigitos(t.cnpj);
+  const nome = normalizarNome(t.cliente);
   if (!cnpj && !nome) return null;
   const match = clientes.find(
     (c) =>
-      (cnpj !== "" && (c.cnpj ?? "").replace(/\D/g, "") === cnpj) ||
-      (nome !== "" && (c.razao_social ?? "").trim().toUpperCase() === nome),
+      (cnpj !== "" && apenasDigitos(c.cnpj) === cnpj) ||
+      (nome !== "" && normalizarNome(c.razao_social) === nome),
   );
   return match?.id ?? null;
 }
@@ -156,7 +171,60 @@ export function chaveClienteDoTitulo(
   t: Pick<Titulo, "cliente_id" | "cliente" | "cnpj">,
   clientes: ClienteRef[] = [],
 ): string {
-  return clienteIdDoTitulo(t, clientes) ?? `nome:${(t.cliente ?? "").trim().toUpperCase()}`;
+  return clienteIdDoTitulo(t, clientes) ?? chavePorNome(t.cliente);
+}
+
+/** Chave estável de um cliente (cadastro) para uso em mapas de assinatura. */
+export function chaveDoCliente(
+  cliente: Pick<ClienteRef, "id" | "cnpj" | "razao_social">,
+): string {
+  // id é sempre string quando vindo do cadastro; fallback sintético garante
+  // estabilidade quando um registro vier sem id.
+  const id = (cliente.id ?? "").trim();
+  return id || chavePorNome(cliente.razao_social);
+}
+
+/** Converte um cadastro de cliente em título recorrente (sem perder vínculo). */
+export function tituloDeClienteAtivo(
+  cliente: Pick<
+    ClienteRef & {
+      telefone: string;
+      vencimento: number;
+      status: "ATIVO" | "INATIVO";
+      valor_base: number;
+    },
+    "id" | "cnpj" | "razao_social" | "telefone" | "vencimento" | "status" | "valor_base"
+  >,
+  mensalidade?: number | string,
+  mesAnoRef: string = currentMesAno(),
+): TituloInput {
+  // Mensalidade: usa o valor do contrato como padrão; o chamador pode
+  // sobrescrever com o valor mais recente do título recorrente.
+  // Aceita "R$ 1.234,56" via parseNumber (mesma regra de computeRow).
+  const mensal =
+    mensalidade !== undefined && mensalidade !== null && mensalidade !== ""
+      ? parseNumber(mensalidade)
+      : parseNumber(cliente.valor_base ?? 0);
+  // Mes/ano: normaliza ou usa o atual quando inválido.
+  const mes_ano = normalizeMesAno(mesAnoRef) ?? currentMesAno();
+  // Vencimento: inteiro dentro de 1..31 (padrão 5).
+  const vencimentoRaw = Number.parseInt(String(cliente.vencimento ?? 5), 10);
+  const vencimento = Number.isNaN(vencimentoRaw) ? 5 : Math.min(31, Math.max(1, vencimentoRaw));
+  return {
+    cliente_id: (cliente.id ?? "").trim() || null,
+    cliente: cliente.razao_social ?? "",
+    cnpj: cliente.cnpj ?? "",
+    telefone: normalizePhone(cliente.telefone ?? ""),
+    mensal_site: mensal,
+    mensal_real: mensal,
+    custo_boleto: 0,
+    francisco_pct: 0,
+    vencimento,
+    mes_ano,
+    tipo_cobranca: "RECORRENTE",
+    status_assinatura: cliente.status === "ATIVO" ? "ATIVO" : "CANCELADO",
+    situacao: "ABERTO",
+  };
 }
 
 export function normalizePhone(phone: string): string {

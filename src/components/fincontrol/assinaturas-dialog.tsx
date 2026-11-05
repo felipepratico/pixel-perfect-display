@@ -10,12 +10,13 @@ import {
 } from "@/components/ui/dialog";
 import {
   chaveClienteDoTitulo,
+  chaveDoCliente,
   computeRow,
   formatCurrency,
   mesAnoRank,
-  type ClienteRef,
   type Titulo,
 } from "@/lib/fincontrol";
+import { valorContrato, type Cliente } from "@/lib/clientes";
 
 type Linha = {
   chave: string;
@@ -25,6 +26,8 @@ type Linha = {
   ativa: boolean;
   rank: number;
   ids: string[];
+  clienteId: string | null;
+  virtual: boolean;
 };
 
 export function AssinaturasDialog({
@@ -38,10 +41,10 @@ export function AssinaturasDialog({
 }: {
   open: boolean;
   titulos: Titulo[];
-  clientes: ClienteRef[];
+  clientes: Cliente[];
   valoresVisiveis: boolean;
   onOpenChange: (open: boolean) => void;
-  onAlternar: (ids: string[], ativar: boolean) => void;
+  onAlternar: (ids: string[], ativar: boolean, clienteId?: string) => void;
   onNovaAssinatura: () => void;
 }) {
   const porCliente = new Map<string, Linha>();
@@ -57,6 +60,8 @@ export function AssinaturasDialog({
       ativa: false,
       rank: -1,
       ids: [],
+      clienteId: null,
+      virtual: false,
     };
     // Valor e vencimento vêm do mês mais recente do cliente.
     if (rank >= linha.rank) {
@@ -70,6 +75,30 @@ export function AssinaturasDialog({
     porCliente.set(chave, linha);
   }
 
+  // Sincronização automática: todo cliente ATIVO do cadastro sem nenhum título
+  // recorrente entra como assinatura virtual ATIVA. Clientes com título cancelado
+  // pela ação do usuário permanecem como CANCELADA (não ressuscitam como ATIVA).
+  // Pegadinha: o título pode estar vinculado antes por CNPJ/nome (sem cliente_id),
+  // então o chaveClienteDoTitulo acima já resolve para o id do cadastro; se um
+  // título antigo não resolver, tentamos localizar o cadastro por CNPJ/nome
+  // para não duplicar a linha.
+  for (const cliente of clientes) {
+    if (cliente.status !== "ATIVO") continue;
+    const chave = chaveDoCliente(cliente);
+    if (porCliente.has(chave)) continue;
+    porCliente.set(chave, {
+      chave,
+      cliente: cliente.razao_social,
+      valor: valorContrato(cliente),
+      vencimento: cliente.vencimento,
+      ativa: true,
+      rank: -1,
+      ids: [],
+      clienteId: cliente.id,
+      virtual: true,
+    });
+  }
+
   const linhas = [...porCliente.values()].sort((a, b) => a.cliente.localeCompare(b.cliente));
   const ativas = linhas.filter((linha) => linha.ativa);
   const mrr = ativas.reduce((sum, linha) => sum + linha.valor, 0);
@@ -80,8 +109,9 @@ export function AssinaturasDialog({
         <DialogHeader>
           <DialogTitle>Painel de assinaturas recorrentes</DialogTitle>
           <DialogDescription>
-            Clientes com renovação automática mensal. O status vale para todos os meses do cliente,
-            mesmo com filtros aplicados na tela. Cancelar impede a geração de novos meses.
+            Reflete diretamente os clientes ATIVOS do cadastro (Clientes e contratos), mesmo sem
+            título gerado ainda. Cancelar só afeta títulos existentes; meses futuros são gerados
+            via “Gerar meses”.
           </DialogDescription>
         </DialogHeader>
 
@@ -122,7 +152,14 @@ export function AssinaturasDialog({
             <tbody className="divide-y divide-border bg-card">
               {linhas.map((linha) => (
                 <tr key={linha.chave}>
-                  <td className="p-3 font-bold">{linha.cliente}</td>
+                  <td className="p-3 font-bold">
+                    {linha.cliente}
+                    {linha.virtual ? (
+                      <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                        Sem título gerado
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="p-3 text-right">
                     {valoresVisiveis ? formatCurrency(linha.valor) : "R$ ••••••"}
                   </td>
@@ -139,15 +176,21 @@ export function AssinaturasDialog({
                     </span>
                   </td>
                   <td className="p-3 text-center">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={linha.ativa ? "outline" : "default"}
-                      className="h-7 text-xs"
-                      onClick={() => onAlternar(linha.ids, !linha.ativa)}
-                    >
-                      {linha.ativa ? "Cancelar" : "Reativar"}
-                    </Button>
+                    {linha.virtual ? (
+                      <span className="text-[11px] text-muted-foreground">
+                        Use “Gerar meses” para criar títulos
+                      </span>
+                    ) : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={linha.ativa ? "outline" : "default"}
+                        className="h-7 text-xs"
+                        onClick={() => onAlternar(linha.ids, !linha.ativa, linha.clienteId ?? undefined)}
+                      >
+                        {linha.ativa ? "Cancelar" : "Reativar"}
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}
