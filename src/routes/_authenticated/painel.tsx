@@ -40,6 +40,7 @@ import { Graficos } from "@/components/fincontrol/graficos";
 import { ImportDialog } from "@/components/fincontrol/import-dialog";
 import { AreaImpressao } from "@/components/fincontrol/impressao";
 import { KpiCards } from "@/components/fincontrol/kpi-cards";
+import { CardAdimplencia } from "@/components/fincontrol/card-adimplencia";
 import {
   MarcarComoPagoDialog,
   type FormaPagamento,
@@ -671,6 +672,13 @@ function Painel() {
                   `${vencidos.length} vencido(s) selecionado(s). Use "Cobrar no WhatsApp".`,
                 );
               }}
+            />
+
+            {/* 1.5. Adimplência */}
+            <CardAdimplencia
+              titulos={todos}
+              clientes={clientesCadastrados}
+              valoresVisiveis={valoresVisiveis}
             />
 
             {/* 2. Gráficos */}

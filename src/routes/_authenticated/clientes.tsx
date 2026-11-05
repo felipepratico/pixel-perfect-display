@@ -22,8 +22,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/fincontrol";
+import { BadgePerfilPagamento } from "@/components/fincontrol/badge-perfil-pagamento";
+import { CardAdimplencia } from "@/components/fincontrol/card-adimplencia";
+import { calcularHistoricoClientes } from "@/lib/adimplencia";
 import { ticketMedio, valorContrato, type Cliente, type ClienteInput } from "@/lib/clientes";
 import { useClienteMutations, useClientes, useGrupos } from "@/lib/use-clientes";
+import { useTitulos } from "@/lib/use-titulos";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   head: () => ({
@@ -48,6 +52,7 @@ export const Route = createFileRoute("/_authenticated/clientes")({
 function ClientesPage() {
   const { data: clientes = [], isLoading } = useClientes();
   const { data: grupos = [] } = useGrupos();
+  const { data: titulos = [] } = useTitulos();
   const { saveCliente, softDeleteCliente, createGrupo } = useClienteMutations();
   const [busca, setBusca] = useState("");
   const [grupo, setGrupo] = useState("all");
@@ -72,6 +77,9 @@ function ClientesPage() {
       );
     });
   }, [clientes, busca, grupo]);
+
+  const historico = calcularHistoricoClientes(titulos, clientes);
+  const historicoPorCliente = new Map(historico.map((h) => [h.clienteId, h]));
 
   const ativos = clientes.filter((cliente) => cliente.status === "ATIVO").length;
   const receita = clientes
@@ -134,6 +142,14 @@ function ClientesPage() {
             value={valoresVisiveis ? formatCurrency(ticketMedio(clientes)) : "R$ ••••••"}
           />
         </section>
+
+        <section className="grid gap-3 sm:grid-cols-3">
+          <CardAdimplencia
+            titulos={titulos}
+            clientes={clientes}
+            valoresVisiveis={valoresVisiveis}
+          />
+        </section>
         <section className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
@@ -167,6 +183,7 @@ function ClientesPage() {
                   <th className="p-2 text-center">Computadores</th>
                   <th className="p-2 text-right">Mensalidade</th>
                   <th className="p-2 text-center">Status</th>
+                  <th className="p-2 text-center">Adimplência</th>
                   <th className="p-2 text-center">Ações</th>
                 </tr>
               </thead>
@@ -194,6 +211,15 @@ function ClientesPage() {
                       <Badge variant={cliente.status === "ATIVO" ? "default" : "secondary"}>
                         {cliente.status}
                       </Badge>
+                    </td>
+                    <td className="p-2 text-center">
+                      {historicoPorCliente.get(cliente.id) ? (
+                        <BadgePerfilPagamento
+                          perfil={historicoPorCliente.get(cliente.id)!.perfil}
+                        />
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">Sem lançamentos</span>
+                      )}
                     </td>
                     <td className="p-2">
                       <div className="flex justify-center gap-1">
