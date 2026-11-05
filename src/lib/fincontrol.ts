@@ -18,6 +18,9 @@ export type Titulo = {
   status_assinatura: StatusAssinatura;
   situacao: Situacao;
   deleted_at: string | null;
+  pago_em: string | null;
+  forma_pagamento: string | null;
+  dias_atraso: number | null;
   efi_status: string;
   efi_link_pagamento: string;
   efi_linha_digitavel: string;
@@ -222,6 +225,9 @@ export function tituloDeClienteAtivo(
     tipo_cobranca: "RECORRENTE",
     status_assinatura: cliente.status === "ATIVO" ? "ATIVO" : "CANCELADO",
     situacao: "ABERTO",
+    pago_em: null,
+    forma_pagamento: null,
+    dias_atraso: null,
   };
 }
 
@@ -462,4 +468,7 @@ export const emptyTitulo = (): TituloInput => ({
   tipo_cobranca: "RECORRENTE",
   status_assinatura: "ATIVO",
   situacao: "ABERTO",
+  pago_em: null,
+  forma_pagamento: null,
+  dias_atraso: null,
 });

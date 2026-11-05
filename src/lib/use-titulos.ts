@@ -6,7 +6,7 @@ import type { Titulo, TituloInput } from "@/lib/fincontrol";
 const KEY = ["titulos"] as const;
 
 const COLUMNS =
-  "id, cliente_id, cliente, cnpj, telefone, mensal_site, mensal_real, custo_boleto, francisco_pct, vencimento, mes_ano, tipo_cobranca, status_assinatura, situacao, deleted_at, efi_status, efi_link_pagamento, efi_linha_digitavel";
+  "id, cliente_id, cliente, cnpj, telefone, mensal_site, mensal_real, custo_boleto, francisco_pct, vencimento, mes_ano, tipo_cobranca, status_assinatura, situacao, deleted_at, pago_em, forma_pagamento, dias_atraso, efi_status, efi_link_pagamento, efi_linha_digitavel";
 
 export function useTitulos() {
   return useQuery({
@@ -70,7 +70,10 @@ export function useTituloMutations() {
 
   const removeMany = useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase.from("titulos").update({ deleted_at: new Date().toISOString() }).in("id", ids);
+      const { error } = await supabase
+        .from("titulos")
+        .update({ deleted_at: new Date().toISOString() })
+        .in("id", ids);
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -79,7 +82,11 @@ export function useTituloMutations() {
   const removeAll = useMutation({
     mutationFn: async () => {
       const user_id = await currentUserId();
-      const { error } = await supabase.from("titulos").update({ deleted_at: new Date().toISOString() }).eq("user_id", user_id).is("deleted_at", null);
+      const { error } = await supabase
+        .from("titulos")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("user_id", user_id)
+        .is("deleted_at", null);
       if (error) throw error;
     },
     onSuccess: invalidate,
