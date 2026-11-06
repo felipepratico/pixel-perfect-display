@@ -252,12 +252,15 @@
   body {
     background: #fff !important;
     color: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   body * {
     visibility: hidden;
   }
 
+  /* Exibe apenas o container do recibo e seus filhos */
   #area-impressao,
   #area-impressao * {
     visibility: visible;
@@ -285,18 +288,37 @@
     display: none !important;
   }
 
+  /* Container do recibo isolado na folha */
   #area-impressao {
-    position: relative !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
-    left: 0 !important;
-    top: 0 !important;
-    margin: 0 auto !important;
+    min-height: auto !important;
+    margin: 0 !important;
     padding: 0 !important;
     background: #fff !important;
     color: #000 !important;
-    page-break-inside: auto;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Largura A4: preenche a folha (210mm) */
+  #area-impressao.format-a4 {
+    width: 100% !important;
+    max-width: 210mm !important;
+    padding: 0 !important;
+    font-size: inherit !important;
+  }
+
+  /* Largura Térmica 80mm */
+  #area-impressao.format-80mm {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    padding: 5mm !important;
+    font-size: 11px !important;
   }
 
   .no-print,
@@ -306,7 +328,7 @@
   }
 
   @page {
-    margin: 12mm;
     size: auto;
+    margin: 0 !important;
   }
 }

@@ -3,12 +3,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { type Cliente, valorContrato } from "@/lib/clientes";
 import { valorPorExtenso } from "@/lib/extenso";
 import { formatCurrency } from "@/lib/fincontrol";
@@ -129,7 +124,11 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
               onClick={copiarTexto}
               className="gap-1.5 border-zinc-300 bg-white text-xs text-zinc-700 hover:bg-zinc-100"
             >
-              {copiado ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+              {copiado ? (
+                <Check className="size-3.5 text-emerald-600" />
+              ) : (
+                <Copy className="size-3.5" />
+              )}
               {copiado ? "Copiado!" : "Copiar"}
             </Button>
             <Button
@@ -179,7 +178,7 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
             /* Recibo A4 / Padrão */
             <article
               id="area-impressao"
-              className="mx-auto max-w-[620px] bg-white text-zinc-900 shadow-xl rounded-md p-6 sm:p-8 border-2 border-zinc-800 print:border-2 print:border-black print:shadow-none print:p-6 print:max-w-none text-xs leading-relaxed"
+              className={`mx-auto max-w-[620px] bg-white text-zinc-900 shadow-xl rounded-md p-6 sm:p-8 border-2 border-zinc-800 print:border-2 print:border-black print:shadow-none print:p-6 print:max-w-none text-xs leading-relaxed ${formato === "a4" ? "format-a4" : "format-80mm"}`}
             >
               {/* Topo do Recibo */}
               <div className="flex items-start justify-between border-b-2 border-zinc-900 pb-4 mb-5">
@@ -190,9 +189,7 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
                   <p className="text-[11px] font-semibold text-zinc-700 uppercase">
                     Automação Comercial &amp; Gestão Empresarial
                   </p>
-                  <p className="font-mono text-[10px] text-zinc-600">
-                    CNPJ: 12.712.069/0001-27
-                  </p>
+                  <p className="font-mono text-[10px] text-zinc-600">CNPJ: 12.712.069/0001-27</p>
                 </div>
                 <div className="text-right">
                   <span className="inline-block rounded bg-zinc-950 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
@@ -218,15 +215,24 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
               <div className="space-y-3 text-justify text-xs leading-relaxed text-zinc-800">
                 <p>
                   Recebemos de <strong>{cliente.razao_social}</strong>
-                  {cliente.nome_fantasia ? ` (${cliente.nome_fantasia})` : ""}, inscrita no CNPJ/CPF sob o nº <strong>{cliente.cnpj || "Não informado"}</strong>, a quantia líquida de <strong>{formatCurrency(dados.valorTotal)}</strong> ({dados.extenso}).
+                  {cliente.nome_fantasia ? ` (${cliente.nome_fantasia})` : ""}, inscrita no CNPJ/CPF
+                  sob o nº <strong>{cliente.cnpj || "Não informado"}</strong>, a quantia líquida de{" "}
+                  <strong>{formatCurrency(dados.valorTotal)}</strong> ({dados.extenso}).
                 </p>
 
                 <p>
-                  Referente à prestação de serviços continuados de suporte técnico, manutenção e licenciamento de uso do software <strong>PRÁTICO SISTEMAS</strong> (Plano <strong>{cliente.plano}</strong> com <strong>{cliente.quantidade_computadores}</strong> terminal(is) autorizado(s)), correspondente à competência <strong>{dados.mesAnoReferencia}</strong>, com vencimento em <strong>dia {cliente.vencimento}</strong>.
+                  Referente à prestação de serviços continuados de suporte técnico, manutenção e
+                  licenciamento de uso do software <strong>PRÁTICO SISTEMAS</strong> (Plano{" "}
+                  <strong>{cliente.plano}</strong> com{" "}
+                  <strong>{cliente.quantidade_computadores}</strong> terminal(is) autorizado(s)),
+                  correspondente à competência <strong>{dados.mesAnoReferencia}</strong>, com
+                  vencimento em <strong>dia {cliente.vencimento}</strong>.
                 </p>
 
                 <p className="text-[11px] text-zinc-600 italic">
-                  Pelo presente instrumento, damos plena, rasa, geral e irrevogável quitação da referida parcela mensal, nada mais havendo a reclamar quanto a este período de competência.
+                  Pelo presente instrumento, damos plena, rasa, geral e irrevogável quitação da
+                  referida parcela mensal, nada mais havendo a reclamar quanto a este período de
+                  competência.
                 </p>
               </div>
 
@@ -243,12 +249,8 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
 
                 <div className="text-center w-56">
                   <div className="border-t border-zinc-900 pt-1">
-                    <p className="font-bold text-xs uppercase text-zinc-950">
-                      PRÁTICO SISTEMAS
-                    </p>
-                    <p className="text-[10px] text-zinc-600 font-mono">
-                      CNPJ: 12.712.069/0001-27
-                    </p>
+                    <p className="font-bold text-xs uppercase text-zinc-950">PRÁTICO SISTEMAS</p>
+                    <p className="text-[10px] text-zinc-600 font-mono">CNPJ: 12.712.069/0001-27</p>
                   </div>
                 </div>
               </div>
@@ -257,7 +259,7 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
             /* Recibo Térmica 80mm / Bobina */
             <article
               id="area-impressao"
-              className="mx-auto w-[300px] bg-white text-zinc-950 shadow-xl rounded-sm p-4 font-mono text-[11px] leading-tight border border-zinc-300 print:border-none print:shadow-none print:p-2 print:w-[80mm]"
+              className={`mx-auto w-[300px] bg-white text-zinc-950 shadow-xl rounded-sm p-4 font-mono text-[11px] leading-tight border border-zinc-300 print:border-none print:shadow-none print:p-2 print:w-[80mm] ${formato === "termica" ? "format-80mm" : "format-a4"}`}
             >
               <div className="text-center border-b border-dashed border-zinc-600 pb-2 mb-2">
                 <p className="font-bold text-sm tracking-wide">PRATICO SISTEMAS</p>
@@ -278,14 +280,24 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
                 </div>
 
                 <div className="border-t border-dashed border-zinc-400 pt-1">
-                  <p><strong>PLANO:</strong> {cliente.plano}</p>
-                  <p><strong>TERMINAIS:</strong> {cliente.quantidade_computadores} PDV/Caixa</p>
-                  <p><strong>COMPETENCIA:</strong> {dados.mesAnoReferencia}</p>
-                  <p><strong>VENCIMENTO:</strong> DIA {cliente.vencimento}</p>
+                  <p>
+                    <strong>PLANO:</strong> {cliente.plano}
+                  </p>
+                  <p>
+                    <strong>TERMINAIS:</strong> {cliente.quantidade_computadores} PDV/Caixa
+                  </p>
+                  <p>
+                    <strong>COMPETENCIA:</strong> {dados.mesAnoReferencia}
+                  </p>
+                  <p>
+                    <strong>VENCIMENTO:</strong> DIA {cliente.vencimento}
+                  </p>
                 </div>
 
                 <div className="border-t border-dashed border-zinc-400 pt-1">
-                  <p className="text-[10px] uppercase">Ref: Licenca software &amp; suporte tecnico Pratico Sistemas.</p>
+                  <p className="text-[10px] uppercase">
+                    Ref: Licenca software &amp; suporte tecnico Pratico Sistemas.
+                  </p>
                 </div>
 
                 <div className="border-t-2 border-zinc-800 my-1 py-1 text-center bg-zinc-100">
@@ -297,7 +309,9 @@ export function ReciboModal({ cliente, open, onOpenChange }: ReciboModalProps) {
                 <div className="border-t border-dashed border-zinc-400 pt-1 text-center">
                   <p className="font-bold text-emerald-800">*** QUITADO ***</p>
                   <p className="text-[9px]">{dados.dataHoraCurta}</p>
-                  <p className="text-[9px] mt-1">{dados.cidade} - {dados.uf}</p>
+                  <p className="text-[9px] mt-1">
+                    {dados.cidade} - {dados.uf}
+                  </p>
                 </div>
 
                 <div className="pt-4 text-center">
