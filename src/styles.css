@@ -254,6 +254,7 @@
     color: #000 !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: visible !important;
   }
 
   body * {
@@ -266,15 +267,18 @@
     visibility: visible;
   }
 
-  /* Neutraliza posicionamento fixo do Radix Dialog na impressão */
+  /* Neutraliza todo o stack do Radix Dialog na impressão */
   [data-radix-portal],
   [data-radix-portal] > div,
-  [role="dialog"] {
+  [role="dialog"],
+  [role="dialog"] > div,
+  [role="dialog"] > div > div {
     position: static !important;
     transform: none !important;
-    max-width: 100% !important;
+    max-width: none !important;
     width: 100% !important;
     height: auto !important;
+    min-height: auto !important;
     overflow: visible !important;
     background: transparent !important;
     border: none !important;
@@ -288,26 +292,29 @@
     display: none !important;
   }
 
-  /* Container do recibo isolado na folha */
+  /* Container do recibo: fixo no topo da folha, fora do fluxo do dialog */
   #area-impressao {
-    position: absolute !important;
+    position: fixed !important;
     left: 0 !important;
     top: 0 !important;
     display: block !important;
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: none !important;
     min-height: auto !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #fff !important;
     color: #000 !important;
     page-break-inside: avoid;
     break-inside: avoid;
+    z-index: 999999 !important;
+    overflow: visible !important;
   }
 
   /* Largura A4: preenche a folha (210mm) */
   #area-impressao.format-a4 {
-    width: 100% !important;
+    width: 210mm !important;
     max-width: 210mm !important;
     padding: 0 !important;
     font-size: inherit !important;
@@ -319,6 +326,13 @@
     max-width: 80mm !important;
     padding: 5mm !important;
     font-size: 11px !important;
+  }
+
+  /* Sobrescreve classes Tailwind de largura fixa na impressão */
+  #area-impressao[class*="w-\\[300px\\]"],
+  #area-impressao[class*="max-w-\\[620px\\]"] {
+    width: auto !important;
+    max-width: none !important;
   }
 
   .no-print,
