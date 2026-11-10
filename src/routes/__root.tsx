@@ -159,6 +159,12 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
+    // Tells the boot guard in RootShell that the app is alive, so it stops
+    // offering the reload screen.
+    document.documentElement.setAttribute("data-app-mounted", "1");
+  }, []);
+
+  useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
