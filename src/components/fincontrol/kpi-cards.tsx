@@ -60,7 +60,7 @@ export function KpiCards({
   return (
     <div className="space-y-3">
       {clientesAtivos !== undefined ? (
-        <div className="card-panel flex flex-wrap items-center justify-between gap-2 border-emerald-500/30 bg-white px-3.5 py-2.5 animate-card-in">
+        <div className="card-panel flex flex-wrap items-center justify-between gap-2 border-emerald-500/30 bg-card px-3.5 py-2.5 animate-card-in">
           <div className="flex items-center gap-2.5">
             <div className="rounded-lg bg-emerald-600 p-1.5 text-white">
               <Users className="size-3.5" />
@@ -117,7 +117,7 @@ export function KpiCards({
           valueClass="text-emerald-700"
           hint={valoresVisiveis ? `${pctFelipe}% do total` : "Percentual oculto"}
           hintClass="text-emerald-700 font-medium"
-          className="border-emerald-500/40 bg-white shadow-sm"
+          className="border-emerald-500/40 bg-card shadow-sm"
         />
 
         {/* 3. LUCRO FRANCISCO - Roxo */}
@@ -129,7 +129,7 @@ export function KpiCards({
           value={moeda(animadoFrancisco)}
           valueClass="text-purple-700"
           hint="Comissão repassada"
-          className="border-purple-500/25 bg-white"
+          className="border-purple-500/25 bg-card"
         />
 
         {/* 4. CUSTOS (BLT X FRA) - Âmbar */}
@@ -144,7 +144,7 @@ export function KpiCards({
               ? `Boletos: ${formatCurrency(totais.custoBoleto)}`
               : "Boletos: R$ ••••••"
           }
-          className="border-amber-500/25 bg-white"
+          className="border-amber-500/25 bg-card"
         />
 
         {/* 5. MRR (ASSINATURAS) - Roxo */}
@@ -157,12 +157,12 @@ export function KpiCards({
           valueClass="text-purple-700"
           hint={`${moeda(animadoMrr)} /mês`}
           hintClass="text-purple-700 font-medium"
-          className="border-purple-500/25 bg-white"
+          className="border-purple-500/25 bg-card"
         />
 
         {/* 6. SITUAÇÃO PAGAMENTOS */}
         <div
-          className="card-panel flex flex-col justify-between p-3.5 bg-white animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg hover:border-sky-500/50 active:scale-95"
+          className="card-panel flex flex-col justify-between p-3.5 bg-card animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg hover:border-sky-500/50 active:scale-95"
           style={{ animationDelay: "300ms" }}
         >
           <div className="flex items-center justify-between gap-2">
@@ -194,7 +194,7 @@ export function KpiCards({
 
         {/* 7. TAXA DE INADIMPLÊNCIA */}
         <div
-          className="card-panel flex flex-col justify-between p-3.5 bg-white animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg hover:border-destructive/40 active:scale-95"
+          className="card-panel flex flex-col justify-between p-3.5 bg-card animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg hover:border-destructive/40 active:scale-95"
           style={{ animationDelay: "360ms" }}
         >
           <div className="flex items-center justify-between gap-2">
@@ -220,7 +220,7 @@ export function KpiCards({
             variant="outline"
             disabled={!totais.vencidos}
             onClick={onCobrarVencidos}
-            className="mt-1.5 h-6 w-full gap-1 border-emerald-600/40 bg-white px-2 text-[10px] font-bold text-emerald-700 transition-all hover:bg-emerald-50 active:scale-95"
+            className="mt-1.5 h-6 w-full gap-1 border-emerald-600/40 bg-card px-2 text-[10px] font-bold text-emerald-700 transition-all hover:bg-emerald-50 active:scale-95"
           >
             <MessageCircle className="size-3" />
             Enviar lembrete (WhatsApp)
@@ -229,7 +229,7 @@ export function KpiCards({
 
         {/* 8. ARPU + CANCELADAS */}
         <div
-          className="card-panel flex flex-col justify-between p-3.5 bg-white animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg hover:border-purple-500/40 active:scale-95"
+          className="card-panel flex flex-col justify-between p-3.5 bg-card animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg hover:border-purple-500/40 active:scale-95"
           style={{ animationDelay: "420ms" }}
         >
           <div className="flex items-center justify-between gap-2">
@@ -277,7 +277,7 @@ function Card({
 }) {
   return (
     <div
-      className={`card-panel flex flex-col justify-between p-3.5 bg-white animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg hover:ring-1 hover:ring-current/20 active:scale-95 ${className ?? ""}`}
+      className={`card-panel flex flex-col justify-between p-3.5 bg-card animate-card-in transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg hover:ring-1 hover:ring-current/20 active:scale-95 ${className ?? ""}`}
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="flex items-center justify-between gap-2">
