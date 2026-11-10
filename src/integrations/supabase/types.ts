@@ -110,7 +110,6 @@ export type Database = {
           chave_pix: string
           cidade: string
           cnpj: string
-          codigo_site: string
           created_at: string
           data_ultima_atualizacao: string | null
           deleted_at: string | null
@@ -145,7 +144,6 @@ export type Database = {
           chave_pix?: string
           cidade?: string
           cnpj?: string
-          codigo_site?: string
           created_at?: string
           data_ultima_atualizacao?: string | null
           deleted_at?: string | null
@@ -180,7 +178,6 @@ export type Database = {
           chave_pix?: string
           cidade?: string
           cnpj?: string
-          codigo_site?: string
           created_at?: string
           data_ultima_atualizacao?: string | null
           deleted_at?: string | null
@@ -463,7 +460,6 @@ export type Database = {
           cliente: string
           cliente_id?: string | null
           cnpj?: string
-          codigo_site?: string
           created_at?: string
           custo_boleto?: number
           deleted_at?: string | null
@@ -490,7 +486,6 @@ export type Database = {
           cliente?: string
           cliente_id?: string | null
           cnpj?: string
-          codigo_site?: string
           created_at?: string
           custo_boleto?: number
           deleted_at?: string | null
