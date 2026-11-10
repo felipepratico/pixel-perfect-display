@@ -85,8 +85,8 @@
   color-scheme: light;
   --background: #e3eaf5;
   --foreground: #1e293b;
-  --card: #003566;
-  --card-foreground: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
   --popover: #ffffff;
   --popover-foreground: #1e293b;
   --primary: #2563eb;
