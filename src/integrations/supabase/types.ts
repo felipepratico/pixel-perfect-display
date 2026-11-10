@@ -463,7 +463,6 @@ export type Database = {
           cliente: string
           cliente_id?: string | null
           cnpj?: string
-          codigo_site?: string
           created_at?: string
           custo_boleto?: number
           deleted_at?: string | null
@@ -490,7 +489,6 @@ export type Database = {
           cliente?: string
           cliente_id?: string | null
           cnpj?: string
-          codigo_site?: string
           created_at?: string
           custo_boleto?: number
           deleted_at?: string | null

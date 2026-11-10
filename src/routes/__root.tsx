@@ -110,6 +110,35 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+// Recovery guard for the one failure the React error boundary cannot catch: the
+// app bundle itself failing to import (dev-server restart, stale chunk after a
+// deploy). Nothing mounts in that case, so the screen would stay blank forever.
+// Runs before the module script, shows itself only while the app never mounted,
+// and never touches a page that is already working.
+const BOOT_GUARD = `
+(function () {
+  var shown = false;
+  function mounted() { return document.documentElement.hasAttribute('data-app-mounted'); }
+  function show() {
+    if (shown || mounted() || document.getElementById('boot-fallback')) return;
+    shown = true;
+    var box = document.createElement('div');
+    box.id = 'boot-fallback';
+    box.setAttribute('role', 'alert');
+    box.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:#14161c;color:#e8eaed;font-family:system-ui,-apple-system,Segoe UI,sans-serif;text-align:center';
+    box.innerHTML = '<div style="max-width:26rem"><h1 style="font-size:1.15rem;font-weight:600;margin:0 0 .5rem">Esta p&#225;gina n&#227;o carregou</h1><p style="font-size:.875rem;opacity:.75;margin:0 0 1.25rem">A conex&#227;o com o servidor caiu enquanto a tela abria. Recarregue para continuar de onde parou.</p><button type="button" id="boot-fallback-reload" style="font:inherit;font-size:.875rem;font-weight:500;padding:.5rem 1rem;border-radius:.375rem;border:0;background:#3b82f6;color:#fff;cursor:pointer">Recarregar a p&#225;gina</button></div>';
+    document.body.appendChild(box);
+    var btn = document.getElementById('boot-fallback-reload');
+    if (btn) btn.addEventListener('click', function () { window.location.reload(); });
+  }
+  window.addEventListener('error', function (e) {
+    var t = e.target;
+    if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) show();
+  }, true);
+  setTimeout(function () { if (!mounted()) show(); }, 15000);
+})();
+`;
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR" className="dark">
@@ -118,6 +147,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <script dangerouslySetInnerHTML={{ __html: BOOT_GUARD }} />
         <Scripts />
       </body>
     </html>
@@ -127,6 +157,12 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+
+  useEffect(() => {
+    // Tells the boot guard in RootShell that the app is alive, so it stops
+    // offering the reload screen.
+    document.documentElement.setAttribute("data-app-mounted", "1");
+  }, []);
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
