@@ -27,6 +27,7 @@ export type Cliente = {
   grupo_id: string | null;
   razao_social: string;
   nome_fantasia: string;
+  codigo_site: string;
   cnpj: string;
   email: string;
   telefone: string;
@@ -98,6 +99,7 @@ export const clienteSchema = z.object({
   grupo_id: z.string().uuid().nullable().optional(),
   razao_social: z.string().trim().min(1, "Razão social / Nome é obrigatório.").max(160),
   nome_fantasia: z.string().trim().max(160).default(""),
+  codigo_site: z.string().trim().max(100).default(""),
   cnpj: z.string().trim().max(20).default(""),
   email: z.string().trim().max(255).default(""),
   telefone: z.string().trim().max(20).default(""),
@@ -142,6 +144,7 @@ export const emptyCliente = (): ClienteInput => ({
   grupo_id: null,
   razao_social: "",
   nome_fantasia: "",
+  codigo_site: "",
   cnpj: "",
   email: "",
   telefone: "",

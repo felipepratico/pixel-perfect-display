@@ -115,6 +115,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
       ...form,
       razao_social: form.razao_social.trim().toUpperCase(),
       nome_fantasia: form.nome_fantasia.trim().toUpperCase(),
+      codigo_site: form.codigo_site.trim(),
       cnpj: form.cnpj.trim(),
       telefone: form.telefone.replace(/\D/g, ""),
       quantidade_computadores: Math.max(1, Number(form.quantidade_computadores) || 1),
@@ -133,6 +134,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
             <Field label="Tipo de pessoa"><div className="grid grid-cols-2 gap-1 rounded-md border bg-muted p-1"><Button type="button" size="sm" variant={tipoPessoa === "FISICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("FISICA")}>Pessoa física</Button><Button type="button" size="sm" variant={tipoPessoa === "JURIDICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("JURIDICA")}>Pessoa jurídica</Button></div></Field>
             <Field label={tipoPessoa === "FISICA" ? "Nome completo *" : "Razão social *"} className="lg:col-span-2"><Input required value={form.razao_social} onChange={(e) => update("razao_social", e.target.value)} /></Field>
             {tipoPessoa === "JURIDICA" ? <Field label="Nome fantasia"><Input value={form.nome_fantasia} onChange={(e) => update("nome_fantasia", e.target.value)} /></Field> : null}
+            <Field label="Cód. Site"><Input value={form.codigo_site} onChange={(e) => update("codigo_site", e.target.value)} /></Field>
             <Field label={tipoPessoa === "FISICA" ? "CPF *" : "CNPJ *"}><div className="flex gap-2"><Input required inputMode="numeric" maxLength={tipoPessoa === "FISICA" ? 14 : 18} value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} onBlur={() => { const digitos = onlyDigits(form.cnpj); if (!cliente && tipoPessoa === "JURIDICA" && !isCnpjZerado(digitos) && isValidCnpj(digitos) && digitos !== ultimoCnpjConsultado.current) void consultarCnpj(); }} />{tipoPessoa === "JURIDICA" ? <Button type="button" size="icon" variant="outline" title="Buscar dados do CNPJ" disabled={consultandoCnpj} onClick={consultarCnpj}>{consultandoCnpj ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</Button> : null}</div></Field>
             <Field label="WhatsApp"><Input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} /></Field>
             <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
