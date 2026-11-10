@@ -355,16 +355,3 @@
     margin: 0;
   }
 }
-
-/* Classe geral para os valores em destaque */
-.card-value,
-.metric-highlight {
-  color: #FFC300 !important;
-}
-
-/* Caso queiras aplicar a todos os elementos de texto dentro dos cartões */
-.card-body,
-.card-title,
-.card-subtitle {
-  color: #FFC300;
-}
