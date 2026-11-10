@@ -71,7 +71,7 @@ function ClientesPage() {
       if (grupo !== "all" && cliente.grupo_id !== grupo) return false;
       return (
         !termo ||
-        `${cliente.razao_social} ${cliente.nome_fantasia} ${cliente.cnpj}`
+        `${cliente.razao_social} ${cliente.nome_fantasia} ${cliente.cnpj} ${cliente.codigo_site}`
           .toLocaleUpperCase("pt-BR")
           .includes(termo)
       );
@@ -157,7 +157,7 @@ function ClientesPage() {
               className="pl-9"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por nome ou CNPJ"
+              placeholder="Buscar por nome, CNPJ ou Cód. Site"
             />
           </div>
           <select
@@ -194,7 +194,8 @@ function ClientesPage() {
                       <strong>{cliente.razao_social}</strong>
                       <p className="text-xs text-muted-foreground">
                         {grupos.find((item) => item.id === cliente.grupo_id)?.nome ?? "Sem grupo"} ·{" "}
-                        {cliente.cnpj || "CNPJ não informado"}
+                        {cliente.cnpj || "CNPJ não informado"} ·{" "}
+                        {cliente.codigo_site && `Cód. Site: ${cliente.codigo_site}`}
                       </p>
                     </td>
                     <td className="p-2">
