@@ -184,9 +184,14 @@ function Painel() {
 
   const filtrados = useMemo(() => {
     const busca = filtros.busca.trim().toUpperCase();
+    const codigoSitePorCliente = new Map(
+      clientesCadastrados.map((c) => [c.id, c.codigo_site]),
+    );
     const list = todos.filter((t) => {
-      if (busca && !t.cliente.toUpperCase().includes(busca) && !t.cnpj.includes(busca))
-        return false;
+      if (busca && !t.cliente.toUpperCase().includes(busca) && !t.cnpj.includes(busca)) {
+        if (!t.cliente_id || !codigoSitePorCliente.get(t.cliente_id)?.toUpperCase().includes(busca))
+          return false;
+      }
       if (filtros.status === "VENCIDO") {
         if (!isTituloVencido(t)) return false;
       } else if (filtros.status === "AVENCER") {
@@ -816,6 +821,7 @@ function Painel() {
               totais={totais}
               valoresVisiveis={valoresVisiveis}
               selecionados={selecionados}
+              clientes={clientesCadastrados}
               onToggle={(id) =>
                 setSelecionados((s) => {
                   const n = new Set(s);

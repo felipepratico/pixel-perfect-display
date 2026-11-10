@@ -22,6 +22,7 @@ import {
   type Titulo,
 } from "@/lib/fincontrol";
 import type { Totais } from "@/lib/totais";
+import type { Cliente } from "@/lib/clientes";
 
 export function TitulosTable({
   titulos,
@@ -35,6 +36,7 @@ export function TitulosTable({
   onAlternarSituacao,
   onExcluir,
   valoresVisiveis,
+  clientes,
 }: {
   titulos: Titulo[];
   totais: Totais;
@@ -47,9 +49,13 @@ export function TitulosTable({
   onAlternarSituacao: (titulo: Titulo) => void;
   onExcluir: (titulo: Titulo) => void;
   valoresVisiveis: boolean;
+  /** Lista de clientes cadastrados (usada para resolver o Cód. Site via cliente_id). */
+  clientes?: Cliente[];
 }) {
   const todosMarcados = titulos.length > 0 && titulos.every((t) => selecionados.has(t.id));
   const moeda = (valor: number) => (valoresVisiveis ? formatCurrency(valor) : "R$ ••••••");
+
+  const clientesPorId = new Map((clientes ?? []).map((c) => [c.id, c.codigo_site]));
 
   return (
     <div className="card-panel overflow-hidden bg-white border border-border">
@@ -66,6 +72,7 @@ export function TitulosTable({
                 />
               </th>
               <th className="px-4 py-4">CLIENTE / ASSINATURA</th>
+              <th className="px-4 py-4 text-center">COD. SITE</th>
               <th className="px-4 py-4 text-center">SITUAÇÃO</th>
               <th className="px-4 py-4 text-center">VENCIMENTO</th>
               <th className="px-4 py-4 text-center">AÇÕES</th>
@@ -137,6 +144,15 @@ export function TitulosTable({
                       )}
                       <span className="text-muted-foreground font-medium">{titulo.mes_ano}</span>
                     </div>
+                  </td>
+                  <td className="px-4 py-3.5 text-center">
+                    {titulo.cliente_id ? (
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {clientesPorId.get(titulo.cliente_id) || "—"}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3.5 text-center">
                     <button
