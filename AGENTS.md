@@ -12,3 +12,4 @@
 - Keep customer records as the source of contract and operational data; financial titles reference customers so history remains stable.
 - Keep Efí credentials and API calls server-side; browser code only invokes authenticated server functions.
 - Render the application in dark mode by default so every route and shared control uses the same semantic theme.
+- Keep the boot-recovery guard in the root shell: it catches a failed app-bundle import (dev-server restart, stale chunk) and offers a reload, because a React error boundary cannot run when nothing mounted.
