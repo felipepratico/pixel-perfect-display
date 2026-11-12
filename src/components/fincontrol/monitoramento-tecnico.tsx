@@ -464,13 +464,14 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                 <th className="px-4 py-3">Último Backup</th>
                 <th className="px-4 py-3 text-center">Dias sem Backup</th>
                 <th className="px-4 py-3">Versão Instalada</th>
+                <th className="px-4 py-3">Contato</th>
                 <th className="px-4 py-3 text-center">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
               {filtrados.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
                       <Database className="size-8 opacity-30" />
                       <p className="font-semibold text-foreground">
@@ -534,6 +535,11 @@ function AbaBackup({ clientes, onEditar, onExcluir }: AbaBackupProps) {
                         >
                           {c.versao_instalada || "Não informada"}
                         </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-foreground">
+                          {c.nome_contato || "—"}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
