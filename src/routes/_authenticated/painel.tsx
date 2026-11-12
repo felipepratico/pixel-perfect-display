@@ -104,7 +104,15 @@ export const Route = createFileRoute("/_authenticated/painel")({
   component: Painel,
 });
 
-const erro = (e: unknown) => toast.error(e instanceof Error ? e.message : "Algo deu errado.");
+const erro = (e: unknown) => {
+  const mensagem =
+    e instanceof Error
+      ? e.message
+      : e !== null && typeof e === "object" && "message" in e
+        ? String((e as { message?: unknown }).message ?? "Algo deu errado.")
+        : "Algo deu errado.";
+  toast.error(mensagem);
+};
 
 function Painel() {
   const navigate = useNavigate();
