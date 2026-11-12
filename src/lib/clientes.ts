@@ -52,6 +52,7 @@ export type Cliente = {
   chave_pix: string;
   observacoes: string;
   status: ClienteStatus;
+  mensagem_sistema: string;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
@@ -122,6 +123,7 @@ export const clienteSchema = z.object({
   tipo_certificado: z.enum(["", "A1", "A3"]).default(""),
   validade_certificado: z.string().nullable().default(null),
   chave_pix: z.string().trim().max(255).default(""),
+  mensagem_sistema: z.enum(["Normal", "Bloqueado", "Atualização", "Cobrança"]).default("Normal"),
   observacoes: z.string().trim().max(5000).default(""),
   status: z.enum(["ATIVO", "INATIVO"]).default("ATIVO"),
 });
@@ -167,6 +169,7 @@ export const emptyCliente = (): ClienteInput => ({
   tipo_certificado: "",
   validade_certificado: null,
   chave_pix: "",
+  mensagem_sistema: "Normal",
   observacoes: "",
   status: "ATIVO",
 });

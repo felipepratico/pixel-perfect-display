@@ -128,6 +128,14 @@ export function useClienteMutations() {
     onSuccess: refresh,
   });
 
+  const patchCliente = useMutation({
+    mutationFn: async ({ id, values }: { id: string; values: Partial<ClienteInput> }) => {
+      const { error } = await supabase.from("clientes").update(values).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: refresh,
+  });
+
   const restoreCliente = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("clientes").update({ deleted_at: null }).eq("id", id);
@@ -159,7 +167,7 @@ export function useClienteMutations() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CONFIG_KEY }),
   });
 
-  return { saveCliente, softDeleteCliente, restoreCliente, createGrupo, saveConfiguracoes };
+  return { saveCliente, softDeleteCliente, restoreCliente, patchCliente, createGrupo, saveConfiguracoes };
 }
 
 export function useAtendimentoMutations() {

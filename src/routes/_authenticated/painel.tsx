@@ -112,7 +112,7 @@ function Painel() {
   const { data: todos = [], isLoading } = useTitulos();
   const { data: clientesCadastrados = [] } = useClientes();
   const { saveTitulo, insertMany, patchMany, removeMany } = useTituloMutations();
-  const { saveCliente } = useClienteMutations();
+  const { saveCliente, patchCliente } = useClienteMutations();
 
   const [filtros, setFiltros] = useState<FiltrosState>({
     busca: "",
@@ -854,6 +854,15 @@ function Painel() {
               }}
               onExcluir={(t) => {
                 if (confirm(`Excluir ${t.cliente}?`)) removeMany.mutate([t.id], { onError: erro });
+              }}
+              onAlterarMensagemSistema={(clienteId, valor) => {
+                patchCliente.mutate(
+                  { id: clienteId, values: { mensagem_sistema: valor } },
+                  {
+                    onSuccess: () => toast.success("Mensagem do sistema atualizada."),
+                    onError: erro,
+                  },
+                );
               }}
             />
           </>

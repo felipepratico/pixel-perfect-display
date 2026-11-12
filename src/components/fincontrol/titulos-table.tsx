@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   CircleCheck,
   Clock,
+  ExternalLink,
   FileText,
   FolderOpen,
   Link2,
@@ -12,6 +13,12 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   computeRow,
   formatCurrency,
@@ -37,6 +44,7 @@ export function TitulosTable({
   onExcluir,
   valoresVisiveis,
   clientes,
+  onAlterarMensagemSistema,
 }: {
   titulos: Titulo[];
   totais: Totais;
@@ -51,11 +59,77 @@ export function TitulosTable({
   valoresVisiveis: boolean;
   /** Lista de clientes cadastrados (usada para resolver o Cód. Site via cliente_id). */
   clientes?: Cliente[];
+  /** Callback para alterar a mensagem do sistema de um cliente diretamente na tabela. */
+  onAlterarMensagemSistema?: (clienteId: string, valor: string) => void;
 }) {
   const todosMarcados = titulos.length > 0 && titulos.every((t) => selecionados.has(t.id));
   const moeda = (valor: number) => (valoresVisiveis ? formatCurrency(valor) : "R$ ••••••");
 
   const clientesPorId = new Map((clientes ?? []).map((c) => [c.id, c.codigo_site]));
+  const mensagemPorId = new Map((clientes ?? []).map((c) => [c.id, c.mensagem_sistema ?? "Normal"]));
+
+  type MensagemSistema = "Normal" | "Bloqueado" | "Atualização" | "Cobrança";
+
+  const MSG_CONFIG: Record<MensagemSistema, { label: string; className: string }> = {
+    Normal: { label: "Normal", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+    Bloqueado: { label: "Bloqueado", className: "border-rose-200 bg-rose-50 text-rose-700" },
+    Atualização: { label: "Atualização", className: "border-blue-200 bg-blue-50 text-blue-700" },
+    Cobrança: { label: "Cobrança", className: "border-amber-200 bg-amber-50 text-amber-700" },
+  };
+
+  function codigoSiteLink(codigo: string | null | undefined) {
+    if (!codigo) return null;
+    return (
+      <a
+        href={`http://sistemaspratico.com.br/licenca/Cliente/Edit/${codigo}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 rounded-md border border-transparent bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand hover:bg-brand hover:text-white transition-colors"
+        title="Abrir no site do cliente"
+      >
+        {codigo}
+        <ExternalLink className="size-3" />
+      </a>
+    );
+  }
+
+  function mensagemBadge(clienteId: string | undefined, valor: string | null | undefined) {
+    const msg = (valor ?? "Normal") as MensagemSistema;
+    const config = MSG_CONFIG[msg];
+    const podeAlterar = Boolean(clienteId && onAlterarMensagemSistema);
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${config.className} hover:opacity-90 transition-colors ${!podeAlterar ? "opacity-60 cursor-default" : ""}`}
+            disabled={!podeAlterar}
+            title={podeAlterar ? `Alterar mensagem do sistema (atual: ${config.label})` : undefined}
+          >
+            {config.label}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="text-xs">
+          {Object.entries(MSG_CONFIG).map(([chave, item]) => {
+            const chaveMsg = chave as MensagemSistema;
+            const ativo = chaveMsg === msg;
+            const className = `border-b border-border/50 last:border-0 text-sm ${ativo ? "bg-accent text-accent-foreground" : ""}`;
+            return (
+              <DropdownMenuItem
+                key={chave}
+                className={className}
+                onSelect={() => {
+                  if (clienteId) onAlterarMensagemSistema?.(clienteId, chaveMsg);
+                }}
+              >
+                {item.label}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
 
   return (
     <div className="card-panel overflow-hidden bg-white border border-border">
@@ -73,6 +147,7 @@ export function TitulosTable({
               </th>
               <th className="px-4 py-4">CLIENTE / ASSINATURA</th>
               <th className="px-4 py-4 text-center">COD. SITE</th>
+              <th className="px-4 py-4 text-center">MSG. SISTEMA</th>
               <th className="px-4 py-4 text-center">SITUAÇÃO</th>
               <th className="px-4 py-4 text-center">VENCIMENTO</th>
               <th className="px-4 py-4 text-center">AÇÕES</th>
@@ -147,10 +222,15 @@ export function TitulosTable({
                   </td>
                   <td className="px-4 py-3.5 text-center">
                     {titulo.cliente_id ? (
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {clientesPorId.get(titulo.cliente_id) || "—"}
-                      </span>
+                      codigoSiteLink(clientesPorId.get(titulo.cliente_id) ?? undefined) ?? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )
                     ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 text-center">
+                    {titulo.cliente_id ? mensagemBadge(titulo.cliente_id, mensagemPorId.get(titulo.cliente_id)) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </td>
@@ -272,9 +352,10 @@ export function TitulosTable({
           {titulos.length > 0 ? (
             <tfoot className="border-t-2 border-border/80 bg-muted/40 text-sm font-bold">
               <tr>
-                <td className="p-4" colSpan={3}>
+                <td className="p-4" colSpan={4}>
                   TOTAIS (filtrados)
                 </td>
+                <td className="p-4 text-center text-muted-foreground">--</td>
                 <td className="p-4 text-center text-muted-foreground">--</td>
                 <td className="p-4 text-center text-muted-foreground">--</td>
                 <td className="p-4 text-right text-sky-700">{moeda(totais.mensalSite)}</td>
