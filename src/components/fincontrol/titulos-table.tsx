@@ -142,9 +142,9 @@ export function TitulosTable({
     <div className="card-panel overflow-hidden bg-white border border-border">
       <div className="scroll-slim overflow-x-auto">
         <table className="w-full whitespace-nowrap text-left text-sm">
-          <thead className="bg-card/90 border-b border-border/60 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
             <tr>
-              <th className="px-4 py-4 text-center w-10">
+              <th className="px-4 py-3.5 text-center w-10">
                 <Checkbox
                   checked={todosMarcados}
                   onCheckedChange={(checked) => onToggleTodos(checked === true)}
@@ -152,16 +152,16 @@ export function TitulosTable({
                   className="rounded-full"
                 />
               </th>
-              <th className="px-4 py-4">CLIENTE / ASSINATURA</th>
-              <th className="px-4 py-4 text-center">COD. SITE</th>
-              <th className="px-4 py-4 text-center">MSG. SISTEMA</th>
-              <th className="px-4 py-4 text-center">SITUAÇÃO</th>
-              <th className="px-4 py-4 text-center">VENCIMENTO</th>
-              <th className="px-4 py-4 text-center">AÇÕES</th>
-              <th className="px-4 py-4">CNPJ / TELEFONE</th>
-              <th className="px-4 py-4 text-right">VALOR</th>
-              <th className="px-4 py-4 text-right">REPASSE FRANCISCO</th>
-              <th className="px-4 py-4 text-right">LUCRO FELIPE</th>
+              <th className="px-4 py-3.5">CLIENTE / ASSINATURA</th>
+              <th className="px-4 py-3.5 text-center">COD. SITE</th>
+              <th className="px-4 py-3.5 text-center">MSG. SISTEMA</th>
+              <th className="px-4 py-3.5 text-center">SITUAÇÃO</th>
+              <th className="px-4 py-3.5 text-center">VENCIMENTO</th>
+              <th className="px-4 py-3.5 text-center">AÇÕES</th>
+              <th className="px-4 py-3.5">CNPJ / TELEFONE</th>
+              <th className="px-4 py-3.5 text-right">VALOR</th>
+              <th className="px-4 py-3.5 text-right">REPASSE FRANCISCO</th>
+              <th className="px-4 py-3.5 text-right">LUCRO FELIPE</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
@@ -183,11 +183,7 @@ export function TitulosTable({
               return (
                 <tr
                   key={titulo.id}
-                  className={`transition-colors ${
-                    vencido
-                      ? "bg-destructive/5 hover:bg-destructive/10 border-l-2 border-l-destructive"
-                      : "hover:bg-muted/40"
-                  }`}
+                  className="transition-colors bg-white hover:bg-slate-50 border-b border-slate-50/50"
                 >
                   <td className="px-4 py-3.5 text-center">
                     <Checkbox
@@ -237,10 +233,10 @@ export function TitulosTable({
                       onClick={() => onAlternarSituacao(titulo)}
                       className={
                         titulo.situacao === "PAGO"
-                          ? "inline-flex items-center gap-1.5 rounded-full border border-emerald-600/40 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                          ? "inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
                           : vencido
-                            ? "inline-flex items-center gap-1.5 rounded-full border border-rose-600/40 bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-700 hover:bg-rose-100 transition-colors"
-                            : "inline-flex items-center gap-1.5 rounded-full border border-amber-600/40 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors"
+                            ? "inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
+                            : "inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                       }
                     >
                       <span
@@ -248,8 +244,8 @@ export function TitulosTable({
                           titulo.situacao === "PAGO"
                             ? "bg-emerald-600"
                             : vencido
-                              ? "bg-rose-600 animate-pulse"
-                              : "bg-amber-600"
+                              ? "bg-rose-500 animate-pulse"
+                              : "bg-slate-400"
                         }`}
                       />
                       {titulo.situacao === "PAGO"
@@ -259,7 +255,7 @@ export function TitulosTable({
                           : "ABERTO"}
                     </button>
                     {isPagoBloqueado && (
-                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-rose-700 font-semibold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
+                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-slate-700 font-semibold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
                         <AlertTriangle className="size-3" />
                         Liberar acesso (MSG Bloqueado)
                       </span>
@@ -282,12 +278,12 @@ export function TitulosTable({
                         <Button
                           type="button"
                           size="sm"
-                          variant="default"
-                          className="h-7 gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700"
+                          variant="outline"
+                          className="h-7 gap-1.5 rounded-full border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                           title="Cobrar no WhatsApp"
                           onClick={() => onWhatsApp(titulo)}
                         >
-                          <MessageCircle className="size-4 text-white" />
+                          <MessageCircle className="size-4 text-slate-600" />
                           Cobrar
                         </Button>
                       ) : (
@@ -295,11 +291,11 @@ export function TitulosTable({
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="h-7 gap-1.5 rounded-full border border-border bg-white px-3 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted"
+                          className="h-7 gap-1.5 rounded-full border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                           title="Enviar comprovante"
                           onClick={() => onWhatsApp(titulo)}
                         >
-                          <MessageCircle className="size-4 text-muted-foreground" />
+                          <MessageCircle className="size-4 text-slate-600" />
                           Enviar
                         </Button>
                       )}
@@ -307,7 +303,7 @@ export function TitulosTable({
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="size-8 text-muted-foreground/70 hover:text-foreground"
+                        className="size-8 text-slate-600 hover:text-slate-900"
                         title="Relatório do cliente"
                         onClick={() => onRelatorio(titulo)}
                       >
@@ -317,7 +313,7 @@ export function TitulosTable({
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="size-8 text-muted-foreground/70 hover:text-foreground"
+                        className="size-8 text-slate-600 hover:text-slate-900"
                         title="Editar"
                         onClick={() => onEditar(titulo)}
                       >
@@ -336,23 +332,25 @@ export function TitulosTable({
                     </div>
                   </td>
                   <td className="px-4 py-3.5">
-                    <p className="font-mono text-foreground text-sm">{titulo.cnpj || "—"}</p>
+                    <p className="font-mono text-slate-900 text-sm tabular-nums">
+                      {titulo.cnpj || "—"}
+                    </p>
                     {nomeContato && (
-                      <p className="text-xs text-muted-foreground truncate" title={nomeContato}>
+                      <p className="text-xs text-slate-500 truncate" title={nomeContato}>
                         {nomeContato}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-slate-500">
                       {titulo.telefone || "sem telefone"}
                     </p>
                   </td>
-                  <td className="px-4 py-3.5 text-right font-bold text-foreground">
+                  <td className="px-4 py-3.5 text-right font-semibold text-slate-900 tabular-nums">
                     {moeda(calc.mensalReal)}
                   </td>
-                  <td className="px-4 py-3.5 text-right text-muted-foreground font-medium">
+                  <td className="px-4 py-3.5 text-right text-slate-500 font-medium tabular-nums">
                     {moeda(calc.lucroFrancisco)}
                   </td>
-                  <td className="px-4 py-3.5 text-right font-bold text-emerald-700">
+                  <td className="px-4 py-3.5 text-right font-semibold text-slate-900 tabular-nums">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="cursor-default">{moeda(calc.lucroFelipe)}</span>
@@ -384,18 +382,24 @@ export function TitulosTable({
             })}
           </tbody>
           {titulos.length > 0 ? (
-            <tfoot className="border-t-2 border-border/80 bg-muted/40 text-sm font-bold">
+            <tfoot className="border-t border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <tr>
-                <td className="p-4" colSpan={4}>
+                <td className="p-3.5" colSpan={4}>
                   TOTAIS (filtrados)
                 </td>
-                <td className="p-4 text-center text-muted-foreground">--</td>
-                <td className="p-4 text-center text-muted-foreground">--</td>
-                <td className="p-4 text-center text-muted-foreground">--</td>
-                <td className="p-4 text-center text-muted-foreground">--</td>
-                <td className="p-4 text-right text-sky-700">{moeda(totais.mensalSite)}</td>
-                <td className="p-4 text-right text-purple-700">{moeda(totais.lucroFrancisco)}</td>
-                <td className="p-4 text-right text-emerald-700">{moeda(totais.lucroFelipe)}</td>
+                <td className="p-3.5 text-center">--</td>
+                <td className="p-3.5 text-center">--</td>
+                <td className="p-3.5 text-center">--</td>
+                <td className="p-3.5 text-center">--</td>
+                <td className="p-3.5 text-right text-slate-900 tabular-nums font-bold">
+                  {moeda(totais.mensalSite)}
+                </td>
+                <td className="p-3.5 text-right text-slate-500 tabular-nums font-medium">
+                  {moeda(totais.lucroFrancisco)}
+                </td>
+                <td className="p-3.5 text-right text-slate-900 tabular-nums font-bold">
+                  {moeda(totais.lucroFelipe)}
+                </td>
               </tr>
             </tfoot>
           ) : null}

@@ -55,10 +55,10 @@ const menuItems: {
 ];
 
 const botaoMenu =
-  "h-9 gap-2.5 rounded-lg px-2.5 text-sidebar-foreground/75 transition-all duration-300 ease-in-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:translate-x-1 active:scale-95 data-[active=true]:bg-sidebar-highlight data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-auto";
+  "h-9 gap-2.5 rounded-lg px-2.5 text-slate-600 transition-all duration-300 ease-in-out hover:bg-slate-100 hover:text-slate-900 hover:translate-x-1 active:scale-95 data-[active=true]:bg-slate-100 data-[active=true]:font-semibold data-[active=true]:text-slate-800 data-[state=open]:hover:bg-slate-100 data-[state=open]:hover:text-slate-900 group-data-[collapsible=icon]:mx-auto";
 
 const botaoSubmenu =
-  "h-8 gap-2 rounded-md pl-2.5 text-[13px] text-sidebar-foreground/65 transition-all duration-300 ease-in-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:translate-x-1 active:scale-95 data-[active=true]:bg-sidebar-highlight data-[active=true]:font-semibold data-[active=true]:text-sidebar-highlight-foreground";
+  "h-8 gap-2 rounded-md pl-2.5 text-[13px] text-slate-500 transition-all duration-300 ease-in-out hover:bg-slate-100 hover:text-slate-900 hover:translate-x-1 active:scale-95 data-[active=true]:bg-slate-100 data-[active=true]:font-semibold data-[active=true]:text-slate-800";
 
 type AppSidebarProps = {
   email?: string | null | undefined;
@@ -134,12 +134,12 @@ export function AppSidebar({ email }: AppSidebarProps) {
                     : "Expandir menu lateral"
               }
               aria-expanded={aberto}
-              className="size-8 shrink-0 rounded-lg text-white/80 transition-all duration-300 ease-in-out hover:bg-sidebar-accent hover:text-white active:scale-95"
+              className="size-8 shrink-0 rounded-lg border border-slate-200 bg-white text-slate-700 transition-all duration-300 ease-in-out hover:bg-slate-50 hover:text-slate-900 active:scale-95"
             >
               {aberto ? (
-                <PanelLeftClose className="size-4" />
+                <PanelLeftClose className="size-4 text-slate-700" />
               ) : (
-                <PanelLeftOpen className="size-4" />
+                <PanelLeftOpen className="size-4 text-slate-700" />
               )}
             </Button>
             <FullscreenToggle />
@@ -290,9 +290,9 @@ export function AppSidebar({ email }: AppSidebarProps) {
               onClick={sair}
               title="Sair"
               aria-label="Sair"
-              className="size-8 shrink-0 rounded-lg text-white/80 transition-all duration-300 ease-in-out hover:bg-red-500/20 hover:text-white active:scale-95"
+              className="size-8 shrink-0 rounded-lg border border-slate-200 bg-white text-slate-700 transition-all duration-300 ease-in-out hover:bg-slate-50 hover:text-slate-900 active:scale-95"
             >
-              <LogOut className="size-4" />
+              <LogOut className="size-4 text-slate-700" />
             </Button>
           </div>
         </SidebarFooter>

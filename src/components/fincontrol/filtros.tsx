@@ -15,7 +15,7 @@ export type FiltrosState = {
 };
 
 const selectClass =
-  "rounded-lg border border-input/60 bg-card/80 px-2.5 py-1 text-xs font-semibold text-foreground outline-none focus:ring-1 focus:ring-primary";
+  "rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-slate-800";
 
 export function Filtros({
   state,
@@ -48,14 +48,14 @@ export function Filtros({
 
         <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
           {/* Pílulas Todos / Pagos / Abertos */}
-          <div className="flex items-center gap-1 rounded-full bg-muted/40 p-0.5">
+          <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5">
             <button
               type="button"
               onClick={() => onChange({ status: "all" })}
-              className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-colors ${
+              className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${
                 state.status === "all"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-slate-800 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
               Todos
@@ -63,10 +63,10 @@ export function Filtros({
             <button
               type="button"
               onClick={() => onChange({ status: "PAGO" })}
-              className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-colors ${
+              className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${
                 state.status === "PAGO"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-slate-800 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
               Pagos
@@ -74,10 +74,10 @@ export function Filtros({
             <button
               type="button"
               onClick={() => onChange({ status: "ABERTO" })}
-              className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-colors ${
+              className={`rounded-full px-3.5 py-1 text-xs font-bold transition-colors ${
                 state.status === "ABERTO"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-slate-800 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
               Abertos
@@ -90,16 +90,18 @@ export function Filtros({
             onClick={() => onChange({ status: isAssinaturas ? "all" : "RECORRENTE" })}
             className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors ${
               isAssinaturas
-                ? "border-primary/50 bg-primary/10 text-primary"
-                : "border-border/60 bg-card/60 text-muted-foreground hover:text-foreground"
+                ? "border-slate-800 bg-slate-800/10 text-slate-800"
+                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
             {isAssinaturas ? (
-              <CheckSquare className="size-3.5 text-primary" />
+              <CheckSquare className="size-3.5 text-slate-800" />
             ) : (
-              <Square className="size-3.5 text-muted-foreground" />
+              <Square className="size-3.5 text-slate-400" />
             )}
-            <span>Assinaturas ativas</span>
+            <span className={isAssinaturas ? "text-slate-800" : "text-slate-500"}>
+              Assinaturas ativas
+            </span>
           </button>
 
           {/* Pílulas de vencimento, sempre visíveis: a vencer e vencidos */}
@@ -109,12 +111,16 @@ export function Filtros({
             title="Títulos em aberto com vencimento hoje ou em data futura"
             className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
               state.status === "AVENCER"
-                ? "border-amber-500 bg-amber-500 text-white"
-                : "border-amber-500/50 bg-white text-amber-700 hover:bg-amber-50"
+                ? "border-amber-200 bg-amber-50 text-amber-700"
+                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
-            <span>A vencer</span>
-            <span className="rounded-full bg-amber-500/30 px-1.5 text-[10px] font-bold">
+            <span className={state.status === "AVENCER" ? "text-amber-700" : "text-slate-500"}>
+              A vencer
+            </span>
+            <span className={`rounded-full px-1.5 text-[10px] font-bold ${
+              state.status === "AVENCER" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
+            }`}>
               {countAVencer}
             </span>
           </button>
@@ -125,12 +131,16 @@ export function Filtros({
             title="Títulos em aberto com vencimento já ultrapassado"
             className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
               state.status === "VENCIDO"
-                ? "border-destructive bg-destructive text-destructive-foreground"
-                : "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                ? "border-rose-200 bg-rose-50 text-rose-700"
+                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
-            <span>Vencidos</span>
-            <span className="rounded-full bg-destructive/30 px-1.5 text-[10px] font-bold">
+            <span className={state.status === "VENCIDO" ? "text-rose-700" : "text-slate-500"}>
+              Vencidos
+            </span>
+            <span className={`rounded-full px-1.5 text-[10px] font-bold ${
+              state.status === "VENCIDO" ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600"
+            }`}>
               {countVencidos}
             </span>
           </button>

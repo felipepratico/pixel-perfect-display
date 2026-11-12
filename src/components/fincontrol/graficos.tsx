@@ -48,8 +48,8 @@ export function Graficos({
     .reduce((acc, t) => acc + computeRow(t).mensalSite, 0);
   const totalValor = valorPago + valorAberto;
   const situacao = [
-    { name: "PAGO", value: totais.pagos, valor: valorPago, color: "#10b981" },
-    { name: "ABERTO", value: totais.abertos, valor: valorAberto, color: "#f59e0b" },
+    { name: "PAGO", value: totais.pagos, valor: valorPago, color: "#059669" },
+    { name: "ABERTO", value: totais.abertos, valor: valorAberto, color: "#64748b" },
   ].filter((item) => item.value > 0);
 
   if (!valoresVisiveis) {
@@ -130,14 +130,14 @@ export function Graficos({
                 />
                 <Bar
                   dataKey="Mensal site"
-                  fill="#0284c7"
+                  fill="#0f4c5c"
                   radius={[4, 4, 0, 0]}
                   animationDuration={800}
                   animationEasing="ease-out"
                 />
                 <Bar
                   dataKey="Lucro Felipe"
-                  fill="#10b981"
+                  fill="#059669"
                   radius={[4, 4, 0, 0]}
                   animationDuration={800}
                   animationBegin={80}
@@ -145,7 +145,7 @@ export function Graficos({
                 />
                 <Bar
                   dataKey="Lucro Francisco"
-                  fill="#8b5cf6"
+                  fill="#64748b"
                   radius={[4, 4, 0, 0]}
                   animationDuration={800}
                   animationBegin={160}
@@ -216,11 +216,11 @@ export function Graficos({
             </>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2 border-t border-border/50 pt-3 text-center text-xs">
-          <div className="rounded-lg border border-emerald-500/40 bg-emerald-50 py-1.5 font-bold text-emerald-700">
+        <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-3 text-center text-xs">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 py-1.5 font-semibold text-emerald-700 tabular-nums">
             {totais.pagos} pagos · {formatCurrency(valorPago)}
           </div>
-          <div className="rounded-lg border border-amber-500/40 bg-amber-50 py-1.5 font-bold text-amber-700">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 py-1.5 font-semibold text-slate-700 tabular-nums">
             {totais.abertos} abertos · {formatCurrency(valorAberto)}
           </div>
         </div>

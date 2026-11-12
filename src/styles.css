@@ -5,11 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * FinControl design system (Light Mode).
- * Surface: ice-gray app background (#E3EAF5) with white panels.
- * Money figures use semantic tokens: brand (emerald = Felipe),
- * partner (purple = Francisco), info (blue = faturamento),
- * warning (amber = custos), danger (rose).
+ * FinControl design system (Minimalist Corporate — Light Mode).
+ * Surface: ice-gray app background (#F8FAFC) with white panels.
+ * Money figures use tabular nums and near-black text (#0F172A).
+ * Primary accent: azul petróleo profundo (#0F4C5C).
  */
 
 @theme inline {
@@ -81,46 +80,46 @@
 }
 
 :root {
-  --radius: 0.875rem;
+  --radius: 0.625rem;
   color-scheme: light;
-  --background: #e3eaf5;
-  --foreground: #1e293b;
+  --background: #f8fafc;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #1e293b;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #1e293b;
-  --primary: #2563eb;
+  --popover-foreground: #0f172a;
+  --primary: #0f4c5c;
   --primary-foreground: #ffffff;
-  --secondary: #eef2fb;
-  --secondary-foreground: #1e293b;
-  --muted: #eef2fb;
-  --muted-foreground: #5b6b82;
-  --accent: #e8f0fd;
-  --accent-foreground: #16438a;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #e0f2fe;
+  --accent-foreground: #0f4c5c;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #d3dfee;
-  --input: #c9d6ea;
-  --ring: #2563eb;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #0f4c5c;
 
-  --shell: #16438a;
-  --shell-foreground: #f8fafc;
+  --shell: #0f4c5c;
+  --shell-foreground: #ffffff;
   --shell-muted: #bfdcf2;
-  --shell-border: #0f4c9c;
+  --shell-border: #0f4c5c;
 
-  --brand: #059669;
+  --brand: #0f4c5c;
   --brand-foreground: #ffffff;
-  --brand-soft: #e7f7f1;
-  --brand-border: #b9e4d5;
+  --brand-soft: #e0f2fe;
+  --brand-border: #bae6fd;
 
-  --partner: #7c3aed;
+  --partner: #0f4c5c;
   --partner-foreground: #ffffff;
-  --partner-soft: #f3eafd;
-  --partner-border: #ddd0fa;
+  --partner-soft: #e0f2fe;
+  --partner-border: #bae6fd;
 
-  --info: #1d6fd1;
+  --info: #0f4c5c;
   --info-foreground: #ffffff;
-  --info-soft: #e8f2fd;
+  --info-soft: #e0f2fe;
 
   --warning: #d97706;
   --warning-foreground: #ffffff;
@@ -130,22 +129,22 @@
   --danger: #dc2626;
   --danger-soft: #fdecec;
 
-  --chart-1: #2563eb;
+  --chart-1: #0f4c5c;
   --chart-2: #059669;
-  --chart-3: #7c3aed;
+  --chart-3: #64748b;
   --chart-4: #d97706;
   --chart-5: #dc2626;
-  /* Sidebar: fundo azul sólido (#003566) com textos e ícones brancos. */
-  --sidebar: #003566;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #ffffff;
-  --sidebar-primary-foreground: #003566;
-  --sidebar-accent: rgb(255 255 255 / 0.1);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgb(255 255 255 / 0.18);
-  --sidebar-ring: #ffffff;
-  --sidebar-highlight: #ffffff;
-  --sidebar-highlight-foreground: #003566;
+  /* Sidebar: fundo cinza-ardósia claro (#F1F5F9) com borda direita sutil. */
+  --sidebar: #f1f5f9;
+  --sidebar-foreground: #334155;
+  --sidebar-primary: #0f4c5c;
+  --sidebar-primary-foreground: #0f4c5c;
+  --sidebar-accent: #f0f9ff;
+  --sidebar-accent-foreground: #0f4c5c;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #0f4c5c;
+  --sidebar-highlight: #f0f9ff;
+  --sidebar-highlight-foreground: #0f4c5c;
 }
 
 @layer base {
@@ -183,8 +182,8 @@
 @utility card-panel {
   background-color: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-2xl);
-  box-shadow: 0 1px 2px 0 rgb(23 42 90 / 6%);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 4%);
 }
 
 @keyframes card-in {

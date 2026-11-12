@@ -533,18 +533,14 @@ function Painel() {
   return (
     <div className="min-h-screen bg-background">
       {/* Toolbar superior de ações (alinhada com a imagem) */}
-      <div className="border-b border-border/60 bg-white/80 backdrop-blur-md print:hidden">
+      <div className="border-b border-slate-200 bg-white print:hidden">
         <div className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-4">
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
               onClick={() => setValoresVisiveis((visivel) => !visivel)}
               aria-pressed={valoresVisiveis}
-              className={`gap-1.5 rounded-lg font-semibold text-xs transition-colors ${
-                valoresVisiveis
-                  ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
+              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
             >
               {valoresVisiveis ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
               {valoresVisiveis ? "Ocultar valores" : "Mostrar valores"}
@@ -555,34 +551,34 @@ function Painel() {
                 setEditando(null);
                 setTituloOpen(true);
               }}
-              className="gap-1.5 rounded-lg bg-sky-500 font-semibold text-xs text-white hover:bg-sky-600 shadow-sm"
+              className="gap-1.5 rounded-lg bg-slate-800 px-3 text-xs font-bold text-white hover:bg-slate-900 shadow-sm"
             >
               <Plus className="size-3.5" />
               Lançamento
             </Button>
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               onClick={() => setAssOpen(true)}
-              className="gap-1.5 rounded-lg text-xs font-semibold"
+              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
             >
               <Repeat className="size-3.5" />
               Assinaturas
             </Button>
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               onClick={() => setRecOpen(true)}
-              className="gap-1.5 rounded-lg text-xs font-semibold"
+              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
             >
               <CalendarPlus className="size-3.5" />
               Gerar meses
             </Button>
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               asChild
-              className="gap-1.5 rounded-lg text-xs font-semibold"
+              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
             >
               <Link to="/cobrancas-efi">
                 <CloudCheck className="size-3.5" />
@@ -591,39 +587,39 @@ function Painel() {
             </Button>
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               onClick={() => setImpOpen(true)}
-              className="gap-1.5 rounded-lg text-xs font-semibold"
+              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
             >
               <Upload className="size-3.5" />
               Importar
             </Button>
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               disabled={!valoresVisiveis || clientesVisiveis.length === 0}
               onClick={() => exportTitulos(clientesVisiveis)}
-              className="gap-1.5 rounded-lg text-xs font-semibold"
+              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
             >
               <Download className="size-3.5" />
               Exportar
             </Button>
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               disabled={clientesVisiveis.length === 0}
               onClick={() => {
                 setRelCliente(null);
                 setRelOpen(true);
               }}
-              className="gap-1.5 rounded-lg text-xs font-semibold"
+              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
             >
               <FileText className="size-3.5" />
               Relatórios
             </Button>
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               disabled={!valoresVisiveis || clientesVisiveis.length === 0}
               onClick={() =>
                 imprimir(
@@ -631,7 +627,7 @@ function Painel() {
                   `Agrupado por vencimento${filtros.mesAno !== "all" ? ` · ${filtros.mesAno}` : ""}${filtros.status !== "all" ? ` · ${filtros.status}` : ""}`,
                 )
               }
-              className="gap-1.5 rounded-lg text-xs font-semibold"
+              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
             >
               <Printer className="size-3.5" />
               Imprimir
@@ -643,12 +639,12 @@ function Painel() {
             <Button
               size="sm"
               onClick={() => setGeminiOpen(true)}
-              className="gap-1.5 rounded-lg bg-gradient-to-r from-brand via-primary to-indigo-600 text-xs font-extrabold text-white shadow-md shadow-brand/20 transition-all hover:opacity-90"
+              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
             >
               <Sparkles className="size-3.5 animate-pulse" />
               Gemini IA
               {titulosVencidos.length > 0 && (
-                <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[10px] font-black">
+                <span className="rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] font-bold text-slate-700">
                   {titulosVencidos.length}
                 </span>
               )}
@@ -656,8 +652,8 @@ function Painel() {
 
             <Button
               size="icon"
-              variant="ghost"
-              className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+              variant="outline"
+              className="size-8 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
               title="Sair"
               onClick={async () => {
                 await supabase.auth.signOut();

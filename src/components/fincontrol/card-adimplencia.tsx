@@ -12,7 +12,7 @@ type AdimplenciaKPI = {
   value: string | number;
   sublabel: string;
   icon: React.ElementType;
-  color: "emerald" | "amber" | "destructive" | "blue";
+  color: "slate" | "emerald" | "amber" | "rose";
 };
 
 export function CardAdimplencia({
@@ -46,30 +46,40 @@ export function CardAdimplencia({
     {
       label: "Clientes inadimplentes",
       value: m.inadimplentes,
-      sublabel: "perfil vermelho",
+      sublabel: "perfil em atraso",
       icon: Users,
-      color: "destructive",
+      color: "rose",
     },
   ];
 
+  const COLOR_MAP: Record<AdimplenciaKPI["color"], { bg: string; text: string; border: string; dot: string }> = {
+    slate: { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200", dot: "bg-slate-500" },
+    emerald: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-600" },
+    amber: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", dot: "bg-amber-500" },
+    rose: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", dot: "bg-rose-500" },
+  };
+
   return (
     <section className="grid gap-3 sm:grid-cols-3">
-      {kpis.map((kpi) => (
-        <div key={kpi.label} className="rounded-md border bg-card p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-            <kpi.icon className="size-4" />
-            {kpi.label}
+      {kpis.map((kpi) => {
+        const { bg, text, border, dot } = COLOR_MAP[kpi.color];
+        return (
+          <div key={kpi.label} className={`card-panel p-4 border ${border}`}>
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-500">
+              <div className={`size-4 rounded-full ${dot}`} />
+              {kpi.label}
+            </div>
+            <p className={`text-2xl font-black tracking-tight text-slate-900 tabular-nums`}>
+              {typeof kpi.value === "number"
+                ? kpi.label === "Clientes inadimplentes"
+                  ? String(kpi.value)
+                  : formatCurrency(kpi.value)
+                : kpi.value}
+            </p>
+            <p className="text-xs text-slate-500">{kpi.sublabel}</p>
           </div>
-          <p className="text-2xl font-extrabold">
-            {typeof kpi.value === "number"
-              ? kpi.label === "Clientes inadimplentes"
-                ? String(kpi.value)
-                : formatCurrency(kpi.value)
-              : kpi.value}
-          </p>
-          <p className="text-xs text-muted-foreground">{kpi.sublabel}</p>
-        </div>
-      ))}
+        );
+      })}
     </section>
   );
 }
