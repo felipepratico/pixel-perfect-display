@@ -32,14 +32,14 @@ export function CardAdimplencia({
     {
       label: "Taxa de pontualidade",
       value: `${taxaPontualidade}%`,
-      sublabel: "títulos pagos em dia",
+      sublabel: "títulos em dia (não vencidos)",
       icon: CreditCard,
       color: "emerald",
     },
     {
       label: "Média de atraso",
       value: `${mediaAtraso} dias`,
-      sublabel: "por título pago",
+      sublabel: "por título vencido em aberto",
       icon: Clock,
       color: m.mediaAtrasoGeral <= 5 ? "emerald" : "amber",
     },
