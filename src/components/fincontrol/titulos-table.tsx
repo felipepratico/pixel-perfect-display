@@ -11,6 +11,12 @@ import {
   Trash2,
 } from "lucide-react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -196,11 +202,6 @@ export function TitulosTable({
                       <p className="font-bold text-foreground tracking-tight">
                         {titulo.cliente}
                       </p>
-                      {nomeContato && (
-                        <p className="text-xs text-muted-foreground">
-                          Contato: {nomeContato}
-                        </p>
-                      )}
                       {!ativa && (
                         <span
                           className={
@@ -336,6 +337,11 @@ export function TitulosTable({
                   </td>
                   <td className="px-4 py-3.5">
                     <p className="font-mono text-foreground text-sm">{titulo.cnpj || "—"}</p>
+                    {nomeContato && (
+                      <p className="text-xs text-muted-foreground truncate" title={nomeContato}>
+                        {nomeContato}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {titulo.telefone || "sem telefone"}
                     </p>
@@ -346,11 +352,32 @@ export function TitulosTable({
                   <td className="px-4 py-3.5 text-right text-muted-foreground font-medium">
                     {moeda(calc.lucroFrancisco)}
                   </td>
-                  <td
-                    className="px-4 py-3.5 text-right font-bold text-emerald-700"
-                    title={`Mensal Site: ${moeda(calc.mensalSite)}\nCusto Boleto: ${moeda(calc.custoBoleto)}\n% Francisco: ${calc.franciscoPct}%\nCusto Total (Boleto + Francisco): ${moeda(calc.custoBltFra)}`}
-                  >
-                    {moeda(calc.lucroFelipe)}
+                  <td className="px-4 py-3.5 text-right font-bold text-emerald-700">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">{moeda(calc.lucroFelipe)}</span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <div className="space-x-1 text-left">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Mensal Site</span>
+                            <span className="font-medium">{moeda(calc.mensalSite)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Custo Boleto</span>
+                            <span className="font-medium">{moeda(calc.custoBoleto)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">% Francisco</span>
+                            <span className="font-medium">{calc.franciscoPct}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Custo Total</span>
+                            <span className="font-medium">{moeda(calc.custoBltFra)}</span>
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   </td>
                 </tr>
               );

@@ -67,6 +67,7 @@ import {
   computeRow,
   currentMesAno,
   emptyTitulo,
+  formatCurrency,
   getDiasVencido,
   isActiveSubscription,
   isTituloAVencer,
@@ -273,9 +274,25 @@ function Painel() {
     [clientesVisiveis, todos, clientesCadastrados],
   );
 
+  const moeda = (valor: number) =>
+    valoresVisiveis ? formatCurrency(valor) : "R$ ••••••";
+
   /** Mês de referência dos indicadores de clientes (respeita o filtro do painel). */
   const mesReferencia =
     filtros.mesAno && filtros.mesAno !== "all" ? filtros.mesAno : currentMesAno();
+
+  // Indicadores secundários usados no accordion de gráficos.
+  const pontualidade =
+    totais.quantidade > 0 ? (totais.pagos / totais.quantidade) * 100 : 0;
+
+  const mediaAtraso = useMemo(() => {
+    const vencidos = clientesVisiveis.filter(isTituloVencido);
+    if (!vencidos.length) return 0;
+    const soma = vencidos.reduce((acc, t) => acc + (getDiasVencido(t) ?? 0), 0);
+    return soma / vencidos.length;
+  }, [clientesVisiveis]);
+
+  const arpu = totais.assinaturasAtivas > 0 ? totais.mrr / totais.assinaturasAtivas : 0;
 
   function onSave(values: TituloInput, id?: string) {
     saveTitulo.mutate(id ? { id, values } : { values }, {
@@ -688,6 +705,53 @@ function Painel() {
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4">
+                  {/* Métricas secundárias */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="card-panel p-3 bg-white border border-border/60">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        MRR
+                      </p>
+                      <p className="text-lg font-black tracking-tight text-foreground">
+                        {moeda(totais.mrr)}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground/75">
+                        {totais.assinaturasAtivas} assinatura(s) ativa(s)
+                      </p>
+                    </div>
+                    <div className="card-panel p-3 bg-white border border-border/60">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Pontualidade
+                      </p>
+                      <p className="text-lg font-black tracking-tight text-foreground">
+                        {pontualidade.toFixed(1)}%
+                      </p>
+                      <p className="text-[11px] text-muted-foreground/75">
+                        {totais.pagos} de {totais.quantidade} pagos
+                      </p>
+                    </div>
+                    <div className="card-panel p-3 bg-white border border-border/60">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Média de atraso
+                      </p>
+                      <p className="text-lg font-black tracking-tight text-foreground">
+                        {mediaAtraso.toFixed(1)} dias
+                      </p>
+                      <p className="text-[11px] text-muted-foreground/75">
+                        sobre vencidos em aberto
+                      </p>
+                    </div>
+                    <div className="card-panel p-3 bg-white border border-border/60">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        ARPU
+                      </p>
+                      <p className="text-lg font-black tracking-tight text-foreground">
+                        {moeda(arpu)}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground/75">
+                        receita média por assinatura
+                      </p>
+                    </div>
+                  </div>
                   <CardAdimplencia
                     titulos={todos}
                     clientes={clientesCadastrados}
