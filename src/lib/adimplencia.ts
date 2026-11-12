@@ -13,20 +13,27 @@ export type HistoricoCliente = {
   taxaPontualidade: number; // 0 a 1
   perfil: PerfilPagamento;
   receitaRecebida: number;
+  vencidosEmAberto: number;
 };
 
 /**
  * Classifica o perfil de pagamento do cliente.
  *
  * Regras:
- * - ADIMPLENTE: paga 90%+ em dia.
- * - ATRASADOR_LEVE: paga entre 70% e 90% em dia, com atraso médio <= 5 dias.
- * - INADIMPLENTE: abaixo de 70% em dia ou atraso médio > 5 dias.
+ * - INADIMPLENTE: possui título vencido ainda em aberto.
+ * - ATRASADOR_LEVE: está em dia, mas menos de 90% dos pagamentos foram pontuais.
+ * - ADIMPLENTE: está em dia e paga pontualmente.
  */
-export function classificarPerfil(taxaPontualidade: number, mediaAtraso: number): PerfilPagamento {
-  if (taxaPontualidade >= 0.9) return "ADIMPLENTE";
-  if (taxaPontualidade >= 0.7 && mediaAtraso <= 5) return "ATRASADOR_LEVE";
-  return "INADIMPLENTE";
+export function classificarPerfil(
+  taxaPontualidade: number,
+  mediaAtraso: number,
+  vencidosEmAberto = 0,
+): PerfilPagamento {
+  // Inadimplente = tem título vencido e ainda não pago.
+  if (vencidosEmAberto > 0) return "INADIMPLENTE";
+  // Pagou tudo, mas com atrasos frequentes ou longos.
+  if (taxaPontualidade < 0.9 && mediaAtraso > 0) return "ATRASADOR_LEVE";
+  return "ADIMPLENTE";
 }
 
 /**
@@ -58,10 +65,12 @@ export function calcularHistoricoClientes(
       taxaPontualidade: 0,
       perfil: "ATRASADOR_LEVE",
       receitaRecebida: 0,
+      vencidosEmAberto: 0,
     };
 
     registro.totalTitulos += 1;
 
+    if (t.situacao !== "PAGO" && getDiasVencido(t) > 0) registro.vencidosEmAberto += 1;
     if (t.situacao === "PAGO") {
       registro.pagos += 1;
       const valor = computeRow(t).mensalSite;
@@ -92,7 +101,11 @@ export function calcularHistoricoClientes(
   const resultado: HistoricoCliente[] = [];
   for (const registro of porCliente.values()) {
     const taxaPontualidade = registro.pagos > 0 ? registro.pagosPontuais / registro.pagos : 0;
-    const perfil = classificarPerfil(taxaPontualidade, registro.mediaAtraso);
+    const perfil = classificarPerfil(
+      taxaPontualidade,
+      registro.mediaAtraso,
+      registro.vencidosEmAberto,
+    );
     resultado.push({
       ...registro,
       taxaPontualidade,
