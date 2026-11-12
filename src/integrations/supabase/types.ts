@@ -118,6 +118,7 @@ export type Database = {
           endereco: string
           grupo_id: string | null
           id: string
+          mensagem_sistema: string
           modulos: string[]
           nome_fantasia: string
           numero_endereco: string
@@ -138,7 +139,6 @@ export type Database = {
           valor_computador_adicional: number
           vencimento: number
           versao_instalada: string
-          mensagem_sistema: string
         }
         Insert: {
           bairro?: string
@@ -154,6 +154,7 @@ export type Database = {
           endereco?: string
           grupo_id?: string | null
           id?: string
+          mensagem_sistema?: string
           modulos?: string[]
           nome_fantasia?: string
           numero_endereco?: string
@@ -174,7 +175,6 @@ export type Database = {
           valor_computador_adicional?: number
           vencimento?: number
           versao_instalada?: string
-          mensagem_sistema?: string
         }
         Update: {
           bairro?: string
@@ -190,6 +190,7 @@ export type Database = {
           endereco?: string
           grupo_id?: string | null
           id?: string
+          mensagem_sistema?: string
           modulos?: string[]
           nome_fantasia?: string
           numero_endereco?: string
@@ -210,7 +211,6 @@ export type Database = {
           valor_computador_adicional?: number
           vencimento?: number
           versao_instalada?: string
-          mensagem_sistema?: string
         }
         Relationships: [
           {
