@@ -31,6 +31,7 @@ export type Cliente = {
   cnpj: string;
   email: string;
   telefone: string;
+  nome_contato: string | null;
   endereco: string;
   numero_endereco: string;
   bairro: string;
@@ -104,6 +105,7 @@ export const clienteSchema = z.object({
   cnpj: z.string().trim().max(20).default(""),
   email: z.string().trim().max(255).default(""),
   telefone: z.string().trim().max(20).default(""),
+  nome_contato: z.string().trim().max(160).nullable().default(null),
   endereco: z.string().trim().max(180).default(""),
   numero_endereco: z.string().trim().max(30).default(""),
   bairro: z.string().trim().max(100).default(""),
@@ -150,6 +152,7 @@ export const emptyCliente = (): ClienteInput => ({
   cnpj: "",
   email: "",
   telefone: "",
+  nome_contato: null,
   endereco: "",
   numero_endereco: "",
   bairro: "",

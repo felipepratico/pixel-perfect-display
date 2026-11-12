@@ -119,6 +119,7 @@ export type Database = {
           grupo_id: string | null
           id: string
           mensagem_sistema: string
+          nome_contato: string | null
           modulos: string[]
           nome_fantasia: string
           numero_endereco: string
@@ -155,6 +156,7 @@ export type Database = {
           grupo_id?: string | null
           id?: string
           mensagem_sistema?: string
+          nome_contato?: string | null
           modulos?: string[]
           nome_fantasia?: string
           numero_endereco?: string
@@ -191,6 +193,7 @@ export type Database = {
           grupo_id?: string | null
           id?: string
           mensagem_sistema?: string
+          nome_contato?: string | null
           modulos?: string[]
           nome_fantasia?: string
           numero_endereco?: string

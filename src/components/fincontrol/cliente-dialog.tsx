@@ -118,6 +118,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
       codigo_site: form.codigo_site.trim(),
       cnpj: form.cnpj.trim(),
       telefone: form.telefone.replace(/\D/g, ""),
+      nome_contato: form.nome_contato?.trim() || null,
       quantidade_computadores: Math.max(1, Number(form.quantidade_computadores) || 1),
       vencimento: Math.min(31, Math.max(1, Number(form.vencimento) || 5)),
       valor_base: Math.max(0, Number(form.valor_base) || 0),
@@ -138,6 +139,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
             <Field label="Mensagem Sistema"><select className={selectClass} value={form.mensagem_sistema} onChange={(e) => update("mensagem_sistema", e.target.value as ClienteInput["mensagem_sistema"])}><option value="Normal">Normal</option><option value="Bloqueado">Bloqueado</option><option value="Atualização">Atualização</option><option value="Cobrança">Cobrança</option></select></Field>
             <Field label={tipoPessoa === "FISICA" ? "CPF *" : "CNPJ *"}><div className="flex gap-2"><Input required inputMode="numeric" maxLength={tipoPessoa === "FISICA" ? 14 : 18} value={form.cnpj} onChange={(e) => update("cnpj", e.target.value)} onBlur={() => { const digitos = onlyDigits(form.cnpj); if (!cliente && tipoPessoa === "JURIDICA" && !isCnpjZerado(digitos) && isValidCnpj(digitos) && digitos !== ultimoCnpjConsultado.current) void consultarCnpj(); }} />{tipoPessoa === "JURIDICA" ? <Button type="button" size="icon" variant="outline" title="Buscar dados do CNPJ" disabled={consultandoCnpj} onClick={consultarCnpj}>{consultandoCnpj ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</Button> : null}</div></Field>
             <Field label="WhatsApp"><Input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} /></Field>
+            <Field label="Nome do contato"><Input placeholder="Ex: Larissa" value={form.nome_contato ?? ""} onChange={(e) => update("nome_contato", e.target.value || null)} /></Field>
             <Field label="E-mail"><Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
             <Field label="Endereço" className="lg:col-span-2"><Input value={form.endereco} onChange={(e) => update("endereco", e.target.value)} /></Field>
             <Field label="Número"><Input value={form.numero_endereco} onChange={(e) => update("numero_endereco", e.target.value)} /></Field>
