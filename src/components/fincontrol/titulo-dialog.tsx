@@ -46,11 +46,16 @@ export function TituloDialog({
     if (!open) return;
     if (titulo) {
       const { id: _id, ...rest } = titulo;
+      // Quando edita um lançamento já vinculado, traz o contato do cadastro do cliente.
+      if (titulo.cliente_id) {
+        const c = clientes.find((item) => item.id === titulo.cliente_id);
+        if (c) rest.nome_contato = c.nome_contato ?? null;
+      }
       setForm(rest);
     } else {
       setForm(emptyTitulo());
     }
-  }, [open, titulo]);
+  }, [open, titulo, clientes]);
 
   const calc = computeRow(form);
 
@@ -72,6 +77,7 @@ export function TituloDialog({
       cliente: c.razao_social,
       cnpj: c.cnpj,
       telefone: c.telefone,
+      nome_contato: c.nome_contato ?? null,
       vencimento: c.vencimento,
       mensal_site: prev.mensal_site > 0 ? prev.mensal_site : mensalidade,
     }));
@@ -142,6 +148,11 @@ export function TituloDialog({
                 onChange={(event) => update("cliente", event.target.value)}
                 placeholder="Ex: DISTRIBUIDORA FORTES"
               />
+              {form.nome_contato && (
+                <p className="text-xs text-muted-foreground">
+                  Contato: <strong>{form.nome_contato}</strong>
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cnpj">CNPJ / CPF</Label>

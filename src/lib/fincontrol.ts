@@ -8,6 +8,7 @@ export type Titulo = {
   cliente: string;
   cnpj: string;
   telefone: string;
+  nome_contato: string | null;
   mensal_site: number;
   mensal_real: number;
   custo_boleto: number;
@@ -190,11 +191,12 @@ export function tituloDeClienteAtivo(
   cliente: Pick<
     ClienteRef & {
       telefone: string;
+      nome_contato: string | null;
       vencimento: number;
       status: "ATIVO" | "INATIVO";
       valor_base: number;
     },
-    "id" | "cnpj" | "razao_social" | "telefone" | "vencimento" | "status" | "valor_base"
+    "id" | "cnpj" | "razao_social" | "telefone" | "nome_contato" | "vencimento" | "status" | "valor_base"
   >,
   mensalidade?: number | string,
   mesAnoRef: string = currentMesAno(),
@@ -216,6 +218,7 @@ export function tituloDeClienteAtivo(
     cliente: cliente.razao_social ?? "",
     cnpj: cliente.cnpj ?? "",
     telefone: normalizePhone(cliente.telefone ?? ""),
+    nome_contato: cliente.nome_contato ?? null,
     mensal_site: mensal,
     mensal_real: mensal,
     custo_boleto: 0,
@@ -459,6 +462,7 @@ export const emptyTitulo = (): TituloInput => ({
   cliente: "",
   cnpj: "",
   telefone: "",
+  nome_contato: null,
   mensal_site: 0,
   mensal_real: 0,
   custo_boleto: 3.45,

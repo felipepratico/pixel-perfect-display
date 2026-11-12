@@ -461,6 +461,7 @@ export type Database = {
           status_assinatura: string
           telefone: string
           tipo_cobranca: string
+          nome_contato?: string | null
           updated_at: string
           user_id: string
           vencimento: number
@@ -487,6 +488,7 @@ export type Database = {
           status_assinatura?: string
           telefone?: string
           tipo_cobranca?: string
+          nome_contato?: string | null
           updated_at?: string
           user_id: string
           vencimento?: number
@@ -513,6 +515,7 @@ export type Database = {
           status_assinatura?: string
           telefone?: string
           tipo_cobranca?: string
+          nome_contato?: string | null
           updated_at?: string
           user_id?: string
           vencimento?: number

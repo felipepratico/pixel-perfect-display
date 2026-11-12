@@ -112,6 +112,7 @@ export function rowsToTitulos(rows: SheetRow[], mapping: Mapping, mesAno: string
         cliente,
         cnpj,
         telefone: String(pick(row, mapping.telefone) ?? "").replace(/\D/g, ""),
+        nome_contato: null,
         mensal_site: parseNumber(pick(row, mapping.mensal_site)),
         mensal_real: parseNumber(pick(row, mapping.mensal_real)),
         custo_boleto: parseNumber(pick(row, mapping.custo_boleto)),
