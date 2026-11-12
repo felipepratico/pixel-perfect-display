@@ -13,26 +13,30 @@ export type HistoricoCliente = {
   taxaPontualidade: number;
   perfil: PerfilPagamento;
   receitaRecebida: number;
+  vencidosEmAberto: number;
 };
 
 /**
- * Limite (em dias) de atraso acima do qual um cliente em aberto deixa de ser
- * considerado "atraso leve" e passa a ser "inadimplente".
- * Mantido alinhado ao limite histórico de 5 dias usado no score anterior.
- */
-const LIMITE_ATRASO_LEVE_DIAS = 5;
-
-/**
- * Classifica o perfil de pagamento com base apenas em cobranças realmente
- * em aberto e vencidas.
+ * Classifica o perfil de pagamento do cliente.
  *
- * Títulos quitados (situacao === "PAGO") nunca geram inadimplência, mesmo
- * que tenham sido pagos com atraso no passado. Só títulos em aberto cujo
- * vencimento já ultrapassou contam como atraso.
+ * Regras:
+ * - INADIMPLENTE: possui título vencido ainda em aberto.
+ * - ATRASADOR_LEVE: está em dia, mas menos de 90% dos pagamentos foram pontuais.
+ * - ADIMPLENTE: está em dia e paga pontualmente.
+ *
+ * Títulos quitados (situacao === "PAGO") nunca geram inadimplência por si
+ * sós; somente títulos em aberto com vencimento ultrapassado contam como
+ * atraso, alinhando o badge de /clientes com a tela de Assinaturas/Cobranças.
  */
-export function classificarPerfil(diasAtraso: number): PerfilPagamento {
-  if (diasAtraso > LIMITE_ATRASO_LEVE_DIAS) return "INADIMPLENTE";
-  if (diasAtraso > 0) return "ATRASADOR_LEVE";
+export function classificarPerfil(
+  taxaPontualidade: number,
+  mediaAtraso: number,
+  vencidosEmAberto = 0,
+): PerfilPagamento {
+  // Inadimplente = tem título vencido e ainda não pago.
+  if (vencidosEmAberto > 0) return "INADIMPLENTE";
+  // Pagou tudo, mas com atrasos frequentes ou longos.
+  if (taxaPontualidade < 0.9 && mediaAtraso > 0) return "ATRASADOR_LEVE";
   return "ADIMPLENTE";
 }
 
@@ -41,8 +45,8 @@ export function classificarPerfil(diasAtraso: number): PerfilPagamento {
  *
  * Regras (somente títulos não excluídos):
  * - ADIMPLENTE: não há títulos em aberto vencidos (todos quitados ou a vencer).
- * - ATRASADOR_LEVE: possui títulos em aberto vencidos por até 5 dias.
- * - INADIMPLENTE: possui títulos em aberto vencidos por mais de 5 dias.
+ * - ATRASADOR_LEVE: está em dia, mas com histórico de atrasos.
+ * - INADIMPLENTE: possui títulos em aberto vencidos.
  */
 export function calcularHistoricoClientes(
   titulos: Titulo[],
@@ -54,16 +58,12 @@ export function calcularHistoricoClientes(
 
   const validos = titulos.filter((t) => !t.deleted_at);
 
-  // Primeira passagem: contagem de títulos e quitados por cliente.
+  // Primeira passagem: contagem de títulos, quitados e vencidos em aberto.
   for (const t of validos) {
     const clienteId = t.cliente_id ?? t.cliente;
     if (!clienteId) continue;
 
-    const cliente = porId.get(clienteId) ?? {
-      id: clienteId,
-      razao_social: t.cliente,
-      cnpj: "",
-    };
+    const cliente = porId.get(clienteId) ?? { id: clienteId, razao_social: t.cliente, cnpj: "" };
     let registro = porCliente.get(clienteId);
     if (!registro) {
       registro = {
@@ -76,11 +76,15 @@ export function calcularHistoricoClientes(
         taxaPontualidade: 0,
         perfil: "ADIMPLENTE",
         receitaRecebida: 0,
+        vencidosEmAberto: 0,
       };
       porCliente.set(clienteId, registro);
     }
 
     registro.totalTitulos += 1;
+
+    // Título em aberto já vencido: conta como inadimplência corrente.
+    if (t.situacao !== "PAGO" && getDiasVencido(t) > 0) registro.vencidosEmAberto += 1;
 
     if (t.situacao === "PAGO") {
       registro.pagos += 1;
@@ -89,7 +93,7 @@ export function calcularHistoricoClientes(
     }
   }
 
-  // Segunda passagem: pior atraso (dias) entre títulos em aberto vencidos por cliente.
+  // Segunda passagem: pior atraso (dias) entre títulos em aberto vencidos.
   const vencidosPorCliente = new Map<string, { piorAtraso: number; quantidade: number }>();
   for (const t of validos) {
     if (t.situacao !== "ABERTO") continue;
@@ -108,15 +112,19 @@ export function calcularHistoricoClientes(
   const resultado: HistoricoCliente[] = [];
   for (const registro of porCliente.values()) {
     const vencidos = vencidosPorCliente.get(registro.clienteId);
-    const piorAtraso = vencidos?.piorAtraso ?? 0;
     const qtdVencidos = vencidos?.quantidade ?? 0;
+    registro.mediaAtraso = vencidos?.piorAtraso ?? 0;
 
-    registro.mediaAtraso = piorAtraso;
     // Share de títulos não vencidos (quitados ou ainda a vencer).
     registro.taxaPontualidade =
       registro.totalTitulos > 0 ? (registro.totalTitulos - qtdVencidos) / registro.totalTitulos : 1;
 
-    registro.perfil = classificarPerfil(piorAtraso);
+    // vencidosEmAberto já foi contado na primeira passagem.
+    registro.perfil = classificarPerfil(
+      registro.taxaPontualidade,
+      registro.mediaAtraso,
+      registro.vencidosEmAberto,
+    );
 
     resultado.push(registro);
   }

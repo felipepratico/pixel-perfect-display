@@ -56,6 +56,8 @@ function ClientesPage() {
   const { saveCliente, softDeleteCliente, createGrupo } = useClienteMutations();
   const [busca, setBusca] = useState("");
   const [grupo, setGrupo] = useState("all");
+  const [statusFiltro, setStatusFiltro] = useState("all");
+  const [adimplenciaFiltro, setAdimplenciaFiltro] = useState("all");
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState<Cliente | null>(null);
   const [valoresVisiveis, setValoresVisiveis] = useState(false);
@@ -65,10 +67,19 @@ function ClientesPage() {
   const [clienteRecibo, setClienteRecibo] = useState<Cliente | null>(null);
   const [reciboOpen, setReciboOpen] = useState(false);
 
+  const historico = calcularHistoricoClientes(titulos, clientes);
+  const historicoPorCliente = new Map(historico.map((h) => [h.clienteId, h]));
+
   const visiveis = useMemo(() => {
     const termo = busca.trim().toLocaleUpperCase("pt-BR");
     return clientes.filter((cliente) => {
       if (grupo !== "all" && cliente.grupo_id !== grupo) return false;
+      if (statusFiltro !== "all" && cliente.status !== statusFiltro) return false;
+      if (adimplenciaFiltro !== "all") {
+        const perfil = historicoPorCliente.get(cliente.id)?.perfil;
+        if (adimplenciaFiltro === "INADIMPLENTE" ? perfil !== "INADIMPLENTE" : perfil !== "ADIMPLENTE")
+          return false;
+      }
       return (
         !termo ||
         `${cliente.razao_social} ${cliente.nome_fantasia} ${cliente.cnpj} ${cliente.codigo_site}`
@@ -76,10 +87,8 @@ function ClientesPage() {
           .includes(termo)
       );
     });
-  }, [clientes, busca, grupo]);
-
-  const historico = calcularHistoricoClientes(titulos, clientes);
-  const historicoPorCliente = new Map(historico.map((h) => [h.clienteId, h]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientes, titulos, busca, grupo, statusFiltro, adimplenciaFiltro]);
 
   const ativos = clientes.filter((cliente) => cliente.status === "ATIVO").length;
   const receita = clientes
@@ -160,6 +169,26 @@ function ClientesPage() {
               placeholder="Buscar por nome, CNPJ ou Cód. Site"
             />
           </div>
+          <select
+            aria-label="Filtrar por adimplência"
+            className="h-10 rounded-md border border-input bg-card px-3 text-sm"
+            value={adimplenciaFiltro}
+            onChange={(e) => setAdimplenciaFiltro(e.target.value)}
+          >
+            <option value="all">Toda adimplência</option>
+            <option value="ADIMPLENTE">Bom padrão</option>
+            <option value="INADIMPLENTE">Inadimplente</option>
+          </select>
+          <select
+            aria-label="Filtrar por status"
+            className="h-10 rounded-md border border-input bg-card px-3 text-sm"
+            value={statusFiltro}
+            onChange={(e) => setStatusFiltro(e.target.value)}
+          >
+            <option value="all">Todos os status</option>
+            <option value="ATIVO">Ativo</option>
+            <option value="INATIVO">Inativo</option>
+          </select>
           <select
             className="h-10 rounded-md border border-input bg-card px-3 text-sm"
             value={grupo}
