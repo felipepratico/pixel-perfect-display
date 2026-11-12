@@ -118,6 +118,7 @@ export type Database = {
           endereco: string
           grupo_id: string | null
           id: string
+          mensagem_sistema: string
           modulos: string[]
           nome_fantasia: string
           numero_endereco: string
@@ -153,6 +154,7 @@ export type Database = {
           endereco?: string
           grupo_id?: string | null
           id?: string
+          mensagem_sistema?: string
           modulos?: string[]
           nome_fantasia?: string
           numero_endereco?: string
@@ -188,6 +190,7 @@ export type Database = {
           endereco?: string
           grupo_id?: string | null
           id?: string
+          mensagem_sistema?: string
           modulos?: string[]
           nome_fantasia?: string
           numero_endereco?: string
