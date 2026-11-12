@@ -10,6 +10,7 @@ export type FiltrosState = {
   status: StatusFiltro;
   mesAno: string;
   vencimento: string;
+  mensagemSistema: "all" | "Normal" | "Bloqueado" | "Atualização" | "Cobrança";
   ordenacao: Ordenacao;
 };
 
@@ -171,6 +172,23 @@ export function Filtros({
                   Dia {dia}
                 </option>
               ))}
+            </select>
+          </label>
+
+          <label className="flex items-center gap-1.5">
+            <span className="font-medium text-muted-foreground">Msg. Sistema:</span>
+            <select
+              className={selectClass}
+              value={state.mensagemSistema}
+              onChange={(event) =>
+                onChange({ mensagemSistema: event.target.value as FiltrosState["mensagemSistema"] })
+              }
+            >
+              <option value="all">Todos</option>
+              <option value="Normal">Normal</option>
+              <option value="Bloqueado">Bloqueado</option>
+              <option value="Atualização">Atualização</option>
+              <option value="Cobrança">Cobrança</option>
             </select>
           </label>
         </div>

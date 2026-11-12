@@ -105,13 +105,11 @@ export const Route = createFileRoute("/_authenticated/painel")({
 });
 
 const erro = (e: unknown) => {
+  const err = e as { message?: string; details?: string; hint?: string; code?: string } | null | undefined;
   const mensagem =
-    e instanceof Error
-      ? e.message
-      : e !== null && typeof e === "object" && "message" in e
-        ? String((e as { message?: unknown }).message ?? "Algo deu errado.")
-        : "Algo deu errado.";
-  toast.error(mensagem);
+    err?.message ?? (e instanceof Error ? e.message : "Algo deu errado.");
+  const detalhes = err?.details;
+  toast.error(detalhes ? `${mensagem}\nDetalhes: ${detalhes}` : mensagem);
 };
 
 function Painel() {
@@ -127,6 +125,7 @@ function Painel() {
     status: "all",
     mesAno: currentMesAno(),
     vencimento: "all",
+    mensagemSistema: "all",
     ordenacao: "clienteAsc",
   });
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
@@ -195,6 +194,9 @@ function Painel() {
     const codigoSitePorCliente = new Map(
       clientesCadastrados.map((c) => [c.id, c.codigo_site]),
     );
+    const mensagemSistemaPorCliente = new Map(
+      clientesCadastrados.map((c) => [c.id, (c.mensagem_sistema ?? "Normal") || "Normal"]),
+    );
     const list = todos.filter((t) => {
       if (busca && !t.cliente.toUpperCase().includes(busca) && !t.cnpj.includes(busca)) {
         if (!t.cliente_id || !codigoSitePorCliente.get(t.cliente_id)?.toUpperCase().includes(busca))
@@ -216,6 +218,10 @@ function Painel() {
         String(t.vencimento) !== filtros.vencimento
       )
         return false;
+      if (filtros.mensagemSistema && filtros.mensagemSistema !== "all") {
+        const msg = mensagemSistemaPorCliente.get(t.cliente_id ?? "") ?? "Normal";
+        if (msg !== filtros.mensagemSistema) return false;
+      }
       return true;
     });
     return list.sort((a, b) => {
@@ -230,7 +236,7 @@ function Painel() {
           return a.cliente.localeCompare(b.cliente);
       }
     });
-  }, [todos, filtros]);
+  }, [todos, filtros, clientesCadastrados]);
 
   const clientesVisiveis = filtrados;
 
