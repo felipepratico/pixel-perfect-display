@@ -17,6 +17,7 @@ import {
   Sparkles,
   Trash2,
   Upload,
+  Clock,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ import { AssinaturasDialog } from "@/components/fincontrol/assinaturas-dialog";
 import { CobrancaLoteDialog } from "@/components/fincontrol/cobranca-lote-dialog";
 import { Filtros, type FiltrosState } from "@/components/fincontrol/filtros";
 import { GeminiInsightsDialog } from "@/components/fincontrol/gemini-insights-dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Graficos } from "@/components/fincontrol/graficos";
 import { ImportDialog } from "@/components/fincontrol/import-dialog";
 import { AreaImpressao } from "@/components/fincontrol/impressao";
@@ -274,19 +276,6 @@ function Painel() {
   /** Mês de referência dos indicadores de clientes (respeita o filtro do painel). */
   const mesReferencia =
     filtros.mesAno && filtros.mesAno !== "all" ? filtros.mesAno : currentMesAno();
-
-  const resumoClientes = useMemo(() => {
-    const ativos = clientesCadastrados.filter((cliente) => cliente.status === "ATIVO");
-    const chavesComTitulo = new Set(
-      todos
-        .filter((t) => (normalizeMesAno(t.mes_ano) ?? t.mes_ano) === mesReferencia)
-        .map((t) => chaveClienteDoTitulo(t, clientesCadastrados)),
-    );
-    return {
-      ativos: ativos.length,
-      semTitulo: ativos.filter((cliente) => !chavesComTitulo.has(chaveDoCliente(cliente))).length,
-    };
-  }, [clientesCadastrados, todos, mesReferencia]);
 
   function onSave(values: TituloInput, id?: string) {
     saveTitulo.mutate(id ? { id, values } : { values }, {
@@ -672,14 +661,10 @@ function Painel() {
           </div>
         ) : (
           <>
-            {/* 1. Cartões de KPI */}
+            {/* 1. Cartões de KPI (5 principais) */}
             <KpiCards
               totais={totais}
               valoresVisiveis={valoresVisiveis}
-              clientesAtivos={resumoClientes.ativos}
-              clientesSemTitulo={resumoClientes.semTitulo}
-              mesAnoReferencia={mesReferencia}
-              onVerAssinaturas={() => setAssOpen(true)}
               onCobrarVencidos={() => {
                 const vencidos = clientesVisiveis.filter((t) => isTituloVencido(t));
                 if (!vencidos.length) {
@@ -693,19 +678,29 @@ function Painel() {
               }}
             />
 
-            {/* 1.5. Adimplência */}
-            <CardAdimplencia
-              titulos={todos}
-              clientes={clientesCadastrados}
-              valoresVisiveis={valoresVisiveis}
-            />
-
-            {/* 2. Gráficos */}
-            <Graficos
-              titulos={clientesVisiveis}
-              totais={totais}
-              valoresVisiveis={valoresVisiveis}
-            />
+            {/* 1.5. Gráficos e indicadores detalhados (recolhível) */}
+            <Accordion type="single" collapsible>
+              <AccordionItem value="graficos">
+                <AccordionTrigger className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 font-semibold text-sm">
+                    <Clock className="size-4 text-muted-foreground" />
+                    Ver gráficos e indicadores detalhados
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4">
+                  <CardAdimplencia
+                    titulos={todos}
+                    clientes={clientesCadastrados}
+                    valoresVisiveis={valoresVisiveis}
+                  />
+                  <Graficos
+                    titulos={clientesVisiveis}
+                    totais={totais}
+                    valoresVisiveis={valoresVisiveis}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
 
             {/* 3. Filtros */}
             <Filtros

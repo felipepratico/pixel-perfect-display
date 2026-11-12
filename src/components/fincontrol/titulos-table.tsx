@@ -67,6 +67,7 @@ export function TitulosTable({
 
   const clientesPorId = new Map((clientes ?? []).map((c) => [c.id, c.codigo_site]));
   const mensagemPorId = new Map((clientes ?? []).map((c) => [c.id, c.mensagem_sistema ?? "Normal"]));
+  const contatoPorId = new Map((clientes ?? []).map((c) => [c.id, c.nome_contato ?? null]));
 
   type MensagemSistema = "Normal" | "Bloqueado" | "Atualização" | "Cobrança";
 
@@ -152,12 +153,8 @@ export function TitulosTable({
               <th className="px-4 py-4 text-center">VENCIMENTO</th>
               <th className="px-4 py-4 text-center">AÇÕES</th>
               <th className="px-4 py-4">CNPJ / TELEFONE</th>
-              <th className="px-4 py-4 text-right">MENSAL SITE</th>
-              <th className="px-4 py-4 text-right">MENSAL REAL</th>
-              <th className="px-4 py-4 text-right">CUSTO BOLETO</th>
-              <th className="px-4 py-4 text-center">% FRANCISCO</th>
-              <th className="px-4 py-4 text-right">LUCRO FRANCISCO</th>
-              <th className="px-4 py-4 text-right">CUSTO (BLT X FRA)</th>
+              <th className="px-4 py-4 text-right">VALOR</th>
+              <th className="px-4 py-4 text-right">REPASSE FRANCISCO</th>
               <th className="px-4 py-4 text-right">LUCRO FELIPE</th>
             </tr>
           </thead>
@@ -171,6 +168,12 @@ export function TitulosTable({
               const dataVencimentoFmt = dataVencimento
                 ? dataVencimento.toLocaleDateString("pt-BR")
                 : "—";
+              const clienteId = titulo.cliente_id;
+              const msgSistema = mensagemPorId.get(clienteId ?? "") ?? "Normal";
+              const nomeContato = contatoPorId.get(clienteId ?? "") ?? null;
+              const isPagoBloqueado =
+                titulo.situacao === "PAGO" && msgSistema === "Bloqueado";
+
               return (
                 <tr
                   key={titulo.id}
@@ -189,40 +192,33 @@ export function TitulosTable({
                     />
                   </td>
                   <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-foreground tracking-tight">{titulo.cliente}</p>
-                      {titulo.cliente_id && (
-                        <span
-                          title="Vinculado ao cadastro de clientes"
-                          className="inline-flex items-center gap-0.5 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand"
-                        >
-                          <Link2 className="size-3" />
-                          Cliente
-                        </span>
+                    <div className="flex flex-col gap-1">
+                      <p className="font-bold text-foreground tracking-tight">
+                        {titulo.cliente}
+                      </p>
+                      {nomeContato && (
+                        <p className="text-xs text-muted-foreground">
+                          Contato: {nomeContato}
+                        </p>
                       )}
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 text-xs">
-                      {titulo.tipo_cobranca === "RECORRENTE" ? (
+                      {!ativa && (
                         <span
                           className={
-                            ativa
-                              ? "inline-flex items-center gap-1 rounded bg-indigo-50 border border-indigo-500/40 px-2 py-0.5 text-xs font-semibold text-indigo-700"
-                              : "inline-flex items-center gap-1 rounded bg-destructive/20 border border-destructive/40 px-2 py-0.5 text-xs font-semibold text-destructive"
+                            titulo.tipo_cobranca === "RECORRENTE" && !ativa
+                              ? "inline-flex items-center gap-1 rounded bg-destructive/20 border border-destructive/40 px-2 py-0.5 text-xs font-semibold text-destructive"
+                              : "inline-flex items-center gap-1 rounded bg-muted/60 px-2 py-0.5 text-xs text-muted-foreground"
                           }
                         >
-                          {ativa ? "■ assinatura ativa" : "🔴 cancelada"}
-                        </span>
-                      ) : (
-                        <span className="rounded bg-muted/60 px-2 py-0.5 text-xs text-muted-foreground">
-                          avulso
+                          {titulo.tipo_cobranca === "RECORRENTE" && !ativa
+                            ? "🔴 cancelada"
+                            : "avulso"}
                         </span>
                       )}
-                      <span className="text-muted-foreground font-medium">{titulo.mes_ano}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-center">
-                    {titulo.cliente_id ? (
-                      codigoSiteLink(clientesPorId.get(titulo.cliente_id) ?? undefined) ?? (
+                    {clienteId ? (
+                      codigoSiteLink(clientesPorId.get(clienteId) ?? undefined) ?? (
                         <span className="text-xs text-muted-foreground">—</span>
                       )
                     ) : (
@@ -230,7 +226,7 @@ export function TitulosTable({
                     )}
                   </td>
                   <td className="px-4 py-3.5 text-center">
-                    {titulo.cliente_id ? mensagemBadge(titulo.cliente_id, mensagemPorId.get(titulo.cliente_id)) : (
+                    {clienteId ? mensagemBadge(clienteId, msgSistema) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </td>
@@ -261,6 +257,12 @@ export function TitulosTable({
                           ? `VENCIDO (${diasAtraso}d)`
                           : "ABERTO"}
                     </button>
+                    {isPagoBloqueado && (
+                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-rose-700 font-semibold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
+                        <AlertTriangle className="size-3" />
+                        Liberar acesso (MSG Bloqueado)
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3.5 text-center">
                     <p
@@ -275,17 +277,31 @@ export function TitulosTable({
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-center gap-1.5">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 gap-1.5 rounded-full border-emerald-600/40 bg-white px-3 text-xs font-bold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
-                        title="Cobrar no WhatsApp"
-                        onClick={() => onWhatsApp(titulo)}
-                      >
-                        <MessageCircle className="size-4 text-emerald-400" />
-                        Cobrar
-                      </Button>
+                      {(vencido || titulo.situacao === "ABERTO") ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="default"
+                          className="h-7 gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700"
+                          title="Cobrar no WhatsApp"
+                          onClick={() => onWhatsApp(titulo)}
+                        >
+                          <MessageCircle className="size-4 text-white" />
+                          Cobrar
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1.5 rounded-full border border-border bg-white px-3 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted"
+                          title="Enviar comprovante"
+                          onClick={() => onWhatsApp(titulo)}
+                        >
+                          <MessageCircle className="size-4 text-muted-foreground" />
+                          Enviar
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         size="icon"
@@ -325,24 +341,15 @@ export function TitulosTable({
                     </p>
                   </td>
                   <td className="px-4 py-3.5 text-right font-bold text-foreground">
-                    {moeda(calc.mensalSite)}
-                  </td>
-                  <td className="px-4 py-3.5 text-right text-muted-foreground font-medium">
                     {moeda(calc.mensalReal)}
                   </td>
-                  <td className="px-4 py-3.5 text-right text-muted-foreground">
-                    {moeda(calc.custoBoleto)}
-                  </td>
-                  <td className="px-4 py-3.5 text-center text-muted-foreground">
-                    {valoresVisiveis ? `${calc.franciscoPct}%` : "•••"}
-                  </td>
-                  <td className="px-4 py-3.5 text-right font-semibold text-purple-700">
+                  <td className="px-4 py-3.5 text-right text-muted-foreground font-medium">
                     {moeda(calc.lucroFrancisco)}
                   </td>
-                  <td className="px-4 py-3.5 text-right font-semibold text-amber-700">
-                    {moeda(calc.custoBltFra)}
-                  </td>
-                  <td className="px-4 py-3.5 text-right font-bold text-emerald-700">
+                  <td
+                    className="px-4 py-3.5 text-right font-bold text-emerald-700"
+                    title={`Mensal Site: ${moeda(calc.mensalSite)}\nCusto Boleto: ${moeda(calc.custoBoleto)}\n% Francisco: ${calc.franciscoPct}%\nCusto Total (Boleto + Francisco): ${moeda(calc.custoBltFra)}`}
+                  >
                     {moeda(calc.lucroFelipe)}
                   </td>
                 </tr>
@@ -358,12 +365,9 @@ export function TitulosTable({
                 <td className="p-4 text-center text-muted-foreground">--</td>
                 <td className="p-4 text-center text-muted-foreground">--</td>
                 <td className="p-4 text-center text-muted-foreground">--</td>
-                <td className="p-4 text-right text-sky-700">{moeda(totais.mensalSite)}</td>
-                <td className="p-4 text-right">{moeda(totais.mensalReal)}</td>
-                <td className="p-4 text-right">{moeda(totais.custoBoleto)}</td>
                 <td className="p-4 text-center text-muted-foreground">--</td>
+                <td className="p-4 text-right text-sky-700">{moeda(totais.mensalSite)}</td>
                 <td className="p-4 text-right text-purple-700">{moeda(totais.lucroFrancisco)}</td>
-                <td className="p-4 text-right text-amber-700">{moeda(totais.custoBltFra)}</td>
                 <td className="p-4 text-right text-emerald-700">{moeda(totais.lucroFelipe)}</td>
               </tr>
             </tfoot>
