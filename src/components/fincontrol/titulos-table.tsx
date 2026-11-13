@@ -99,6 +99,11 @@ export function TitulosTable({
     return calc.valorTotal;
   }
 
+  /** Encargos (multa + juros) do título: diferença entre o total com encargos e o valor base. */
+  function multaJuros(titulo: Titulo): number {
+    return obterValorTotal(titulo) - computeRow(titulo).mensalReal;
+  }
+
   type MensagemSistema = "Normal" | "Bloqueado" | "Atualização" | "Cobrança";
 
   const MSG_CONFIG: Record<MensagemSistema, { label: string; className: string }> = {
@@ -187,6 +192,7 @@ export function TitulosTable({
               <th className="px-4 py-3.5 text-right">REPASSE FRANCISCO</th>
               <th className="px-4 py-3.5 text-right">LUCRO FELIPE</th>
               <th className="px-4 py-3.5 text-right">VALOR COM JUROS E MULTA</th>
+              <th className="px-4 py-3.5 text-right">MULTA/JUROS R$</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
@@ -405,6 +411,9 @@ export function TitulosTable({
                   <td className="px-4 py-3.5 text-right font-semibold text-slate-900 tabular-nums">
                     {moeda(obterValorTotal(titulo))}
                   </td>
+                  <td className="px-4 py-3.5 text-right text-slate-500 font-medium tabular-nums">
+                    {moeda(multaJuros(titulo))}
+                  </td>
                 </tr>
               );
             })}
@@ -430,6 +439,9 @@ export function TitulosTable({
                 </td>
                 <td className="p-3.5 text-right text-slate-900 tabular-nums font-bold">
                   {moeda(totais.valorTotal)}
+                </td>
+                <td className="p-3.5 text-right text-slate-500 tabular-nums font-medium">
+                  {moeda(totais.valorTotal - totais.mensalReal)}
                 </td>
               </tr>
             </tfoot>
