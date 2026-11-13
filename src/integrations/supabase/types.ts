@@ -315,6 +315,7 @@ export type Database = {
           percentual_repasse_francisco: number
           updated_at: string
           updated_by: string | null
+          user_id: string | null
         }
         Insert: {
           custo_boleto_padrao?: number
@@ -324,6 +325,7 @@ export type Database = {
           percentual_repasse_francisco?: number
           updated_at?: string
           updated_by?: string | null
+          user_id?: string | null
         }
         Update: {
           custo_boleto_padrao?: number
@@ -333,6 +335,7 @@ export type Database = {
           percentual_repasse_francisco?: number
           updated_at?: string
           updated_by?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
