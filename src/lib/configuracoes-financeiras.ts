@@ -51,7 +51,7 @@ export async function salvarConfiguracaoFinanceira(
     ...valores,
     updated_at: new Date().toISOString(),
   };
-  if (userId) payload.user_id = userId;
+  if (userId) payload["user_id"] = userId;
 
   if (existente) {
     const { data, error } = await sb
