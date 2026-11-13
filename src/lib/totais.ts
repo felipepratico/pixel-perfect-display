@@ -16,6 +16,8 @@ export type Totais = {
   lucroFrancisco: number;
   custoBltFra: number;
   lucroFelipe: number;
+  /** Soma dos títulos já com juros e multa. */
+  valorTotal: number;
   pagos: number;
   abertos: number;
   vencidos: number;
@@ -38,6 +40,7 @@ export function calcularTotais(
     lucroFrancisco: 0,
     custoBltFra: 0,
     lucroFelipe: 0,
+    valorTotal: 0,
     pagos: 0,
     abertos: 0,
     vencidos: 0,
@@ -55,6 +58,7 @@ export function calcularTotais(
     totais.lucroFrancisco += calc.lucroFrancisco;
     totais.custoBltFra += calc.custoBltFra;
     totais.lucroFelipe += calc.lucroFelipe;
+    totais.valorTotal += calc.valorTotal;
     if (titulo.situacao === "PAGO") {
       totais.pagos += 1;
     } else {

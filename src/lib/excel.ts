@@ -144,6 +144,7 @@ export function exportTitulos(titulos: Titulo[]) {
       "LUCRO FRANCISCO": Number(calc.lucroFrancisco.toFixed(2)),
       "CUSTO(BLT X FRANCISCO)": Number(calc.custoBltFra.toFixed(2)),
       "LUCRO FELIPE": Number(calc.lucroFelipe.toFixed(2)),
+      "VALOR COM JUROS E MULTA": Number(calc.valorTotal.toFixed(2)),
       VENCIMENTO: titulo.vencimento,
       "MES/ANO": titulo.mes_ano,
       "TIPO COBRANCA": titulo.tipo_cobranca,

@@ -162,6 +162,7 @@ export function TitulosTable({
               <th className="px-4 py-3.5 text-right">VALOR</th>
               <th className="px-4 py-3.5 text-right">REPASSE FRANCISCO</th>
               <th className="px-4 py-3.5 text-right">LUCRO FELIPE</th>
+              <th className="px-4 py-3.5 text-right">VALOR COM JUROS E MULTA</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
@@ -377,6 +378,9 @@ export function TitulosTable({
                       </TooltipContent>
                     </Tooltip>
                   </td>
+                  <td className="px-4 py-3.5 text-right font-semibold text-slate-900 tabular-nums">
+                    {moeda(calc.valorTotal)}
+                  </td>
                 </tr>
               );
             })}
@@ -399,6 +403,9 @@ export function TitulosTable({
                 </td>
                 <td className="p-3.5 text-right text-slate-900 tabular-nums font-bold">
                   {moeda(totais.lucroFelipe)}
+                </td>
+                <td className="p-3.5 text-right text-slate-900 tabular-nums font-bold">
+                  {moeda(totais.valorTotal)}
                 </td>
               </tr>
             </tfoot>

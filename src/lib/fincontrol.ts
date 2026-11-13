@@ -72,6 +72,8 @@ export type RowValues = {
   lucroFrancisco: number;
   custoBltFra: number;
   lucroFelipe: number;
+  /** Valor do título já com juros e multa (valor_total quando já foi calculado). */
+  valorTotal: number;
 };
 
 /** Core spreadsheet math, identical to the original workbook. */
@@ -80,13 +82,24 @@ export function computeRow(item: {
   mensal_real?: number | string;
   custo_boleto?: number | string;
   francisco_pct?: number | string;
+  valor_juros?: number | string | null;
+  valor_multa?: number | string | null;
+  valor_total?: number | string | null;
 }): RowValues {
   const mensalSite = parseNumber(item.mensal_site);
   const mensalReal = parseNumber(item.mensal_real);
   const custoBoleto = parseNumber(item.custo_boleto);
   const franciscoPct = parseNumber(item.francisco_pct);
+  const valorJuros = parseNumber(item.valor_juros);
+  const valorMulta = parseNumber(item.valor_multa);
   const lucroFrancisco = mensalSite * (franciscoPct / 100);
   const custoBltFra = custoBoleto + lucroFrancisco;
+  // Usa o valor_total já calculado (reajuste) quando disponível; caso contrário,
+  // compõe a partir do nominal + encargos armazenados.
+  const valorTotal =
+    item.valor_total == null
+      ? mensalSite + valorJuros + valorMulta
+      : parseNumber(item.valor_total);
   return {
     mensalSite,
     mensalReal,
@@ -95,6 +108,7 @@ export function computeRow(item: {
     lucroFrancisco,
     custoBltFra,
     lucroFelipe: mensalSite - custoBltFra,
+    valorTotal,
   };
 }
 
