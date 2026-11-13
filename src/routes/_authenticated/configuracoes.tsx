@@ -48,7 +48,9 @@ function Configuracoes() {
     mes: string;
     count: number;
     todos: boolean;
+    incluirPagos: boolean;
   } | null>(null);
+  const [incluirPagos, setIncluirPagos] = useState(false);
 
   useEffect(() => {
     carregarConfiguracao();
@@ -102,45 +104,74 @@ function Configuracoes() {
     );
   }
 
+  function filtrarTitulosParaReajuste(mesReferencia?: string, todosMeses?: boolean) {
+    return todos.filter((t) => {
+      if (incluirPagos) {
+        // Inclui tanto ABERTO quanto PAGO
+        if (todosMeses) return true;
+        return t.mes_ano === mesReferencia;
+      }
+      // Apenas ABERTO
+      if (todosMeses) return t.situacao === "ABERTO";
+      return t.mes_ano === mesReferencia && t.situacao === "ABERTO";
+    });
+  }
+
   async function aplicarReajuste() {
     if (!mesReferencia) {
       toast.error("Informe o mês/ano de referência.");
       return;
     }
 
-    const titulosMes = todos.filter((t) => t.mes_ano === mesReferencia);
-    const abertos = titulosMes.filter((t) => t.situacao === "ABERTO");
+    const selecionados = filtrarTitulosParaReajuste(mesReferencia, false);
 
-    if (!abertos.length) {
-      toast.info("Nenhum lançamento aberto encontrado para este mês.");
+    if (!selecionados.length) {
+      const msg = incluirPagos
+        ? "Nenhum lançamento encontrado para este mês (aberto ou pago)."
+        : "Nenhum lançamento aberto encontrado para este mês.";
+      toast.info(msg);
       return;
     }
 
-    setConfirmDialog({ mes: mesReferencia, count: abertos.length, todos: false });
+    setConfirmDialog({
+      mes: mesReferencia,
+      count: selecionados.length,
+      todos: false,
+      incluirPagos,
+    });
   }
 
   async function aplicarReajusteTodos() {
-    const abertos = todos.filter((t) => t.situacao === "ABERTO");
+    const selecionados = filtrarTitulosParaReajuste(undefined, true);
 
-    if (!abertos.length) {
-      toast.info("Nenhum lançamento aberto encontrado.");
+    if (!selecionados.length) {
+      const msg = incluirPagos
+        ? "Nenhum lançamento encontrado (aberto ou pago)."
+        : "Nenhum lançamento aberto encontrado.";
+      toast.info(msg);
       return;
     }
 
-    setConfirmDialog({ mes: "todos", count: abertos.length, todos: true });
+    setConfirmDialog({
+      mes: "todos",
+      count: selecionados.length,
+      todos: true,
+      incluirPagos,
+    });
   }
 
   async function confirmarAplicar() {
     if (!confirmDialog || !config) return;
 
-    const abertos = confirmDialog.todos
-      ? todos.filter((t) => t.situacao === "ABERTO")
-      : todos.filter((t) => t.mes_ano === confirmDialog.mes && t.situacao === "ABERTO");
+    const selecionados = filtrarTitulosParaReajuste(
+      confirmDialog.mes === "todos" ? undefined : confirmDialog.mes,
+      confirmDialog.todos,
+    );
 
     setAplicando(true);
 
     try {
-      const atualizacoes = abertos.map((t) => {
+      const atualizacoes = selecionados.map((t) => {
         const calc = computeRow(t);
         const encargos = calcularEncargosTitulo({
           valorNominal: calc.mensalSite,
@@ -169,10 +200,13 @@ function Configuracoes() {
         });
       }
 
+      const situacaoTxt = confirmDialog.incluirPagos
+        ? " (aberto e pago)"
+        : " (aberto)";
+      const mesTxt = confirmDialog.todos ? "todos os meses" : `mês ${confirmDialog.mes}`;
+
       toast.success(
-        `Reajuste aplicado em ${atualizacoes.length} lançamento(s)${
-          confirmDialog.todos ? " (todos)" : ` de ${confirmDialog.mes}`
-        }.`,
+        `Reajuste aplicado em ${atualizacoes.length} lançamento(s)${situacaoTxt} do ${mesTxt}.`,
       );
       setConfirmDialog(null);
       setAplicando(false);
@@ -298,6 +332,15 @@ function Configuracoes() {
                 }}
                 className="w-32 text-sm text-slate-900"
               />
+              <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer select-none ml-4">
+                <input
+                  type="checkbox"
+                  checked={incluirPagos}
+                  onChange={(e) => setIncluirPagos(e.target.checked)}
+                  className="text-slate-800 border-slate-300 rounded focus:ring-slate-800"
+                />
+                <span>Incluir lançamentos pagos (recalcular %)</span>
+              </label>
               <Button
                 onClick={aplicarReajuste}
                 disabled={aplicando || !mesReferencia || !config}
@@ -310,7 +353,7 @@ function Configuracoes() {
                 disabled={aplicando || !config}
                 className="bg-slate-700 text-white hover:bg-slate-600 shadow-sm"
               >
-                Aplicar para todos os lançamentos em aberto
+                Aplicar para todos os lançamentos
               </Button>
             </div>
             {config && todos.length > 0 && (
@@ -333,21 +376,14 @@ function Configuracoes() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Confirmar reajuste</AlertDialogTitle>
                 <AlertDialogDescription>
-                  {confirmDialog.todos ? (
-                    <>
-                      Aplicar o percentual atual do Francisco (
-                      {config?.percentual_repasse_francisco ?? 5}%
-                      ) a <b>{confirmDialog.count}</b> lançamento(s) em aberto de <b>todos os
-                      meses</b>?
-                    </>
-                  ) : (
-                    <>
-                      Aplicar o percentual atual do Francisco (
-                      {config?.percentual_repasse_francisco ?? 5}%
-                      ) a <b>{confirmDialog.count}</b> lançamento(s) em aberto do mês{" "}
-                      <b>{confirmDialog.mes}</b>?
-                    </>
-                  )}
+                  <>
+                    Aplicar o percentual atual do Francisco (
+                    {config?.percentual_repasse_francisco ?? 5}%
+                    ) a <b>{confirmDialog.count}</b> lançamento(s){" "}
+                    {confirmDialog.incluirPagos ? "aberto e pago" : "em aberto"}{" "}
+                    de{" "}
+                    {confirmDialog.todos ? <b>todos os meses</b> : <b>mês {confirmDialog.mes}</b>}?
+                  </>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
