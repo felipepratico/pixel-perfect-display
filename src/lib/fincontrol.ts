@@ -107,7 +107,8 @@ export function computeRow(item: {
     franciscoPct,
     lucroFrancisco,
     custoBltFra,
-    lucroFelipe: mensalSite - custoBltFra,
+    // Juros e multa recebidos ficam 100% com o Felipe; Francisco e boleto não mudam.
+    lucroFelipe: valorTotal - custoBltFra,
     valorTotal,
   };
 }
