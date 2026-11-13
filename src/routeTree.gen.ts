@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAuditoriaRouteImport } from './routes/_authenticated/auditoria'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedCobrancasEfiRouteImport } from './routes/_authenticated/cobrancas-efi'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedMonitoramentoRouteImport } from './routes/_authenticated/monitoramento'
 import { Route as AuthenticatedOperacaoRouteImport } from './routes/_authenticated/operacao'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
@@ -50,6 +51,12 @@ const AuthenticatedCobrancasEfiRoute =
     path: '/cobrancas-efi',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedConfiguracoesRoute =
+  AuthenticatedConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMonitoramentoRoute =
   AuthenticatedMonitoramentoRouteImport.update({
     id: '/monitoramento',
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas-efi': typeof AuthenticatedCobrancasEfiRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/monitoramento': typeof AuthenticatedMonitoramentoRoute
   '/operacao': typeof AuthenticatedOperacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
@@ -89,6 +97,7 @@ export interface FileRoutesByTo {
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas-efi': typeof AuthenticatedCobrancasEfiRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/monitoramento': typeof AuthenticatedMonitoramentoRoute
   '/operacao': typeof AuthenticatedOperacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
@@ -102,6 +111,7 @@ export interface FileRoutesById {
   '/_authenticated/auditoria': typeof AuthenticatedAuditoriaRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/cobrancas-efi': typeof AuthenticatedCobrancasEfiRoute
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/monitoramento': typeof AuthenticatedMonitoramentoRoute
   '/_authenticated/operacao': typeof AuthenticatedOperacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/auditoria'
     | '/clientes'
     | '/cobrancas-efi'
+    | '/configuracoes'
     | '/monitoramento'
     | '/operacao'
     | '/painel'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/auditoria'
     | '/clientes'
     | '/cobrancas-efi'
+    | '/configuracoes'
     | '/monitoramento'
     | '/operacao'
     | '/painel'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
     | '/_authenticated/auditoria'
     | '/_authenticated/clientes'
     | '/_authenticated/cobrancas-efi'
+    | '/_authenticated/configuracoes'
     | '/_authenticated/monitoramento'
     | '/_authenticated/operacao'
     | '/_authenticated/painel'
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCobrancasEfiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/monitoramento': {
       id: '/_authenticated/monitoramento'
       path: '/monitoramento'
@@ -230,6 +250,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAuditoriaRoute: typeof AuthenticatedAuditoriaRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedCobrancasEfiRoute: typeof AuthenticatedCobrancasEfiRoute
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedMonitoramentoRoute: typeof AuthenticatedMonitoramentoRoute
   AuthenticatedOperacaoRoute: typeof AuthenticatedOperacaoRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
@@ -239,6 +260,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAuditoriaRoute: AuthenticatedAuditoriaRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedCobrancasEfiRoute: AuthenticatedCobrancasEfiRoute,
+  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedMonitoramentoRoute: AuthenticatedMonitoramentoRoute,
   AuthenticatedOperacaoRoute: AuthenticatedOperacaoRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
