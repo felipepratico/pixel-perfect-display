@@ -58,17 +58,30 @@ function Configuracoes() {
 
   async function carregarConfiguracao() {
     const c = await buscarConfiguracaoFinanceira();
-    setConfig(c);
+    if (c) {
+      setConfig(c);
+    } else {
+      // Garante valores padrão quando não há configuração salva (ex.: RLS/sem linha).
+      setConfig({
+        id: "",
+        percentual_repasse_francisco: 5,
+        multa_atraso_percentual: 5,
+        juros_diario_percentual: 0.33,
+        custo_boleto_padrao: 3.45,
+        updated_at: new Date().toISOString(),
+        updated_by: null,
+      } as ConfiguracoesFinanceiras);
+    }
   }
 
   async function salvar() {
     if (!config) return;
     setIsSaving(true);
     const atualizado = await salvarConfiguracaoFinanceira({
-      percentual_repasse_francisco: config.percentual_repasse_francisco,
-      multa_atraso_percentual: config.multa_atraso_percentual,
-      juros_diario_percentual: config.juros_diario_percentual,
-      custo_boleto_padrao: config.custo_boleto_padrao,
+      percentual_repasse_francisco: config.percentual_repasse_francisco ?? 5,
+      multa_atraso_percentual: config.multa_atraso_percentual ?? 5,
+      juros_diario_percentual: config.juros_diario_percentual ?? 0.33,
+      custo_boleto_padrao: config.custo_boleto_padrao ?? 3.45,
     });
     setIsSaving(false);
     if (atualizado) {

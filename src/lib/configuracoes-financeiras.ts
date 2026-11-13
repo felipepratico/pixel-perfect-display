@@ -45,35 +45,49 @@ export async function salvarConfiguracaoFinanceira(
   const { data: authData } = await sb.auth.getUser();
   const userId = authData?.user?.id ?? null;
 
-  const existente = await buscarConfiguracaoFinanceira();
-
   const payload: Record<string, unknown> = {
     ...valores,
     updated_at: new Date().toISOString(),
   };
   if (userId) payload["user_id"] = userId;
 
-  if (existente) {
-    const { data, error } = await sb
-      .from(TABLE)
-      .update(payload)
-      .eq("id", existente.id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Erro ao atualizar configuração financeira:", error);
-      return null;
-    }
-
-    return data as ConfiguracoesFinanceiras;
+  // Upsert garante insert ou update conforme o usuário (evita falhas por RLS/linhas órfãs).
+  let data: any = null;
+  let error: any = null;
+  if (userId) {
+    const res = await sb.from(TABLE).upsert(payload, { onConflict: "user_id" }).select().single();
+    data = res.data;
+    error = res.error;
+  } else {
+    const res = await sb.from(TABLE).insert(payload).select().single();
+    data = res.data;
+    error = res.error;
   }
 
-  const { data, error } = await sb.from(TABLE).insert(payload).select().single();
-
   if (error) {
-    console.error("Erro ao inserir configuração financeira:", error);
-    return null;
+    console.error("Erro ao salvar configuração financeira:", error);
+    // Fallback: tenta update por id existente.
+    const existente = await buscarConfiguracaoFinanceira();
+    if (existente) {
+      const { data: d2, error: e2 } = await sb
+        .from(TABLE)
+        .update(payload)
+        .eq("id", existente.id)
+        .select()
+        .single();
+      if (e2) {
+        console.error("Erro ao atualizar configuração financeira:", e2);
+        return null;
+      }
+      return d2 as ConfiguracoesFinanceiras;
+    }
+    // Fallback: insert simples.
+    const { data: d3, error: e3 } = await sb.from(TABLE).insert(payload).select().single();
+    if (e3) {
+      console.error("Erro ao inserir configuração financeira:", e3);
+      return null;
+    }
+    return d3 as ConfiguracoesFinanceiras;
   }
 
   return data as ConfiguracoesFinanceiras;
