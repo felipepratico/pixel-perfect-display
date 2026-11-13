@@ -35,18 +35,23 @@ export async function buscarConfiguracaoFinanceira(): Promise<ConfiguracoesFinan
     return null;
   }
 
-  return data ?? null;
+  return (data ?? null) as ConfiguracoesFinanceiras | null;
 }
 
 export async function salvarConfiguracaoFinanceira(
   valores: ConfiguracoesFinanceirasInput,
 ): Promise<ConfiguracoesFinanceiras | null> {
+  // Garante que a linha pertence ao usuário autenticado (necessário com RLS ativo).
+  const { data: authData } = await sb.auth.getUser();
+  const userId = authData?.user?.id ?? null;
+
   const existente = await buscarConfiguracaoFinanceira();
 
   const payload: Record<string, unknown> = {
     ...valores,
     updated_at: new Date().toISOString(),
   };
+  if (userId) payload.user_id = userId;
 
   if (existente) {
     const { data, error } = await sb
