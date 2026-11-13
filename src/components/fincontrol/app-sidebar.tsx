@@ -73,11 +73,14 @@ export function AppSidebar({ email }: AppSidebarProps) {
   const aberto = isMobile ? openMobile : open;
 
   const financeiroAtivo = pathname === "/painel" || pathname === "/cobrancas-efi";
+  const configuracoesAtivo = pathname === "/configuracoes";
   const [financeiroAberto, setFinanceiroAberto] = useState(financeiroAtivo);
+  const [configuracoesAberto, setConfiguracoesAberto] = useState(configuracoesAtivo);
 
   useEffect(() => {
     if (financeiroAtivo) setFinanceiroAberto(true);
-  }, [financeiroAtivo]);
+    if (configuracoesAtivo) setConfiguracoesAberto(true);
+  }, [financeiroAtivo, configuracoesAtivo]);
 
   function aoAlternarFinanceiro(abrir: boolean) {
     if (!isMobile && !open) {
@@ -270,6 +273,45 @@ export function AppSidebar({ email }: AppSidebarProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+                <SidebarMenuItem>
+                  <Collapsible open={configuracoesAberto} onOpenChange={setConfiguracoesAberto}>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        isActive={configuracoesAtivo}
+                        tooltip="Configurações"
+                        className={cn(
+                          botaoMenu,
+                          configuracoesAberto && !configuracoesAtivo && "bg-sidebar-accent",
+                        )}
+                      >
+                        <Settings className="size-4 transition-transform duration-300 ease-in-out" />
+                        <span>Configurações</span>
+                        <ChevronDown
+                          className={cn(
+                            "ml-auto size-4 shrink-0 text-sidebar-foreground/60 transition-transform duration-300 ease-in-out group-data-[collapsible=icon]:hidden",
+                            configuracoesAberto && "rotate-180",
+                          )}
+                        />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="overflow-hidden origin-top data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={pathname === "/configuracoes"}
+                            className={botaoSubmenu}
+                          >
+                            <Link to="/configuracoes" onClick={fecharNoMobile}>
+                              <Settings className="size-3.5" />
+                              <span>Taxas Assinatura / Boleto</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

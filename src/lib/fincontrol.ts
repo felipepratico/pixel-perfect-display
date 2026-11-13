@@ -25,6 +25,13 @@ export type Titulo = {
   efi_status: string;
   efi_link_pagamento: string;
   efi_linha_digitavel: string;
+  valor_nominal?: number | null;
+  valor_juros?: number | null;
+  valor_multa?: number | null;
+  valor_total?: number | null;
+  percentual_francisco_aplicado?: number | null;
+  valor_repasse_francisco?: number | null;
+  lucro_liquido_felipe?: number | null;
 };
 
 export type TituloInput = Omit<
