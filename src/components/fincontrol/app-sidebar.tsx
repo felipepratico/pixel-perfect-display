@@ -45,7 +45,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const menuItems: {
-  to: "/clientes" | "/operacao" | "/monitoramento" | "/auditoria" | "/configuracoes";
+  to: "/clientes" | "/operacao" | "/monitoramento" | "/auditoria";
   label: string;
   icon: LucideIcon;
 }[] = [
@@ -53,7 +53,6 @@ const menuItems: {
   { to: "/operacao", label: "Operação", icon: MonitorCog },
   { to: "/monitoramento", label: "Monitoramento", icon: ShieldAlert },
   { to: "/auditoria", label: "Auditoria", icon: FileSearch },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 const botaoMenu =

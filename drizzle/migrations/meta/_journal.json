@@ -43,6 +43,13 @@
       "when": 1794512400000,
       "tag": "0005_configuracoes_financeiras",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794512500000,
+      "tag": "0006_titulos_nome_contato",
+      "breakpoints": true
     }
   ]
 }
