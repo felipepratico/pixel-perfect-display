@@ -66,6 +66,7 @@ export function MarcarComoPagoDialog({
   }) => void | Promise<void>;
 }) {
   const [pagoEm, setPagoEm] = useState("");
+  const [horaPago, setHoraPago] = useState("");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | null>(null);
 
   const tituloUm = titulos[0];
@@ -80,14 +81,19 @@ export function MarcarComoPagoDialog({
   // Inicializa a data com hoje ao abrir o modal, para que o botão de confirmação
   // não fique desabilitado até o usuário interagir com o input.
   useEffect(() => {
-    if (open) setPagoEm(hoje);
+    if (open) {
+      setPagoEm(hoje);
+      const d = new Date();
+      setHoraPago(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+    }
   }, [open, hoje]);
 
   const vencimentoRef = tituloUm ? getVencimentoDate(tituloUm) : null;
 
   const preview = useMemo(() => {
     if (!vencimentoRef || !pagoEm) return null;
-    const dataPagamento = new Date(pagoEm);
+    const [y, m, dd] = pagoEm.split("-").map(Number);
+    const dataPagamento = new Date(y, (m || 1) - 1, dd || 1);
     const diffMs = dataPagamento.getTime() - vencimentoRef.getTime();
     const diasAtraso = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
     return { diasAtraso, pontual: diasAtraso === 0 };
@@ -130,8 +136,16 @@ export function MarcarComoPagoDialog({
               defaultValue={hoje}
               className="w-full"
             />
+            <Label htmlFor="marcarPagoHora" className="pt-1">Horário do pagamento</Label>
+            <Input
+              id="marcarPagoHora"
+              type="time"
+              value={horaPago}
+              onChange={(event) => setHoraPago(event.target.value)}
+              className="w-full"
+            />
             <p className="text-[11px] text-muted-foreground">
-              Preenchida com a data de hoje. Altere para baixa retroativa.
+              Preenchida com a data e o horário de agora. Altere para baixa retroativa.
             </p>
           </div>
 
@@ -200,7 +214,11 @@ export function MarcarComoPagoDialog({
               if (!pagoEm) return;
               onSave({
                 ids: titulos.map((t) => t.id),
-                pagoEm,
+                pagoEm: (() => {
+                  const [y, m, dd] = pagoEm.split("-").map(Number);
+                  const [hh, mm] = (horaPago || "12:00").split(":").map(Number);
+                  return new Date(y, (m || 1) - 1, dd || 1, hh || 0, mm || 0).toISOString();
+                })(),
                 formaPagamento,
                 diasAtraso: preview?.diasAtraso ?? 0,
               });
