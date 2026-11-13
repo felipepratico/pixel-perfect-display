@@ -6,7 +6,7 @@ import type { Titulo, TituloInput } from "@/lib/fincontrol";
 const KEY = ["titulos"] as const;
 
 const COLUMNS =
-  "id, cliente_id, cliente, cnpj, telefone, mensal_site, mensal_real, custo_boleto, francisco_pct, vencimento, mes_ano, tipo_cobranca, status_assinatura, situacao, deleted_at, pago_em, valor_juros, valor_multa, valor_total, forma_pagamento, dias_atraso, efi_status, efi_link_pagamento, efi_linha_digitavel";
+  "id, cliente_id, cliente, cnpj, telefone, mensal_site, mensal_real, custo_boleto, francisco_pct, vencimento, mes_ano, tipo_cobranca, status_assinatura, situacao, deleted_at, pago_em, valor_juros, valor_multa, valor_total, forma_pagamento, dias_atraso, percentual_francisco_aplicado, valor_repasse_francisco, lucro_liquido_felipe, efi_status, efi_link_pagamento, efi_linha_digitavel";
 
 export function useTitulos() {
   return useQuery({
@@ -36,17 +36,12 @@ export function useTituloMutations() {
   const saveTitulo = useMutation({
     mutationFn: async ({ id, values }: { id?: string; values: TituloInput }) => {
       if (id) {
-        const { error } = await (supabase as any)
-          .from("titulos")
-          .update(values)
-          .eq("id", id);
+        const { error } = await (supabase as any).from("titulos").update(values).eq("id", id);
         if (error) throw error;
         return;
       }
       const user_id = await currentUserId();
-      const { error } = await (supabase as any)
-        .from("titulos")
-        .insert({ ...values, user_id });
+      const { error } = await (supabase as any).from("titulos").insert({ ...values, user_id });
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -57,9 +52,7 @@ export function useTituloMutations() {
       const user_id = await currentUserId();
       const payload = rows.map((row) => ({ ...row, user_id }));
       for (let i = 0; i < payload.length; i += 200) {
-        const { error } = await (supabase as any)
-          .from("titulos")
-          .insert(payload.slice(i, i + 200));
+        const { error } = await (supabase as any).from("titulos").insert(payload.slice(i, i + 200));
         if (error) throw error;
       }
       return payload.length;
@@ -69,10 +62,7 @@ export function useTituloMutations() {
 
   const patchMany = useMutation({
     mutationFn: async ({ ids, values }: { ids: string[]; values: Partial<TituloInput> }) => {
-      const { error } = await (supabase as any)
-        .from("titulos")
-        .update(values)
-        .in("id", ids);
+      const { error } = await (supabase as any).from("titulos").update(values).in("id", ids);
       if (error) throw error;
     },
     onSuccess: invalidate,

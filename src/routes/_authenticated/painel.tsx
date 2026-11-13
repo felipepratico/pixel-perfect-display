@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Plus,
   Printer,
+  Receipt,
   Repeat,
   Sparkles,
   Trash2,
@@ -37,7 +38,12 @@ import { AssinaturasDialog } from "@/components/fincontrol/assinaturas-dialog";
 import { CobrancaLoteDialog } from "@/components/fincontrol/cobranca-lote-dialog";
 import { Filtros, type FiltrosState } from "@/components/fincontrol/filtros";
 import { GeminiInsightsDialog } from "@/components/fincontrol/gemini-insights-dialog";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Graficos } from "@/components/fincontrol/graficos";
 import { ImportDialog } from "@/components/fincontrol/import-dialog";
 import { AreaImpressao } from "@/components/fincontrol/impressao";
@@ -57,6 +63,12 @@ import { TituloDialog } from "@/components/fincontrol/titulo-dialog";
 import { TitulosTable } from "@/components/fincontrol/titulos-table";
 import { WhatsAppDialog } from "@/components/fincontrol/whatsapp-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { emptyCliente, type Cliente } from "@/lib/clientes";
 import { exportTitulos } from "@/lib/excel";
@@ -81,7 +93,10 @@ import {
 } from "@/lib/fincontrol";
 import { valorContrato } from "@/lib/clientes";
 import { calcularTotais } from "@/lib/totais";
-import { buscarConfiguracaoFinanceira, type ConfiguracoesFinanceiras } from "@/lib/configuracoes-financeiras";
+import {
+  buscarConfiguracaoFinanceira,
+  type ConfiguracoesFinanceiras,
+} from "@/lib/configuracoes-financeiras";
 import { useClienteMutations, useClientes } from "@/lib/use-clientes";
 import { useTituloMutations, useTitulos } from "@/lib/use-titulos";
 
@@ -109,9 +124,9 @@ export const Route = createFileRoute("/_authenticated/painel")({
 });
 
 const erro = (e: unknown) => {
-  const err = e as { message?: string; details?: string; hint?: string; code?: string } | null | undefined;
-  const mensagem =
-    err?.message ?? (e instanceof Error ? e.message : "Algo deu errado.");
+  const err = e as
+    { message?: string; details?: string; hint?: string; code?: string } | null | undefined;
+  const mensagem = err?.message ?? (e instanceof Error ? e.message : "Algo deu errado.");
   const detalhes = err?.details;
   toast.error(detalhes ? `${mensagem}\nDetalhes: ${detalhes}` : mensagem);
 };
@@ -200,9 +215,7 @@ function Painel() {
 
   const filtrados = useMemo(() => {
     const busca = filtros.busca.trim().toUpperCase();
-    const codigoSitePorCliente = new Map(
-      clientesCadastrados.map((c) => [c.id, c.codigo_site]),
-    );
+    const codigoSitePorCliente = new Map(clientesCadastrados.map((c) => [c.id, c.codigo_site]));
     const mensagemSistemaPorCliente = new Map(
       clientesCadastrados.map((c) => [c.id, (c.mensagem_sistema ?? "Normal") || "Normal"]),
     );
@@ -280,16 +293,14 @@ function Painel() {
     [clientesVisiveis, todos, clientesCadastrados],
   );
 
-  const moeda = (valor: number) =>
-    valoresVisiveis ? formatCurrency(valor) : "R$ ••••••";
+  const moeda = (valor: number) => (valoresVisiveis ? formatCurrency(valor) : "R$ ••••••");
 
   /** Mês de referência dos indicadores de clientes (respeita o filtro do painel). */
   const mesReferencia =
     filtros.mesAno && filtros.mesAno !== "all" ? filtros.mesAno : currentMesAno();
 
   // Indicadores secundários usados no accordion de gráficos.
-  const pontualidade =
-    totais.quantidade > 0 ? (totais.pagos / totais.quantidade) * 100 : 0;
+  const pontualidade = totais.quantidade > 0 ? (totais.pagos / totais.quantidade) * 100 : 0;
 
   const mediaAtraso = useMemo(() => {
     const vencidos = clientesVisiveis.filter(isTituloVencido);
@@ -610,19 +621,35 @@ function Painel() {
               <Download className="size-3.5" />
               Exportar
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={clientesVisiveis.length === 0}
-              onClick={() => {
-                setRelCliente(null);
-                setRelOpen(true);
-              }}
-              className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
-            >
-              <FileText className="size-3.5" />
-              Relatórios
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <FileText className="size-3.5" />
+                  Relatórios
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="text-xs">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setRelCliente(null);
+                    setRelOpen(true);
+                  }}
+                >
+                  <FileText className="size-3.5" />
+                  Relatório do cliente
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => void navigate({ to: "/recebimentos-assinatura" })}
+                >
+                  <Receipt className="size-3.5" />
+                  Recebimentos de Assinatura
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               size="sm"
               variant="outline"

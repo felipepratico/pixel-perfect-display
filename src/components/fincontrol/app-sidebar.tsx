@@ -11,6 +11,7 @@ import {
   MonitorCog,
   PanelLeftClose,
   PanelLeftOpen,
+  Receipt,
   Repeat,
   Settings,
   ShieldAlert,
@@ -71,15 +72,20 @@ export function AppSidebar({ email }: AppSidebarProps) {
   const { isMobile, open, openMobile, setOpen, setOpenMobile } = useSidebar();
   const aberto = isMobile ? openMobile : open;
 
-  const financeiroAtivo = pathname === "/painel" || pathname === "/cobrancas-efi";
+  const financeiroAtivo =
+    pathname === "/painel" ||
+    pathname === "/cobrancas-efi" ||
+    pathname === "/recebimentos-assinatura";
   const configuracoesAtivo = pathname === "/configuracoes";
   const [financeiroAberto, setFinanceiroAberto] = useState(financeiroAtivo);
   const [configuracoesAberto, setConfiguracoesAberto] = useState(configuracoesAtivo);
+  const [relatoriosAberto, setRelatoriosAberto] = useState(pathname === "/recebimentos-assinatura");
 
   useEffect(() => {
     if (financeiroAtivo) setFinanceiroAberto(true);
     if (configuracoesAtivo) setConfiguracoesAberto(true);
-  }, [financeiroAtivo, configuracoesAtivo]);
+    if (pathname === "/recebimentos-assinatura") setRelatoriosAberto(true);
+  }, [financeiroAtivo, configuracoesAtivo, pathname]);
 
   function aoAlternarFinanceiro(abrir: boolean) {
     if (!isMobile && !open) {
@@ -241,16 +247,48 @@ export function AppSidebar({ email }: AppSidebarProps) {
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
-                          <SidebarMenuSubButton asChild className={botaoSubmenu}>
-                            <Link
-                              to="/painel"
-                              search={{ acao: "relatorios" }}
-                              onClick={fecharNoMobile}
-                            >
-                              <FileText className="size-3.5" />
-                              <span>Relatórios</span>
-                            </Link>
-                          </SidebarMenuSubButton>
+                          <Collapsible open={relatoriosAberto} onOpenChange={setRelatoriosAberto}>
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuSubButton className={botaoSubmenu}>
+                                <FileText className="size-3.5" />
+                                <span>Relatórios</span>
+                                <ChevronDown
+                                  className={cn(
+                                    "ml-auto size-3.5 shrink-0 text-sidebar-foreground/60 transition-transform duration-300 ease-in-out",
+                                    relatoriosAberto && "rotate-180",
+                                  )}
+                                />
+                              </SidebarMenuSubButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="overflow-hidden origin-top data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                              <SidebarMenuSub className="ml-3 border-l border-sidebar-border/60 pl-1">
+                                <SidebarMenuSubItem>
+                                  <SidebarMenuSubButton asChild className={botaoSubmenu}>
+                                    <Link
+                                      to="/painel"
+                                      search={{ acao: "relatorios" }}
+                                      onClick={fecharNoMobile}
+                                    >
+                                      <FileText className="size-3.5" />
+                                      <span>Relatório do cliente</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                                <SidebarMenuSubItem>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={pathname === "/recebimentos-assinatura"}
+                                    className={botaoSubmenu}
+                                  >
+                                    <Link to="/recebimentos-assinatura" onClick={fecharNoMobile}>
+                                      <Receipt className="size-3.5" />
+                                      <span>Recebimentos de Assinatura</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              </SidebarMenuSub>
+                            </CollapsibleContent>
+                          </Collapsible>
                         </SidebarMenuSubItem>
                       </SidebarMenuSub>
                     </CollapsibleContent>

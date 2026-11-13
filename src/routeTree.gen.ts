@@ -19,6 +19,7 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedMonitoramentoRouteImport } from './routes/_authenticated/monitoramento'
 import { Route as AuthenticatedOperacaoRouteImport } from './routes/_authenticated/operacao'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedRecebimentosAssinaturaRouteImport } from './routes/_authenticated/recebimentos-assinatura'
 import { Route as ApiEfiWebhookRouteImport } from './routes/api/efi/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -73,6 +74,12 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRecebimentosAssinaturaRoute =
+  AuthenticatedRecebimentosAssinaturaRouteImport.update({
+    id: '/recebimentos-assinatura',
+    path: '/recebimentos-assinatura',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiEfiWebhookRoute = ApiEfiWebhookRouteImport.update({
   id: '/api/efi/webhook',
   path: '/api/efi/webhook',
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/monitoramento': typeof AuthenticatedMonitoramentoRoute
   '/operacao': typeof AuthenticatedOperacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/recebimentos-assinatura': typeof AuthenticatedRecebimentosAssinaturaRoute
   '/api/efi/webhook': typeof ApiEfiWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -101,6 +109,7 @@ export interface FileRoutesByTo {
   '/monitoramento': typeof AuthenticatedMonitoramentoRoute
   '/operacao': typeof AuthenticatedOperacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/recebimentos-assinatura': typeof AuthenticatedRecebimentosAssinaturaRoute
   '/api/efi/webhook': typeof ApiEfiWebhookRoute
 }
 export interface FileRoutesById {
@@ -115,6 +124,7 @@ export interface FileRoutesById {
   '/_authenticated/monitoramento': typeof AuthenticatedMonitoramentoRoute
   '/_authenticated/operacao': typeof AuthenticatedOperacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/recebimentos-assinatura': typeof AuthenticatedRecebimentosAssinaturaRoute
   '/api/efi/webhook': typeof ApiEfiWebhookRoute
 }
 export interface FileRouteTypes {
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/monitoramento'
     | '/operacao'
     | '/painel'
+    | '/recebimentos-assinatura'
     | '/api/efi/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/monitoramento'
     | '/operacao'
     | '/painel'
+    | '/recebimentos-assinatura'
     | '/api/efi/webhook'
   id:
     | '__root__'
@@ -154,6 +166,7 @@ export interface FileRouteTypes {
     | '/_authenticated/monitoramento'
     | '/_authenticated/operacao'
     | '/_authenticated/painel'
+    | '/_authenticated/recebimentos-assinatura'
     | '/api/efi/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -236,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recebimentos-assinatura': {
+      id: '/_authenticated/recebimentos-assinatura'
+      path: '/recebimentos-assinatura'
+      fullPath: '/recebimentos-assinatura'
+      preLoaderRoute: typeof AuthenticatedRecebimentosAssinaturaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/efi/webhook': {
       id: '/api/efi/webhook'
       path: '/api/efi/webhook'
@@ -254,6 +274,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMonitoramentoRoute: typeof AuthenticatedMonitoramentoRoute
   AuthenticatedOperacaoRoute: typeof AuthenticatedOperacaoRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedRecebimentosAssinaturaRoute: typeof AuthenticatedRecebimentosAssinaturaRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -264,6 +285,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMonitoramentoRoute: AuthenticatedMonitoramentoRoute,
   AuthenticatedOperacaoRoute: AuthenticatedOperacaoRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedRecebimentosAssinaturaRoute:
+    AuthenticatedRecebimentosAssinaturaRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
