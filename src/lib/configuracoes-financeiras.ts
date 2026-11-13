@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
+const sb = supabase as any;
+
 export type ConfiguracoesFinanceiras = {
   id: string;
   percentual_repasse_francisco: number;
@@ -19,32 +21,10 @@ export type ConfiguracoesFinanceirasInput = {
 };
 
 const TABLE = "configuracoes_financeiras";
-const sb = supabase as unknown as {
-  from: (table: string) => {
-    select: (cols: string) => {
-      order: (col: string, opts?: { ascending?: boolean }) => {
-        limit: (n: number) => {
-          maybeSingle: () => Promise<{ data: any; error: any }>;
-        };
-      };
-    };
-    update: (vals: Record<string, unknown>) => {
-      eq: (col: string, val: string) => {
-        select: () => {
-          single: () => Promise<{ data: any; error: any }>;
-        };
-      };
-    };
-    insert: (vals: Record<string, unknown>) => {
-      select: () => {
-        single: () => Promise<{ data: any; error: any }>;
-      };
-    };
-  };
-};
 
 export async function buscarConfiguracaoFinanceira(): Promise<ConfiguracoesFinanceiras | null> {
-  const { data, error } = await sb.from(TABLE)
+  const { data, error } = await sb
+    .from(TABLE)
     .select("*")
     .order("updated_at", { ascending: false })
     .limit(1)
@@ -69,7 +49,8 @@ export async function salvarConfiguracaoFinanceira(
   };
 
   if (existente) {
-    const { data, error } = await sb.from(TABLE)
+    const { data, error } = await sb
+      .from(TABLE)
       .update(payload)
       .eq("id", existente.id)
       .select()

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -48,6 +48,10 @@ function Configuracoes() {
     mes: string;
     count: number;
   } | null>(null);
+
+  useEffect(() => {
+    carregarConfiguracao();
+  }, []);
 
   async function carregarConfiguracao() {
     const c = await buscarConfiguracaoFinanceira();
