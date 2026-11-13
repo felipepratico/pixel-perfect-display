@@ -47,6 +47,7 @@ function Configuracoes() {
   const [confirmDialog, setConfirmDialog] = useState<{
     mes: string;
     count: number;
+    todos: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -115,14 +116,26 @@ function Configuracoes() {
       return;
     }
 
-    setConfirmDialog({ mes: mesReferencia, count: abertos.length });
+    setConfirmDialog({ mes: mesReferencia, count: abertos.length, todos: false });
+  }
+
+  async function aplicarReajusteTodos() {
+    const abertos = todos.filter((t) => t.situacao === "ABERTO");
+
+    if (!abertos.length) {
+      toast.info("Nenhum lançamento aberto encontrado.");
+      return;
+    }
+
+    setConfirmDialog({ mes: "todos", count: abertos.length, todos: true });
   }
 
   async function confirmarAplicar() {
     if (!confirmDialog || !config) return;
 
-    const titulosMes = todos.filter((t) => t.mes_ano === confirmDialog.mes);
-    const abertos = titulosMes.filter((t) => t.situacao === "ABERTO");
+    const abertos = confirmDialog.todos
+      ? todos.filter((t) => t.situacao === "ABERTO")
+      : todos.filter((t) => t.mes_ano === confirmDialog.mes && t.situacao === "ABERTO");
 
     setAplicando(true);
 
@@ -157,7 +170,9 @@ function Configuracoes() {
       }
 
       toast.success(
-        `Reajuste aplicado em ${atualizacoes.length} lançamento(s) de ${confirmDialog.mes}.`,
+        `Reajuste aplicado em ${atualizacoes.length} lançamento(s)${
+          confirmDialog.todos ? " (todos)" : ` de ${confirmDialog.mes}`
+        }.`,
       );
       setConfirmDialog(null);
       setAplicando(false);
@@ -290,6 +305,13 @@ function Configuracoes() {
               >
                 Aplicar percentual atual a lançamentos em aberto deste mês
               </Button>
+              <Button
+                onClick={aplicarReajusteTodos}
+                disabled={aplicando || !config}
+                className="bg-slate-700 text-white hover:bg-slate-600 shadow-sm"
+              >
+                Aplicar para todos os lançamentos em aberto
+              </Button>
             </div>
             {config && todos.length > 0 && (
               <div className="bg-slate-50 rounded-lg border border-slate-100 p-4 text-sm">
@@ -311,10 +333,21 @@ function Configuracoes() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Confirmar reajuste</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Aplicar o percentual atual do Francisco (
-                  {config?.percentual_repasse_francisco ?? 5}%
-                  ) a <b>{confirmDialog.count}</b> lançamento(s) em aberto do mês{" "}
-                  <b>{confirmDialog.mes}</b>?
+                  {confirmDialog.todos ? (
+                    <>
+                      Aplicar o percentual atual do Francisco (
+                      {config?.percentual_repasse_francisco ?? 5}%
+                      ) a <b>{confirmDialog.count}</b> lançamento(s) em aberto de <b>todos os
+                      meses</b>?
+                    </>
+                  ) : (
+                    <>
+                      Aplicar o percentual atual do Francisco (
+                      {config?.percentual_repasse_francisco ?? 5}%
+                      ) a <b>{confirmDialog.count}</b> lançamento(s) em aberto do mês{" "}
+                      <b>{confirmDialog.mes}</b>?
+                    </>
+                  )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
