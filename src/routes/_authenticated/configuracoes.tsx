@@ -199,6 +199,7 @@ function Configuracoes() {
             valor_juros: encargos.valorJuros,
             valor_multa: encargos.valorMulta,
             valor_total: encargos.valorTotal,
+            francisco_pct: config.percentual_repasse_francisco,
             percentual_francisco_aplicado: encargos.percentualFranciscoAplicado,
             valor_repasse_francisco: encargos.valorRepasseFrancisco,
             lucro_liquido_felipe: encargos.lucroLiquidoFelipe,
