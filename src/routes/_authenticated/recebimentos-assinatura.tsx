@@ -55,7 +55,7 @@ function toInputDate(d: Date): string {
 
 function parseInputDate(s: string): Date {
   const [y, m, d] = s.split("-").map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
+  return new Date(y ?? 2000, (m || 1) - 1, d || 1);
 }
 
 function formatBR(iso: string | null): string {

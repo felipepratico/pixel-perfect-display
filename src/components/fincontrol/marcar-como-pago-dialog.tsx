@@ -93,7 +93,7 @@ export function MarcarComoPagoDialog({
   const preview = useMemo(() => {
     if (!vencimentoRef || !pagoEm) return null;
     const [y, m, dd] = pagoEm.split("-").map(Number);
-    const dataPagamento = new Date(y, (m || 1) - 1, dd || 1);
+    const dataPagamento = new Date(y ?? 2000, (m || 1) - 1, dd || 1);
     const diffMs = dataPagamento.getTime() - vencimentoRef.getTime();
     const diasAtraso = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
     return { diasAtraso, pontual: diasAtraso === 0 };
@@ -217,7 +217,7 @@ export function MarcarComoPagoDialog({
                 pagoEm: (() => {
                   const [y, m, dd] = pagoEm.split("-").map(Number);
                   const [hh, mm] = (horaPago || "12:00").split(":").map(Number);
-                  return new Date(y, (m || 1) - 1, dd || 1, hh || 0, mm || 0).toISOString();
+                  return new Date(y ?? 2000, (m || 1) - 1, dd || 1, hh || 0, mm || 0).toISOString();
                 })(),
                 formaPagamento,
                 diasAtraso: preview?.diasAtraso ?? 0,
