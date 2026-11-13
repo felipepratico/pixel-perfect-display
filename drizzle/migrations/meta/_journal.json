@@ -50,6 +50,13 @@
       "when": 1794512500000,
       "tag": "0006_titulos_nome_contato",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794551518060,
+      "tag": "0007_configuracoes_financeiras_rls",
+      "breakpoints": true
     }
   ]
 }
