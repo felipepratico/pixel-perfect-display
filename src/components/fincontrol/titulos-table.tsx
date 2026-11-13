@@ -32,8 +32,11 @@ import {
   getVencimentoDate,
   isActiveSubscription,
   isTituloVencido,
+  parseNumber,
   type Titulo,
 } from "@/lib/fincontrol";
+import { calcularEncargosTitulo } from "@/lib/configuracoes-financeiras";
+import type { ConfiguracoesFinanceiras } from "@/lib/configuracoes-financeiras";
 import type { Totais } from "@/lib/totais";
 import type { Cliente } from "@/lib/clientes";
 
@@ -49,6 +52,7 @@ export function TitulosTable({
   onAlternarSituacao,
   onExcluir,
   valoresVisiveis,
+  config,
   clientes,
   onAlterarMensagemSistema,
 }: {
@@ -63,6 +67,8 @@ export function TitulosTable({
   onAlternarSituacao: (titulo: Titulo) => void;
   onExcluir: (titulo: Titulo) => void;
   valoresVisiveis: boolean;
+  /** Configuração financeira para calcular encargos (juros/multa) dinamicamente em títulos em aberto. */
+  config?: ConfiguracoesFinanceiras | null;
   /** Lista de clientes cadastrados (usada para resolver o Cód. Site via cliente_id). */
   clientes?: Cliente[];
   /** Callback para alterar a mensagem do sistema de um cliente diretamente na tabela. */
@@ -74,6 +80,24 @@ export function TitulosTable({
   const clientesPorId = new Map((clientes ?? []).map((c) => [c.id, c.codigo_site]));
   const mensagemPorId = new Map((clientes ?? []).map((c) => [c.id, c.mensagem_sistema ?? "Normal"]));
   const contatoPorId = new Map((clientes ?? []).map((c) => [c.id, c.nome_contato ?? null]));
+
+  /** Retorna o valor total com juros e multa para exibição.
+   * Se já houver valor_total salvo (reajuste aplicado), usa ele.
+   * Senão, se o título está vencido em aberto e temos config, calcula dinamicamente.
+   */
+  function obterValorTotal(titulo: Titulo): number {
+    const calc = computeRow(titulo);
+    if (titulo.valor_total != null) return calc.valorTotal;
+    if (titulo.situacao !== "PAGO" && isTituloVencido(titulo) && config) {
+      const encargos = calcularEncargosTitulo({
+        valorNominal: parseNumber(titulo.mensal_site),
+        diasAtraso: getDiasVencido(titulo),
+        config,
+      });
+      return encargos.valorTotal;
+    }
+    return calc.valorTotal;
+  }
 
   type MensagemSistema = "Normal" | "Bloqueado" | "Atualização" | "Cobrança";
 
@@ -379,7 +403,7 @@ export function TitulosTable({
                     </Tooltip>
                   </td>
                   <td className="px-4 py-3.5 text-right font-semibold text-slate-900 tabular-nums">
-                    {moeda(calc.valorTotal)}
+                    {moeda(obterValorTotal(titulo))}
                   </td>
                 </tr>
               );

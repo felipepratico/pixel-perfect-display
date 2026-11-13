@@ -81,6 +81,7 @@ import {
 } from "@/lib/fincontrol";
 import { valorContrato } from "@/lib/clientes";
 import { calcularTotais } from "@/lib/totais";
+import { buscarConfiguracaoFinanceira, type ConfiguracoesFinanceiras } from "@/lib/configuracoes-financeiras";
 import { useClienteMutations, useClientes } from "@/lib/use-clientes";
 import { useTituloMutations, useTitulos } from "@/lib/use-titulos";
 
@@ -151,7 +152,12 @@ function Painel() {
   } | null>(null);
   const [marcarPagoOpen, setMarcarPagoOpen] = useState(false);
   const [marcarPagoTitulos, setMarcarPagoTitulos] = useState<Titulo[]>([]);
+  const [config, setConfig] = useState<ConfiguracoesFinanceiras | null>(null);
   const [impressao, setImpressao] = useState<{ titulos: Titulo[]; subtitulo: string } | null>(null);
+
+  useEffect(() => {
+    buscarConfiguracaoFinanceira().then(setConfig);
+  }, []);
 
   function imprimir(lista: Titulo[], subtitulo: string) {
     if (!lista.length) {
@@ -889,6 +895,7 @@ function Painel() {
               titulos={clientesVisiveis}
               totais={totais}
               valoresVisiveis={valoresVisiveis}
+              config={config}
               selecionados={selecionados}
               clientes={clientesCadastrados}
               onToggle={(id) =>
