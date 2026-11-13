@@ -55,14 +55,14 @@ function toInputDate(d: Date): string {
 
 function parseInputDate(s: string): Date {
   const [y, m, d] = s.split("-").map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
+  return new Date(y ?? 2000, (m || 1) - 1, d || 1);
 }
 
 function formatBR(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR");
+  return `${d.toLocaleDateString("pt-BR")} ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
 function formatBRDate(d: Date | null): string {
