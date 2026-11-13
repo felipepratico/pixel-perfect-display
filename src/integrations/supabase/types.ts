@@ -119,8 +119,8 @@ export type Database = {
           grupo_id: string | null
           id: string
           mensagem_sistema: string
-          nome_contato: string | null
           modulos: string[]
+          nome_contato: string | null
           nome_fantasia: string
           numero_endereco: string
           observacoes: string
@@ -156,8 +156,8 @@ export type Database = {
           grupo_id?: string | null
           id?: string
           mensagem_sistema?: string
-          nome_contato?: string | null
           modulos?: string[]
+          nome_contato?: string | null
           nome_fantasia?: string
           numero_endereco?: string
           observacoes?: string
@@ -193,8 +193,8 @@ export type Database = {
           grupo_id?: string | null
           id?: string
           mensagem_sistema?: string
-          nome_contato?: string | null
           modulos?: string[]
+          nome_contato?: string | null
           nome_fantasia?: string
           numero_endereco?: string
           observacoes?: string
@@ -305,6 +305,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      configuracoes_financeiras: {
+        Row: {
+          custo_boleto_padrao: number
+          id: string
+          juros_diario_percentual: number
+          multa_atraso_percentual: number
+          percentual_repasse_francisco: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          custo_boleto_padrao?: number
+          id?: string
+          juros_diario_percentual?: number
+          multa_atraso_percentual?: number
+          percentual_repasse_francisco?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          custo_boleto_padrao?: number
+          id?: string
+          juros_diario_percentual?: number
+          multa_atraso_percentual?: number
+          percentual_repasse_francisco?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       configuracoes_usuario: {
         Row: {
@@ -453,17 +483,24 @@ export type Database = {
           forma_pagamento: string | null
           francisco_pct: number
           id: string
+          lucro_liquido_felipe: number | null
           mensal_real: number
           mensal_site: number
           mes_ano: string
+          nome_contato: string | null
           pago_em: string | null
+          percentual_francisco_aplicado: number | null
           situacao: string
           status_assinatura: string
           telefone: string
           tipo_cobranca: string
-          nome_contato?: string | null
           updated_at: string
           user_id: string
+          valor_juros: number | null
+          valor_multa: number | null
+          valor_nominal: number | null
+          valor_repasse_francisco: number | null
+          valor_total: number | null
           vencimento: number
         }
         Insert: {
@@ -480,17 +517,24 @@ export type Database = {
           forma_pagamento?: string | null
           francisco_pct?: number
           id?: string
+          lucro_liquido_felipe?: number | null
           mensal_real?: number
           mensal_site?: number
           mes_ano?: string
+          nome_contato?: string | null
           pago_em?: string | null
+          percentual_francisco_aplicado?: number | null
           situacao?: string
           status_assinatura?: string
           telefone?: string
           tipo_cobranca?: string
-          nome_contato?: string | null
           updated_at?: string
           user_id: string
+          valor_juros?: number | null
+          valor_multa?: number | null
+          valor_nominal?: number | null
+          valor_repasse_francisco?: number | null
+          valor_total?: number | null
           vencimento?: number
         }
         Update: {
@@ -507,17 +551,24 @@ export type Database = {
           forma_pagamento?: string | null
           francisco_pct?: number
           id?: string
+          lucro_liquido_felipe?: number | null
           mensal_real?: number
           mensal_site?: number
           mes_ano?: string
+          nome_contato?: string | null
           pago_em?: string | null
+          percentual_francisco_aplicado?: number | null
           situacao?: string
           status_assinatura?: string
           telefone?: string
           tipo_cobranca?: string
-          nome_contato?: string | null
           updated_at?: string
           user_id?: string
+          valor_juros?: number | null
+          valor_multa?: number | null
+          valor_nominal?: number | null
+          valor_repasse_francisco?: number | null
+          valor_total?: number | null
           vencimento?: number
         }
         Relationships: [
