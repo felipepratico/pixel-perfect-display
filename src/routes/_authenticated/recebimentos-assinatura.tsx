@@ -123,17 +123,20 @@ function RecebimentosAssinaturaPage() {
   );
 
   const filtrados = useMemo(() => {
-    const inicio = parseInputDate(dataInicial);
-    const fim = parseInputDate(dataFinal);
-    fim.setHours(23, 59, 59, 999);
     const termo = busca.trim().toUpperCase();
 
     const lista = todos.filter((t) => {
       if (t.situacao !== "PAGO") return false;
       if (!t.pago_em) return false;
-      const pagoEm = new Date(t.pago_em);
-      if (Number.isNaN(pagoEm.getTime())) return false;
-      if (pagoEm < inicio || pagoEm > fim) return false;
+
+      // Comparação por data (somente dia), evitando problemas de fuso horário.
+      const pagoDia = String(t.pago_em).slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(pagoDia)) {
+        const d = new Date(t.pago_em);
+        if (Number.isNaN(d.getTime())) return false;
+      }
+      if (dataInicial && pagoDia < dataInicial) return false;
+      if (dataFinal && pagoDia > dataFinal) return false;
 
       if (formaRecebimento !== "all") {
         if ((t.forma_pagamento ?? "").toLowerCase() !== formaRecebimento) return false;
