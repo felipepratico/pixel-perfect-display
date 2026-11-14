@@ -276,7 +276,9 @@ async function processar(request: Request, url: URL): Promise<Response> {
         .from("titulos")
         .update({
           efi_status: evento.status,
-          ...(evento.status === "PAGO" ? { situacao: "PAGO" } : {}),
+          ...(evento.status === "PAGO"
+            ? { situacao: "PAGO", pago_em: new Date().toISOString() }
+            : {}),
         })
         .eq("id", cobranca.titulo_id)
         .eq("user_id", cobranca.user_id);

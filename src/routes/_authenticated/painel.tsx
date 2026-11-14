@@ -950,7 +950,7 @@ function Painel() {
                   abrirMarcarComoPago([t]);
                 } else {
                   patchMany.mutate(
-                    { ids: [t.id], values: { situacao: "ABERTO" } },
+                    { ids: [t.id], values: { situacao: "ABERTO", pago_em: null } },
                     { onError: erro },
                   );
                 }

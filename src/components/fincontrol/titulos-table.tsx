@@ -327,6 +327,11 @@ export function TitulosTable({
                         Liberar acesso (MSG Bloqueado)
                       </span>
                     )}
+                    {titulo.situacao === "PAGO" && titulo.pago_em && (
+                      <span className="block mt-1 text-[11px] text-emerald-600 font-medium">
+                        Pago em: {new Date(titulo.pago_em).toLocaleDateString("pt-BR")}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3.5 text-center">
                     <p
