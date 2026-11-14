@@ -85,6 +85,18 @@ function lucroFelipe(t: Titulo): number {
   return computeRow(t).lucroFelipe;
 }
 
+function valorNominal(t: Titulo): number {
+  if (t.valor_nominal != null) return Number(t.valor_nominal) || 0;
+  return computeRow(t).mensalSite;
+}
+
+function jurosMulta(t: Titulo): number {
+  if (t.valor_juros != null || t.valor_multa != null) {
+    return (Number(t.valor_juros) || 0) + (Number(t.valor_multa) || 0);
+  }
+  return Math.max(0, valorRecebido(t) - valorNominal(t));
+}
+
 function diasAtraso(t: Titulo): number {
   if (t.dias_atraso != null) return Number(t.dias_atraso) || 0;
   const venc = getVencimentoDate(t);
@@ -167,6 +179,14 @@ function RecebimentosAssinaturaPage() {
     () => filtrados.reduce((acc, t) => acc + lucroFelipe(t), 0),
     [filtrados],
   );
+  const totalJurosMulta = useMemo(
+    () => filtrados.reduce((acc, t) => acc + jurosMulta(t), 0),
+    [filtrados],
+  );
+  const totalNominal = useMemo(
+    () => filtrados.reduce((acc, t) => acc + valorNominal(t), 0),
+    [filtrados],
+  );
 
   const moeda = (v: number) => (valoresVisiveis ? formatCurrency(v) : "R$ ••••••");
 
@@ -213,6 +233,7 @@ function RecebimentosAssinaturaPage() {
       Pontualidade: pontualidadeLabel(t),
       "Forma de Recebimento": formaLabel(t.forma_pagamento),
       Valor: valorRecebido(t),
+      "Valor sem Juros": valorNominal(t),
       "Repasse Francisco": repasseFrancisco(t),
       "Lucro Felipe": lucroFelipe(t),
     }));
@@ -224,6 +245,7 @@ function RecebimentosAssinaturaPage() {
       Pontualidade: "",
       "Forma de Recebimento": "",
       Valor: totalRecebido,
+      "Valor sem Juros": totalNominal,
       "Repasse Francisco": totalRepasse,
       "Lucro Felipe": totalLucro,
     });
@@ -246,6 +268,7 @@ function RecebimentosAssinaturaPage() {
       "Pontualidade",
       "Forma de Recebimento",
       "Valor",
+      "Valor sem Juros",
       "Repasse Francisco",
       "Lucro Felipe",
     ];
@@ -256,10 +279,11 @@ function RecebimentosAssinaturaPage() {
           formatBR(t.pago_em),
           `"${t.cliente.replace(/"/g, '""')}"`,
           t.cliente_id ? (codigoSitePorCliente.get(t.cliente_id) ?? "") : "",
-          formatBR(getVencimentoDate(t)?.toISOString() ?? null),
+          formatBRDate(getVencimentoDate(t)),
           pontualidadeLabel(t),
           formaLabel(t.forma_pagamento),
           valorRecebido(t).toFixed(2).replace(".", ","),
+          valorNominal(t).toFixed(2).replace(".", ","),
           repasseFrancisco(t).toFixed(2).replace(".", ","),
           lucroFelipe(t).toFixed(2).replace(".", ","),
         ].join(";"),
@@ -274,6 +298,7 @@ function RecebimentosAssinaturaPage() {
         "",
         "",
         totalRecebido.toFixed(2).replace(".", ","),
+        totalNominal.toFixed(2).replace(".", ","),
         totalRepasse.toFixed(2).replace(".", ","),
         totalLucro.toFixed(2).replace(".", ","),
       ].join(";"),
@@ -359,7 +384,7 @@ function RecebimentosAssinaturaPage() {
         ) : (
           <>
             {/* Cards totalizadores */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="card-panel flex flex-col justify-between p-3.5 bg-white">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   Total Recebido
@@ -386,6 +411,15 @@ function RecebimentosAssinaturaPage() {
                   {moeda(totalLucro)}
                 </h3>
                 <p className="text-[11px] text-slate-500/75">Soma de Lucro Felipe</p>
+              </div>
+              <div className="card-panel flex flex-col justify-between p-3.5 bg-white">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Lucro Juros e Multa
+                </p>
+                <h3 className="my-1.5 text-lg font-black tracking-tight text-slate-900 tabular-nums">
+                  {moeda(totalJurosMulta)}
+                </h3>
+                <p className="text-[11px] text-slate-500/75">Soma de juros e multa</p>
               </div>
             </div>
 
@@ -472,6 +506,7 @@ function RecebimentosAssinaturaPage() {
                       <th className="px-4 py-3.5 text-center">Pontualidade</th>
                       <th className="px-4 py-3.5">Forma de Recebimento</th>
                       <th className="px-4 py-3.5 text-right">Valor</th>
+                      <th className="px-4 py-3.5 text-right">Valor sem Juros</th>
                       <th className="px-4 py-3.5 text-right">Repasse Francisco</th>
                       <th className="px-4 py-3.5 text-right">Lucro Felipe</th>
                     </tr>
@@ -507,6 +542,9 @@ function RecebimentosAssinaturaPage() {
                         <td className="px-4 py-3.5 text-right font-semibold text-slate-900 tabular-nums">
                           {moeda(valorRecebido(t))}
                         </td>
+                        <td className="px-4 py-3.5 text-right text-slate-700 tabular-nums">
+                          {moeda(valorNominal(t))}
+                        </td>
                         <td className="px-4 py-3.5 text-right text-slate-500 font-medium tabular-nums">
                           {moeda(repasseFrancisco(t))}
                         </td>
@@ -524,6 +562,9 @@ function RecebimentosAssinaturaPage() {
                         </td>
                         <td className="p-3.5 text-right text-slate-900 tabular-nums font-bold">
                           {moeda(totalRecebido)}
+                        </td>
+                        <td className="p-3.5 text-right text-slate-700 tabular-nums font-medium">
+                          {moeda(totalNominal)}
                         </td>
                         <td className="p-3.5 text-right text-slate-500 tabular-nums font-medium">
                           {moeda(totalRepasse)}
@@ -572,6 +613,7 @@ function RecebimentosAssinaturaPage() {
               <th className="py-1">Pontualidade</th>
               <th className="py-1">Forma</th>
               <th className="py-1 text-right">Valor</th>
+              <th className="py-1 text-right">Valor s/ Juros</th>
               <th className="py-1 text-right">Repasse Francisco</th>
               <th className="py-1 text-right">Lucro Felipe</th>
             </tr>
@@ -588,6 +630,7 @@ function RecebimentosAssinaturaPage() {
                 <td className="py-1">{pontualidadeLabel(t)}</td>
                 <td className="py-1">{formaLabel(t.forma_pagamento)}</td>
                 <td className="py-1 text-right">{formatCurrency(valorRecebido(t))}</td>
+                <td className="py-1 text-right">{formatCurrency(valorNominal(t))}</td>
                 <td className="py-1 text-right">{formatCurrency(repasseFrancisco(t))}</td>
                 <td className="py-1 text-right">{formatCurrency(lucroFelipe(t))}</td>
               </tr>
@@ -595,8 +638,8 @@ function RecebimentosAssinaturaPage() {
           </tbody>
         </table>
         <div className="mt-4 border-t-2 border-black pt-2 text-sm font-extrabold">
-          Total recebido: {formatCurrency(totalRecebido)} · Repasse Francisco:{" "}
-          {formatCurrency(totalRepasse)} · Lucro Felipe: {formatCurrency(totalLucro)}
+          Total recebido: {formatCurrency(totalRecebido)} · Valor s/ juros: {formatCurrency(totalNominal)} · Repasse Francisco:{" "}
+          {formatCurrency(totalRepasse)} · Lucro Felipe: {formatCurrency(totalLucro)} · Juros/Multa: {formatCurrency(totalJurosMulta)}
         </div>
       </div>
     </div>
