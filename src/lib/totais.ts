@@ -65,6 +65,7 @@ export function calcularTotais(
 
     if (config) {
       const dias = getDiasAtrasoEncargos(titulo);
+      if (String(titulo.situacao || "").toUpperCase() === "PAGO") console.debug("[totais] PAGO", titulo.id, "pago_em=", titulo.pago_em, "dias=", dias);
       const enc = calcularEncargosTitulo({
         valorNominal: calc.mensalSite,
         diasAtraso: dias,
