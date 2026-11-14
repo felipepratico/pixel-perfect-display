@@ -88,6 +88,13 @@ export function TitulosTable({
    */
   function obterValorTotal(titulo: Titulo): number {
     const calc = computeRow(titulo);
+
+    // Para lançamentos PAGOS, usa o valor efetivamente pago (armazenado),
+    // evitando recálculo que não reproduz o boleto quitado.
+    if (titulo.situacao === "PAGO" && titulo.valor_total != null) {
+      return calc.valorTotal;
+    }
+
     const diasAtraso = getDiasAtrasoEncargos(titulo);
 
     // Recalcula sempre que há configuração disponível, usando os dias de atraso

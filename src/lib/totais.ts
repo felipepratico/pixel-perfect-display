@@ -63,7 +63,11 @@ export function calcularTotais(
     let lucroFelipe = calc.lucroFelipe;
     let repasse = calc.lucroFrancisco;
 
-    if (config) {
+    const pagoComValorArmazenado =
+      String(titulo.situacao ?? "").toUpperCase() === "PAGO" &&
+      titulo.valor_total != null;
+
+    if (config && !pagoComValorArmazenado) {
       const dias = getDiasAtrasoEncargos(titulo);
       const enc = calcularEncargosTitulo({
         valorNominal: calc.mensalSite,
@@ -74,6 +78,12 @@ export function calcularTotais(
       repasse = titulo.valor_repasse_francisco != null
         ? Number(titulo.valor_repasse_francisco) || 0
         : enc.valorRepasseFrancisco;
+      lucroFelipe = valorTotal - repasse - calc.custoBoleto;
+    } else if (pagoComValorArmazenado) {
+      // Lançamento pago: usa o valor efetivamente pago (armazenado).
+      repasse = titulo.valor_repasse_francisco != null
+        ? Number(titulo.valor_repasse_francisco) || 0
+        : calc.lucroFrancisco;
       lucroFelipe = valorTotal - repasse - calc.custoBoleto;
     }
 
