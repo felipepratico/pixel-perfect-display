@@ -93,6 +93,7 @@ import {
 } from "@/lib/fincontrol";
 import { valorContrato } from "@/lib/clientes";
 import { calcularTotais } from "@/lib/totais";
+import { calcularEncargosTitulo } from "@/lib/configuracoes-financeiras";
 import {
   buscarConfiguracaoFinanceira,
   type ConfiguracoesFinanceiras,

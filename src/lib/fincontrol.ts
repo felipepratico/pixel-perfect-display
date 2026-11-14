@@ -286,7 +286,7 @@ export function getVencimentoDate(t: Pick<Titulo, "vencimento" | "mes_ano">): Da
 }
 
 export function isTituloVencido(t: Pick<Titulo, "situacao" | "vencimento" | "mes_ano">): boolean {
-  if (t.situacao === "PAGO") return false;
+  if (String(t.situacao ?? "").trim().toUpperCase() === "PAGO") return false;
   const dueDate = getVencimentoDate(t);
   if (!dueDate) return false;
   return Date.now() > dueDate.getTime();
@@ -319,7 +319,7 @@ export function getDiasVencido(t: Pick<Titulo, "situacao" | "vencimento" | "mes_
 export function getDiasAtrasoEncargos(
   t: Pick<Titulo, "situacao" | "vencimento" | "mes_ano" | "pago_em" | "dias_atraso">,
 ): number {
-  if (t.situacao === "PAGO") {
+  if (String(t.situacao ?? "").trim().toUpperCase() === "PAGO") {
     if (t.pago_em) {
       const dueDate = getVencimentoDate(t);
       if (dueDate) {
