@@ -87,6 +87,24 @@ export function TitulosTable({
    */
   function obterValorTotal(titulo: Titulo): number {
     const calc = computeRow(titulo);
+    const diasAtraso =
+      titulo.dias_atraso != null
+        ? Number(titulo.dias_atraso) || 0
+        : isTituloVencido(titulo)
+          ? getDiasVencido(titulo)
+          : 0;
+
+    // Recalcula dinamicamente quando há configuração e o título está em aberto
+    // ou possui atraso, evitando valores congelados após edição do valor base.
+    if (config && (titulo.situacao === "ABERTO" || diasAtraso > 0)) {
+      const encargos = calcularEncargosTitulo({
+        valorNominal: calc.mensalSite,
+        diasAtraso,
+        config,
+      });
+      return encargos.valorTotal;
+    }
+
     if (titulo.valor_total != null) return calc.valorTotal;
     if (titulo.situacao !== "PAGO" && isTituloVencido(titulo) && config) {
       const encargos = calcularEncargosTitulo({
@@ -101,7 +119,7 @@ export function TitulosTable({
 
   /** Encargos (multa + juros) do título: diferença entre o total com encargos e o valor base. */
   function multaJuros(titulo: Titulo): number {
-    return obterValorTotal(titulo) - computeRow(titulo).mensalReal;
+    return Math.max(0, obterValorTotal(titulo) - computeRow(titulo).mensalSite);
   }
 
   type MensagemSistema = "Normal" | "Bloqueado" | "Atualização" | "Cobrança";
@@ -166,6 +184,24 @@ export function TitulosTable({
       </DropdownMenu>
     );
   }
+
+  const totalMensalSite = titulos.reduce((acc, t) => acc + computeRow(t).mensalSite, 0);
+  const totalLucroFrancisco = titulos.reduce((acc, t) => acc + computeRow(t).lucroFrancisco, 0);
+  const totalLucroFelipe = titulos.reduce(
+    (acc, t) =>
+      acc +
+      (obterValorTotal(t) -
+        (t.valor_repasse_francisco != null
+          ? Number(t.valor_repasse_francisco) || 0
+          : computeRow(t).lucroFrancisco) -
+        computeRow(t).custoBoleto),
+    0,
+  );
+  const totalValorTotal = titulos.reduce((acc, t) => acc + obterValorTotal(t), 0);
+  const totalMultaJuros = titulos.reduce(
+    (acc, t) => acc + Math.max(0, obterValorTotal(t) - computeRow(t).mensalSite),
+    0,
+  );
 
   return (
     <div className="card-panel overflow-hidden bg-white border border-border">
@@ -384,7 +420,15 @@ export function TitulosTable({
                   <td className="px-4 py-3.5 text-right font-semibold text-slate-900 tabular-nums">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="cursor-default">{moeda(calc.lucroFelipe)}</span>
+                        <span className="cursor-default">
+                          {moeda(
+                            obterValorTotal(titulo) -
+                              (titulo.valor_repasse_francisco != null
+                                ? Number(titulo.valor_repasse_francisco) || 0
+                                : calc.lucroFrancisco) -
+                              calc.custoBoleto,
+                          )}
+                        </span>
                       </TooltipTrigger>
                       <TooltipContent side="top">
                         <div className="space-x-1 text-left">
@@ -429,19 +473,19 @@ export function TitulosTable({
                 <td className="p-3.5 text-center">--</td>
                 <td className="p-3.5 text-center">--</td>
                 <td className="p-3.5 text-right text-slate-900 tabular-nums font-bold">
-                  {moeda(totais.mensalSite)}
+                  {moeda(totalMensalSite)}
                 </td>
                 <td className="p-3.5 text-right text-slate-500 tabular-nums font-medium">
-                  {moeda(totais.lucroFrancisco)}
+                  {moeda(totalLucroFrancisco)}
                 </td>
                 <td className="p-3.5 text-right text-slate-900 tabular-nums font-bold">
-                  {moeda(totais.lucroFelipe)}
+                  {moeda(totalLucroFelipe)}
                 </td>
                 <td className="p-3.5 text-right text-slate-900 tabular-nums font-bold">
-                  {moeda(totais.valorTotal)}
+                  {moeda(totalValorTotal)}
                 </td>
                 <td className="p-3.5 text-right text-slate-500 tabular-nums font-medium">
-                  {moeda(totais.valorTotal - totais.mensalReal)}
+                  {moeda(totalMultaJuros)}
                 </td>
               </tr>
             </tfoot>
