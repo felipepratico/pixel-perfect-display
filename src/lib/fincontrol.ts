@@ -310,6 +310,31 @@ export function getDiasVencido(t: Pick<Titulo, "situacao" | "vencimento" | "mes_
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
+/**
+ * Dias de atraso usados no cálculo de encargos (multa/juros).
+ * Para lançamentos PAGOS com data de pagamento, congela o atraso usando a
+ * diferença entre a data de pagamento e o vencimento (em vez da data atual),
+ * evitando que o valor continue subindo após o pagamento.
+ */
+export function getDiasAtrasoEncargos(
+  t: Pick<Titulo, "situacao" | "vencimento" | "mes_ano" | "pago_em" | "dias_atraso">,
+): number {
+  if (t.situacao === "PAGO") {
+    if (t.pago_em) {
+      const dueDate = getVencimentoDate(t);
+      if (dueDate) {
+        const paidDate = new Date(t.pago_em);
+        const diffMs = paidDate.getTime() - dueDate.getTime();
+        if (diffMs > 0) return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        return 0;
+      }
+    }
+    return t.dias_atraso != null ? Number(t.dias_atraso) || 0 : 0;
+  }
+  if (t.dias_atraso != null) return Number(t.dias_atraso) || 0;
+  return getDiasVencido(t);
+}
+
 export type HistoricoPagamento = {
   /** Média de dias de atraso por cliente (títulos pagos após o vencimento). */
   diasAtrasoMedios: Map<string, number>;

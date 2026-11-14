@@ -28,6 +28,7 @@ import {
 import {
   computeRow,
   formatCurrency,
+  getDiasAtrasoEncargos,
   getDiasVencido,
   getVencimentoDate,
   isActiveSubscription,
@@ -87,12 +88,7 @@ export function TitulosTable({
    */
   function obterValorTotal(titulo: Titulo): number {
     const calc = computeRow(titulo);
-    const diasAtraso =
-      titulo.dias_atraso != null
-        ? Number(titulo.dias_atraso) || 0
-        : isTituloVencido(titulo)
-          ? getDiasVencido(titulo)
-          : 0;
+    const diasAtraso = getDiasAtrasoEncargos(titulo);
 
     // Recalcula sempre que há configuração disponível, usando os dias de atraso
     // atuais, evitando valores congelados após edição do valor base.
@@ -109,7 +105,7 @@ export function TitulosTable({
     if (titulo.situacao !== "PAGO" && isTituloVencido(titulo) && config) {
       const encargos = calcularEncargosTitulo({
         valorNominal: parseNumber(titulo.mensal_site),
-        diasAtraso: getDiasVencido(titulo),
+        diasAtraso: getDiasAtrasoEncargos(titulo),
         config,
       });
       return encargos.valorTotal;

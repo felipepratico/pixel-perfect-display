@@ -8,7 +8,7 @@ import {
   chaveDoCliente,
   computeRow,
   isActiveSubscription,
-  getDiasVencido,
+  getDiasAtrasoEncargos,
   isTituloVencido,
   type Titulo,
 } from "@/lib/fincontrol";
@@ -64,12 +64,7 @@ export function calcularTotais(
     let repasse = calc.lucroFrancisco;
 
     if (config) {
-      const dias =
-        titulo.dias_atraso != null
-          ? Number(titulo.dias_atraso) || 0
-          : isTituloVencido(titulo)
-            ? getDiasVencido(titulo)
-            : 0;
+      const dias = getDiasAtrasoEncargos(titulo);
       const enc = calcularEncargosTitulo({
         valorNominal: calc.mensalSite,
         diasAtraso: dias,

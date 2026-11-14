@@ -19,7 +19,7 @@ import {
   type ConfiguracoesFinanceiras,
 } from "@/lib/configuracoes-financeiras";
 import { computeRow, isTituloVencido, type TituloInput } from "@/lib/fincontrol";
-import { getDiasVencido } from "@/lib/fincontrol";
+import { getDiasAtrasoEncargos } from "@/lib/fincontrol";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -188,7 +188,7 @@ function Configuracoes() {
         const calc = computeRow(t);
         const encargos = calcularEncargosTitulo({
           valorNominal: calc.mensalSite,
-          diasAtraso: isTituloVencido(t) ? getDiasVencido(t) : 0,
+          diasAtraso: getDiasAtrasoEncargos(t),
           config,
         });
 
