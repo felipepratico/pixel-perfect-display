@@ -110,7 +110,8 @@ export function calcularEncargosTitulo({
   config: ConfiguracoesFinanceiras;
 }) {
   const multa = (valorNominal * config.multa_atraso_percentual) / 100;
-  const juros = (valorNominal * config.juros_diario_percentual * diasAtraso) / 100;
+  // Juros mora diário em valor fixo (R$ por dia), conforme configuração.
+  const juros = config.juros_diario_percentual * diasAtraso;
   const valorTotal = valorNominal + multa + juros;
   const repasseFrancisco = (valorNominal * config.percentual_repasse_francisco) / 100;
   const lucroLiquidoFelipe = valorTotal - repasseFrancisco - config.custo_boleto_padrao;

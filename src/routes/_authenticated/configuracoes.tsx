@@ -287,10 +287,10 @@ function Configuracoes() {
                 0.01,
               )}
               {campoNumerico(
-                "Juros Mora Diário (%)",
+                "Juros Mora Diário (R$ por dia)",
                 config?.juros_diario_percentual ?? 0.33,
                 (v) => setConfig({ ...config!, juros_diario_percentual: v }),
-                "% ao dia",
+                "R$ / dia",
                 0.01,
               )}
               {campoNumerico(
