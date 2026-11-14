@@ -1,9 +1,14 @@
 import { valorContrato, type Cliente } from "@/lib/clientes";
 import {
+  calcularEncargosTitulo,
+  type ConfiguracoesFinanceiras,
+} from "@/lib/configuracoes-financeiras";
+import {
   chaveClienteDoTitulo,
   chaveDoCliente,
   computeRow,
   isActiveSubscription,
+  getDiasVencido,
   isTituloVencido,
   type Titulo,
 } from "@/lib/fincontrol";
@@ -31,6 +36,7 @@ export function calcularTotais(
   titulos: Titulo[],
   todos: Titulo[],
   clientes: Cliente[] = [],
+  config: ConfiguracoesFinanceiras | null = null,
 ): Totais {
   const totais: Totais = {
     quantidade: titulos.length,
@@ -52,13 +58,37 @@ export function calcularTotais(
 
   for (const titulo of titulos) {
     const calc = computeRow(titulo);
+
+    let valorTotal = calc.valorTotal;
+    let lucroFelipe = calc.lucroFelipe;
+    let repasse = calc.lucroFrancisco;
+
+    if (config) {
+      const dias =
+        titulo.dias_atraso != null
+          ? Number(titulo.dias_atraso) || 0
+          : isTituloVencido(titulo)
+            ? getDiasVencido(titulo)
+            : 0;
+      const enc = calcularEncargosTitulo({
+        valorNominal: calc.mensalSite,
+        diasAtraso: dias,
+        config,
+      });
+      valorTotal = enc.valorTotal;
+      repasse = titulo.valor_repasse_francisco != null
+        ? Number(titulo.valor_repasse_francisco) || 0
+        : enc.valorRepasseFrancisco;
+      lucroFelipe = valorTotal - repasse - calc.custoBoleto;
+    }
+
     totais.mensalSite += calc.mensalSite;
     totais.mensalReal += calc.mensalReal;
     totais.custoBoleto += calc.custoBoleto;
     totais.lucroFrancisco += calc.lucroFrancisco;
     totais.custoBltFra += calc.custoBltFra;
-    totais.lucroFelipe += calc.lucroFelipe;
-    totais.valorTotal += calc.valorTotal;
+    totais.lucroFelipe += lucroFelipe;
+    totais.valorTotal += valorTotal;
     if (titulo.situacao === "PAGO") {
       totais.pagos += 1;
     } else {

@@ -94,9 +94,9 @@ export function TitulosTable({
           ? getDiasVencido(titulo)
           : 0;
 
-    // Recalcula dinamicamente quando há configuração e o título está em aberto
-    // ou possui atraso, evitando valores congelados após edição do valor base.
-    if (config && (titulo.situacao === "ABERTO" || diasAtraso > 0)) {
+    // Recalcula sempre que há configuração disponível, usando os dias de atraso
+    // atuais, evitando valores congelados após edição do valor base.
+    if (config) {
       const encargos = calcularEncargosTitulo({
         valorNominal: calc.mensalSite,
         diasAtraso,

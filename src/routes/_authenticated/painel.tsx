@@ -289,8 +289,8 @@ function Painel() {
   }, [acao, isLoading]);
 
   const totais = useMemo(
-    () => calcularTotais(clientesVisiveis, todos, clientesCadastrados),
-    [clientesVisiveis, todos, clientesCadastrados],
+    () => calcularTotais(clientesVisiveis, todos, clientesCadastrados, config),
+    [clientesVisiveis, todos, clientesCadastrados, config],
   );
 
   const moeda = (valor: number) => (valoresVisiveis ? formatCurrency(valor) : "R$ ••••••");
