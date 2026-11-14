@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Calendar, Download, Eye, EyeOff, FileText, Printer, Receipt, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -18,6 +18,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useClientes } from "@/lib/use-clientes";
 import { useTitulos } from "@/lib/use-titulos";
 import { computeRow, formatCurrency, getVencimentoDate, type Titulo } from "@/lib/fincontrol";
+import {
+  buscarConfiguracaoFinanceira,
+  calcularEncargosTitulo,
+  type ConfiguracoesFinanceiras,
+} from "@/lib/configuracoes-financeiras";
 
 export const Route = createFileRoute("/_authenticated/recebimentos-assinatura")({
   head: () => ({
@@ -70,8 +75,14 @@ function formatBRDate(d: Date | null): string {
   return d.toLocaleDateString("pt-BR");
 }
 
-function valorRecebido(t: Titulo): number {
+function valorRecebido(t: Titulo, config: ConfiguracoesFinanceiras | null = null): number {
   if (t.valor_total != null) return Number(t.valor_total) || 0;
+  const nominal = valorNominal(t);
+  const dias = diasAtraso(t);
+  if (config) {
+    const enc = calcularEncargosTitulo({ valorNominal: nominal, diasAtraso: dias, config });
+    return enc.valorTotal;
+  }
   return computeRow(t).valorTotal;
 }
 
@@ -80,9 +91,12 @@ function repasseFrancisco(t: Titulo): number {
   return computeRow(t).lucroFrancisco;
 }
 
-function lucroFelipe(t: Titulo): number {
-  if (t.lucro_liquido_felipe != null) return Number(t.lucro_liquido_felipe) || 0;
-  return computeRow(t).lucroFelipe;
+function lucroFelipe(t: Titulo, config: ConfiguracoesFinanceiras | null = null): number {
+  if (t.lucro_liquido_felipe != null && t.valor_total != null) return Number(t.lucro_liquido_felipe) || 0;
+  const total = valorRecebido(t, config);
+  const repasse = repasseFrancisco(t);
+  const custo = Number(t.custo_boleto) || 0;
+  return total - repasse - custo;
 }
 
 function valorNominal(t: Titulo): number {
@@ -90,11 +104,8 @@ function valorNominal(t: Titulo): number {
   return computeRow(t).mensalSite;
 }
 
-function jurosMulta(t: Titulo): number {
-  if (t.valor_juros != null || t.valor_multa != null) {
-    return (Number(t.valor_juros) || 0) + (Number(t.valor_multa) || 0);
-  }
-  return Math.max(0, valorRecebido(t) - valorNominal(t));
+function jurosMulta(t: Titulo, config: ConfiguracoesFinanceiras | null = null): number {
+  return Math.max(0, valorRecebido(t, config) - valorNominal(t));
 }
 
 function diasAtraso(t: Titulo): number {
@@ -128,6 +139,11 @@ function RecebimentosAssinaturaPage() {
   const [formaRecebimento, setFormaRecebimento] = useState("all");
   const [busca, setBusca] = useState("");
   const [valoresVisiveis, setValoresVisiveis] = useState(true);
+  const [config, setConfig] = useState<ConfiguracoesFinanceiras | null>(null);
+
+  useEffect(() => {
+    buscarConfiguracaoFinanceira().then(setConfig);
+  }, []);
 
   const codigoSitePorCliente = useMemo(
     () => new Map(clientesCadastrados.map((c) => [c.id, c.codigo_site])),
@@ -168,20 +184,20 @@ function RecebimentosAssinaturaPage() {
   }, [todos, dataInicial, dataFinal, formaRecebimento, busca, codigoSitePorCliente]);
 
   const totalRecebido = useMemo(
-    () => filtrados.reduce((acc, t) => acc + valorRecebido(t), 0),
-    [filtrados],
+    () => filtrados.reduce((acc, t) => acc + valorRecebido(t, config), 0),
+    [filtrados, config],
   );
   const totalRepasse = useMemo(
     () => filtrados.reduce((acc, t) => acc + repasseFrancisco(t), 0),
     [filtrados],
   );
   const totalLucro = useMemo(
-    () => filtrados.reduce((acc, t) => acc + lucroFelipe(t), 0),
-    [filtrados],
+    () => filtrados.reduce((acc, t) => acc + lucroFelipe(t, config), 0),
+    [filtrados, config],
   );
   const totalJurosMulta = useMemo(
-    () => filtrados.reduce((acc, t) => acc + jurosMulta(t), 0),
-    [filtrados],
+    () => filtrados.reduce((acc, t) => acc + jurosMulta(t, config), 0),
+    [filtrados, config],
   );
   const totalNominal = useMemo(
     () => filtrados.reduce((acc, t) => acc + valorNominal(t), 0),
@@ -232,10 +248,10 @@ function RecebimentosAssinaturaPage() {
       Vencimento: formatBRDate(getVencimentoDate(t)),
       Pontualidade: pontualidadeLabel(t),
       "Forma de Recebimento": formaLabel(t.forma_pagamento),
-      Valor: valorRecebido(t),
+      Valor: valorRecebido(t, config),
       "Valor sem Juros": valorNominal(t),
       "Repasse Francisco": repasseFrancisco(t),
-      "Lucro Felipe": lucroFelipe(t),
+      "Lucro Felipe": lucroFelipe(t, config),
     }));
     rows.push({
       "Data Pagamento": "",
@@ -282,10 +298,10 @@ function RecebimentosAssinaturaPage() {
           formatBRDate(getVencimentoDate(t)),
           pontualidadeLabel(t),
           formaLabel(t.forma_pagamento),
-          valorRecebido(t).toFixed(2).replace(".", ","),
+          valorRecebido(t, config).toFixed(2).replace(".", ","),
           valorNominal(t).toFixed(2).replace(".", ","),
           repasseFrancisco(t).toFixed(2).replace(".", ","),
-          lucroFelipe(t).toFixed(2).replace(".", ","),
+          lucroFelipe(t, config).toFixed(2).replace(".", ","),
         ].join(";"),
       );
     }
@@ -540,7 +556,7 @@ function RecebimentosAssinaturaPage() {
                           {formaLabel(t.forma_pagamento)}
                         </td>
                         <td className="px-4 py-3.5 text-right font-semibold text-slate-900 tabular-nums">
-                          {moeda(valorRecebido(t))}
+                          {moeda(valorRecebido(t, config))}
                         </td>
                         <td className="px-4 py-3.5 text-right text-slate-700 tabular-nums">
                           {moeda(valorNominal(t))}
@@ -549,7 +565,7 @@ function RecebimentosAssinaturaPage() {
                           {moeda(repasseFrancisco(t))}
                         </td>
                         <td className="px-4 py-3.5 text-right font-semibold text-slate-900 tabular-nums">
-                          {moeda(lucroFelipe(t))}
+                          {moeda(lucroFelipe(t, config))}
                         </td>
                       </tr>
                     ))}
@@ -629,10 +645,10 @@ function RecebimentosAssinaturaPage() {
                 <td className="py-1">{formatBRDate(getVencimentoDate(t))}</td>
                 <td className="py-1">{pontualidadeLabel(t)}</td>
                 <td className="py-1">{formaLabel(t.forma_pagamento)}</td>
-                <td className="py-1 text-right">{formatCurrency(valorRecebido(t))}</td>
+                <td className="py-1 text-right">{formatCurrency(valorRecebido(t, config))}</td>
                 <td className="py-1 text-right">{formatCurrency(valorNominal(t))}</td>
                 <td className="py-1 text-right">{formatCurrency(repasseFrancisco(t))}</td>
-                <td className="py-1 text-right">{formatCurrency(lucroFelipe(t))}</td>
+                <td className="py-1 text-right">{formatCurrency(lucroFelipe(t, config))}</td>
               </tr>
             ))}
           </tbody>
