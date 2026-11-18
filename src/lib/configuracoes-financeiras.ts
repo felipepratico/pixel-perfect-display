@@ -109,9 +109,15 @@ export function calcularEncargosTitulo({
   diasAtraso: number;
   config: ConfiguracoesFinanceiras;
 }) {
-  const multa = (valorNominal * config.multa_atraso_percentual) / 100;
-  // Juros mora diário em valor fixo (R$ por dia), conforme configuração.
-  const juros = config.juros_diario_percentual * diasAtraso;
+  // Juros e multa só incidem se o valor do boleto for >= R$ 10,00 e houver atraso.
+  const temEncargos = valorNominal >= 10 && diasAtraso > 0;
+  const multa = temEncargos
+    ? (valorNominal * config.multa_atraso_percentual) / 100
+    : 0;
+  // Juros simples diário: valor_boleto * (percentual ao dia) * dias de atraso.
+  const juros = temEncargos
+    ? valorNominal * (config.juros_diario_percentual / 100) * diasAtraso
+    : 0;
   const valorTotal = valorNominal + multa + juros;
   const repasseFrancisco = (valorNominal * config.percentual_repasse_francisco) / 100;
   const lucroLiquidoFelipe = valorTotal - repasseFrancisco - config.custo_boleto_padrao;

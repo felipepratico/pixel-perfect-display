@@ -66,7 +66,7 @@ function Configuracoes() {
         id: "",
         percentual_repasse_francisco: 5,
         multa_atraso_percentual: 5,
-        juros_diario_percentual: 0.33,
+        juros_diario_percentual: 0.033,
         custo_boleto_padrao: 3.45,
         updated_at: new Date().toISOString(),
         updated_by: null,
@@ -277,28 +277,28 @@ function Configuracoes() {
                 config?.percentual_repasse_francisco ?? 5,
                 (v) => setConfig({ ...config!, percentual_repasse_francisco: v }),
                 "%",
-                0.01,
+                 0.001,
               )}
               {campoNumerico(
                 "Multa por Atraso (%)",
                 config?.multa_atraso_percentual ?? 5,
                 (v) => setConfig({ ...config!, multa_atraso_percentual: v }),
                 "%",
-                0.01,
+                 0.001,
               )}
               {campoNumerico(
-                "Juros Mora Diário (R$ por dia)",
-                config?.juros_diario_percentual ?? 0.33,
+                "Juros Mora Diário (% ao dia)",
+                config?.juros_diario_percentual ?? 0.033,
                 (v) => setConfig({ ...config!, juros_diario_percentual: v }),
-                "R$ / dia",
-                0.01,
+                "% ao dia",
+                 0.001,
               )}
               {campoNumerico(
                 "Custo Padrão Boleto (R$)",
                 config?.custo_boleto_padrao ?? 3.45,
                 (v) => setConfig({ ...config!, custo_boleto_padrao: v }),
                 "R$",
-                0.01,
+                 0.001,
               )}
             </div>
             <div className="mt-6 flex justify-end">

@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS public.configuracoes_financeiras (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   percentual_repasse_francisco NUMERIC(5,2) NOT NULL DEFAULT 5.00,
   multa_atraso_percentual NUMERIC(5,2) NOT NULL DEFAULT 5.00,
-  juros_diario_percentual NUMERIC(5,2) NOT NULL DEFAULT 0.33,
+  juros_diario_percentual NUMERIC(6,3) NOT NULL DEFAULT 0.033,
   custo_boleto_padrao NUMERIC(10,2) NOT NULL DEFAULT 3.45,
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_by TEXT
