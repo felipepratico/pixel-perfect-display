@@ -20,29 +20,35 @@ import {
 } from "@/components/ui/dialog";
 import { formatCurrency, parseNumber } from "@/lib/fincontrol";
 import { useTituloMutations } from "@/lib/use-titulos";
+import type { TituloInput } from "@/lib/fincontrol";
 import {
   conciliarCobrancasPdf,
   dataBrParaIso,
+  somenteDigitos,
   type PdfCobrancaEfi,
   type PdfMatch,
 } from "@/lib/conciliacao-pdf";
 
 export function ConciliacaoPdfDialog({
   open,
+  titulos,
   titulosAbertos,
   clientesCadastrados,
+  configFinanceira,
   initialCobrancas,
   onOpenChange,
   onSuccess,
 }: {
   open: boolean;
+  titulos: any[];
   titulosAbertos: any[];
   clientesCadastrados: any[];
+  configFinanceira?: any;
   initialCobrancas?: PdfCobrancaEfi[] | null;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }) {
-  const { patchMany } = useTituloMutations();
+  const { patchMany, insertMany } = useTituloMutations();
   const [matches, setMatches] = useState<PdfMatch[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
@@ -51,12 +57,14 @@ export function ConciliacaoPdfDialog({
     if (open && initialCobrancas && initialCobrancas.length > 0 && matches.length === 0) {
       const res = conciliarCobrancasPdf({
         cobrancas: initialCobrancas,
-        titulosAbertos,
+        titulos,
         clientesCadastrados,
       });
       setMatches(res);
-      const conc = res.filter((m) => m.status === "conciliado").map((m) => m.cobranca.numero_cobranca);
-      setSelecionados(new Set(conc));
+      const selecionar = res
+        .filter((m) => m.status === "conciliado" || m.status === "corrigir" || m.status === "novo_retroativo")
+        .map((m) => m.cobranca.numero_cobranca);
+      setSelecionados(new Set(selecionar));
     }
     if (!open) {
       setMatches([]);
@@ -66,7 +74,9 @@ export function ConciliacaoPdfDialog({
   }, [open, initialCobrancas, titulosAbertos, clientesCadastrados]);
 
   const conciliados = matches.filter((m) => m.status === "conciliado");
-  const jaPagos = matches.filter((m) => m.status === "ja_pago");
+  const corrigir = matches.filter((m) => m.status === "corrigir");
+  const novoRetroativo = matches.filter((m) => m.status === "novo_retroativo");
+  const jaConciliados = matches.filter((m) => m.status === "ja_conciliado");
   const naoEncontrados = matches.filter((m) => m.status === "nao_encontrado");
   const ignorados = matches.filter((m) => m.status === "ignorado");
 
@@ -82,10 +92,12 @@ export function ConciliacaoPdfDialog({
   function vincularManualmente(idCobranca: string, tituloId: string) {
     const tituloAlvo = titulosAbertos.find((t: any) => t.id === tituloId);
     if (!tituloAlvo) return;
+    const novoStatus =
+      tituloAlvo.situacao === "PAGO" ? "corrigir" : "conciliado";
     setMatches((prev) =>
       prev.map((m) =>
         m.cobranca.numero_cobranca === idCobranca
-          ? { ...m, titulo: tituloAlvo, status: "conciliado" }
+          ? { ...m, titulo: tituloAlvo, status: novoStatus }
           : m,
       ),
     );
@@ -112,8 +124,12 @@ export function ConciliacaoPdfDialog({
   }
 
   async function confirmar() {
-    const selecionadosList = conciliados.filter((m) =>
-      selecionados.has(m.cobranca.numero_cobranca),
+    const selecionadosList = matches.filter(
+      (m) =>
+        selecionados.has(m.cobranca.numero_cobranca) &&
+        (m.status === "conciliado" ||
+          m.status === "corrigir" ||
+          m.status === "novo_retroativo"),
     );
     if (selecionadosList.length === 0) {
       toast.error("Nenhuma cobrança selecionada.");
@@ -122,13 +138,47 @@ export function ConciliacaoPdfDialog({
     setSalvando(true);
     let count = 0;
     try {
+      const novos: any[] = [];
       for (const m of selecionadosList) {
-        if (!m.titulo) continue;
         const cob = m.cobranca;
         const extra = Math.max(0, cob.valor_pago - cob.valor_original);
-        await patchMany.mutateAsync({
-          ids: [m.titulo.id],
-          values: {
+        const franciscoPct =
+          m.titulo?.francisco_pct ??
+          m.cliente?.percentual_repasse_francisco ??
+          configFinanceira?.percentual_repasse_francisco ??
+          5;
+        const custoBoleto =
+          m.titulo?.custo_boleto ??
+          configFinanceira?.custo_boleto_padrao ??
+          3.45;
+        const repasse = (cob.valor_original * franciscoPct) / 100;
+        const lucro = cob.valor_pago - repasse - custoBoleto;
+
+        if (m.status === "novo_retroativo") {
+          const cliente = m.cliente;
+          // template de título existente do mesmo cliente
+          const template = titulos.find(
+            (t: any) =>
+              t.cliente_id === cliente?.id || somenteDigitos(t.cnpj) === cob.documento_digits,
+          );
+          const diaVenc = parseInt(cob.data_vencimento.split("/")[0] || "1", 10);
+          const mesAno = cob.data_vencimento.split("/").slice(1).reverse().join("/");
+          // mesAno formato MM/AAAA
+          const partes = cob.data_vencimento.split("/");
+          const mesAnoFmt = partes.length === 3 ? `${partes[1]}/${partes[2]}` : "";
+          novos.push({
+            cliente_id: cliente?.id ?? null,
+            cliente: cliente?.razao_social ?? cob.nome_cliente,
+            cnpj: cliente?.cnpj ?? cob.documento,
+            telefone: cliente?.telefone ? String(cliente.telefone).replace(/\D/g, "") : "",
+            mensal_site: cob.valor_original,
+            mensal_real: cob.valor_original,
+            custo_boleto: custoBoleto,
+            francisco_pct: franciscoPct,
+            vencimento: diaVenc,
+            mes_ano: mesAnoFmt,
+            tipo_cobranca: template?.tipo_cobranca ?? "AVULSO",
+            status_assinatura: template?.status_assinatura ?? "ATIVO",
             situacao: "PAGO",
             pago_em: dataBrParaIso(cob.data_pagamento),
             forma_pagamento: "boleto",
@@ -137,16 +187,44 @@ export function ConciliacaoPdfDialog({
             valor_total: cob.valor_pago,
             valor_juros: extra,
             valor_multa: 0,
-          },
-        });
+            percentual_francisco_aplicado: franciscoPct,
+            valor_repasse_francisco: repasse,
+            lucro_liquido_felipe: lucro,
+            efi_status: "",
+            efi_link_pagamento: "",
+            efi_linha_digitavel: "",
+          });
+        } else if (m.titulo) {
+          await patchMany.mutateAsync({
+            ids: [m.titulo.id],
+            values: {
+              situacao: "PAGO",
+              pago_em: dataBrParaIso(cob.data_pagamento),
+              forma_pagamento: "boleto",
+              dias_atraso: 0,
+              valor_nominal: cob.valor_original,
+              valor_total: cob.valor_pago,
+              valor_juros: extra,
+              valor_multa: 0,
+              percentual_francisco_aplicado: franciscoPct,
+              valor_repasse_francisco: repasse,
+              lucro_liquido_felipe: lucro,
+            },
+          });
+        }
         count++;
       }
-      toast.success(`${count} lançamento(s) baixado(s) como PAGO.`);
+
+      if (novos.length > 0) {
+        await insertMany.mutateAsync(novos as any);
+      }
+
+      toast.success(`${count} lançamento(s) processado(s) com sucesso.`);
       if (onSuccess) onSuccess();
       onOpenChange(false);
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao baixar lançamentos do PDF.");
+      toast.error("Erro ao processar lançamentos do PDF.");
     } finally {
       setSalvando(false);
     }
@@ -165,21 +243,29 @@ export function ConciliacaoPdfDialog({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
             <div className="card-panel p-3 bg-white border border-border/60">
               <p className="text-[10px] font-bold uppercase text-muted-foreground">Lidas</p>
               <p className="text-lg font-black">{matches.length}</p>
             </div>
             <div className="card-panel p-3 bg-white border border-border/60">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">Conciliadas</p>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Baixar</p>
               <p className="text-lg font-black text-emerald-600">{conciliados.length}</p>
             </div>
             <div className="card-panel p-3 bg-white border border-border/60">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">Já pagas</p>
-              <p className="text-lg font-black text-slate-500">{jaPagos.length}</p>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Corrigir</p>
+              <p className="text-lg font-black text-amber-600">{corrigir.length}</p>
             </div>
             <div className="card-panel p-3 bg-white border border-border/60">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">Não encontradas</p>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Novo retroativo</p>
+              <p className="text-lg font-black text-blue-600">{novoRetroativo.length}</p>
+            </div>
+            <div className="card-panel p-3 bg-white border border-border/60">
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Já conciliados</p>
+              <p className="text-lg font-black text-slate-500">{jaConciliados.length}</p>
+            </div>
+            <div className="card-panel p-3 bg-white border border-border/60">
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Não encontrados</p>
               <p className="text-lg font-black text-amber-600">{naoEncontrados.length}</p>
             </div>
           </div>
@@ -188,6 +274,69 @@ export function ConciliacaoPdfDialog({
             <p className="text-xs text-slate-500">
               {ignorados.length} cobrança(s) ignorada(s) por status não pago.
             </p>
+          )}
+
+          {corrigir.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-amber-700">Corrigir Pago (Divergência):</p>
+              {corrigir.map((m) => {
+                const cob = m.cobranca;
+                const extra = Math.max(0, cob.valor_pago - cob.valor_original);
+                const checked = selecionados.has(cob.numero_cobranca);
+                return (
+                  <div key={cob.numero_cobranca} className="flex items-center justify-between gap-3 p-3 rounded-xl border bg-amber-50/40">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <Checkbox checked={checked} onCheckedChange={() => toggle(cob.numero_cobranca)} className="mt-1" />
+                      <div className="min-w-0 space-y-1">
+                        <p className="font-bold text-sm text-slate-900 truncate">
+                          {cob.nome_cliente || m.titulo?.cliente}
+                          <span className="ml-2 text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                            Corrigir Pago (Divergência)
+                          </span>
+                        </p>
+                        <p className="text-xs text-slate-500">{m.divergencia}</p>
+                        <p className="text-xs text-slate-500">
+                          PDF: Venc. {cob.data_vencimento} • Original {formatCurrency(cob.valor_original)} •
+                          Pago {formatCurrency(cob.valor_pago)} • Juros/Multa {formatCurrency(extra)} •
+                          Pagamento {cob.data_pagamento}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {novoRetroativo.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-blue-700">Novo Lançamento Retroativo (Pago):</p>
+              {novoRetroativo.map((m) => {
+                const cob = m.cobranca;
+                const extra = Math.max(0, cob.valor_pago - cob.valor_original);
+                const checked = selecionados.has(cob.numero_cobranca);
+                return (
+                  <div key={cob.numero_cobranca} className="flex items-center justify-between gap-3 p-3 rounded-xl border bg-blue-50/40">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <Checkbox checked={checked} onCheckedChange={() => toggle(cob.numero_cobranca)} className="mt-1" />
+                      <div className="min-w-0 space-y-1">
+                        <p className="font-bold text-sm text-slate-900 truncate">
+                          {cob.nome_cliente}
+                          <span className="ml-2 text-[10px] font-semibold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+                            Novo Lançamento Retroativo (Pago)
+                          </span>
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Cliente: {m.cliente?.razao_social ?? "—"} • Venc. {cob.data_vencimento} •
+                          Original {formatCurrency(cob.valor_original)} • Pago {formatCurrency(cob.valor_pago)} •
+                          Juros/Multa {formatCurrency(extra)} • Pagamento {cob.data_pagamento}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
 
           {conciliados.length > 0 && (
@@ -264,10 +413,10 @@ export function ConciliacaoPdfDialog({
             </div>
           )}
 
-          {jaPagos.length > 0 && (
+          {jaConciliados.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold text-slate-500">Já pagas (ignoradas):</p>
-              {jaPagos.map((m) => {
+              {jaConciliados.map((m) => {
                 const cob = m.cobranca;
                 return (
                   <div key={cob.numero_cobranca} className="p-3 rounded-xl border bg-slate-50">

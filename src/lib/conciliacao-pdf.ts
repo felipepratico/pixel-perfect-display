@@ -35,7 +35,15 @@ export type PdfCobrancaEfi = {
 export type PdfMatch = {
   cobranca: PdfCobrancaEfi;
   titulo: Titulo | null;
-  status: "conciliado" | "ja_pago" | "nao_encontrado" | "ignorado";
+  status:
+    | "conciliado"
+    | "corrigir"
+    | "ja_conciliado"
+    | "novo_retroativo"
+    | "nao_encontrado"
+    | "ignorado";
+  cliente: any | null;
+  divergencia?: string;
 };
 
 export function isStatusPago(status: string): boolean {
@@ -129,25 +137,36 @@ export function parseCobrancasPdf(texto: string): PdfCobrancaEfi[] {
 
 export function conciliarCobrancasPdf({
   cobrancas,
-  titulosAbertos,
+  titulos,
   clientesCadastrados = [],
 }: {
   cobrancas: PdfCobrancaEfi[];
-  titulosAbertos: Titulo[];
+  titulos: Titulo[];
   clientesCadastrados?: ClienteRef[];
 }): PdfMatch[] {
   const titulosUsados = new Set<string>();
 
   return cobrancas.map((cob) => {
     if (!isStatusPago(cob.status)) {
-      return { cobranca: cob, titulo: null, status: "ignorado" };
+      return { cobranca: cob, titulo: null, status: "ignorado", cliente: null };
     }
 
     const { mesAno: vencMesAno } = parseDataBr(cob.data_vencimento);
     const cobNomeNorm = normalizarNome(cob.nome_cliente);
 
-    // 1) Match prioritário por CNPJ/CPF + Mês/Ano do vencimento
-    let candidatos = titulosAbertos.filter((t) => {
+    let clienteEncontrado: any = null;
+    if (cob.documento_digits) {
+      clienteEncontrado = clientesCadastrados.find(
+        (c: any) => somenteDigitos(c.cnpj) === cob.documento_digits,
+      );
+    }
+    if (!clienteEncontrado && cobNomeNorm) {
+      clienteEncontrado = clientesCadastrados.find(
+        (c: any) => normalizarNome(c.razao_social) === cobNomeNorm,
+      );
+    }
+
+    let candidatos = titulos.filter((t) => {
       if (titulosUsados.has(t.id)) return false;
       if (vencMesAno && t.mes_ano !== vencMesAno) return false;
       if (cob.documento_digits) {
@@ -155,48 +174,40 @@ export function conciliarCobrancasPdf({
         let docOk = false;
         if (tDoc && tDoc === cob.documento_digits) docOk = true;
         if (!tDoc && t.cliente_id) {
-          const cliente = clientesCadastrados.find((c) => c.id === t.cliente_id);
+          const cliente = clientesCadastrados.find((c: any) => c.id === t.cliente_id);
           if (cliente && somenteDigitos(cliente.cnpj) === cob.documento_digits) docOk = true;
         }
         if (!docOk) return false;
+      } else if (cobNomeNorm) {
+        const tNomeNorm = normalizarNome(t.cliente);
+        if (tNomeNorm !== cobNomeNorm) {
+          if (t.cliente_id) {
+            const cliente = clientesCadastrados.find((c: any) => c.id === t.cliente_id);
+            if (!cliente || normalizarNome(cliente.razao_social) !== cobNomeNorm) return false;
+          } else {
+            return false;
+          }
+        }
       }
+      if (Math.abs(parseNumber(t.mensal_site) - cob.valor_original) >= 0.05) return false;
       return true;
     });
 
-    // 2) Fallback: nome normalizado + valor original + mês/ano
-    if (candidatos.length === 0) {
-      candidatos = titulosAbertos.filter((t) => {
-        if (titulosUsados.has(t.id)) return false;
-        if (vencMesAno && t.mes_ano !== vencMesAno) return false;
-        const tNomeNorm = normalizarNome(t.cliente);
-        if (cobNomeNorm && tNomeNorm && tNomeNorm === cobNomeNorm) {
-          // valor original
-          if (Math.abs(parseNumber(t.mensal_site) - cob.valor_original) < 0.05) return true;
-        }
-        // também tenta por cliente cadastrado
-        if (t.cliente_id) {
-          const cliente = clientesCadastrados.find((c) => c.id === t.cliente_id);
-          if (cliente && normalizarNome(cliente.razao_social) === cobNomeNorm) {
-            if (Math.abs(parseNumber(t.mensal_site) - cob.valor_original) < 0.05) return true;
-          }
-        }
-        return false;
-      });
-    }
-
-    // 3) Se ainda sem doc, tenta só por nome+valor+mes (fallback broader)
-    if (candidatos.length === 0 && cob.documento_digits === "") {
-      candidatos = titulosAbertos.filter((t) => {
+    if (candidatos.length === 0 && cobNomeNorm) {
+      candidatos = titulos.filter((t) => {
         if (titulosUsados.has(t.id)) return false;
         if (vencMesAno && t.mes_ano !== vencMesAno) return false;
         if (Math.abs(parseNumber(t.mensal_site) - cob.valor_original) >= 0.05) return false;
         const tNomeNorm = normalizarNome(t.cliente);
-        if (cobNomeNorm && tNomeNorm && (tNomeNorm.includes(cobNomeNorm) || cobNomeNorm.includes(tNomeNorm))) return true;
+        if (tNomeNorm === cobNomeNorm) return true;
+        if (t.cliente_id) {
+          const cliente = clientesCadastrados.find((c: any) => c.id === t.cliente_id);
+          if (cliente && normalizarNome(cliente.razao_social) === cobNomeNorm) return true;
+        }
         return false;
       });
     }
 
-    // desempate por valor original
     if (candidatos.length > 1) {
       candidatos = [...candidatos].sort((a, b) => {
         const diffA = Math.abs(parseNumber(a.mensal_site) - cob.valor_original);
@@ -208,15 +219,29 @@ export function conciliarCobrancasPdf({
     const titulo = candidatos[0] ?? null;
 
     if (!titulo) {
-      return { cobranca: cob, titulo: null, status: "nao_encontrado" };
+      if (clienteEncontrado) {
+        return { cobranca: cob, titulo: null, status: "novo_retroativo", cliente: clienteEncontrado };
+      }
+      return { cobranca: cob, titulo: null, status: "nao_encontrado", cliente: null };
     }
 
     if (titulo.situacao === "PAGO") {
-      return { cobranca: cob, titulo, status: "ja_pago" };
+      const sameDate =
+        titulo.pago_em &&
+        new Date(titulo.pago_em).toISOString().slice(0, 10) ===
+          dataBrParaIso(cob.data_pagamento).slice(0, 10);
+      const sameValor =
+        titulo.valor_total != null &&
+        Math.abs(Number(titulo.valor_total) - cob.valor_pago) < 0.01;
+      if (sameDate && sameValor) {
+        return { cobranca: cob, titulo, status: "ja_conciliado", cliente: clienteEncontrado };
+      }
+      const divergencia = `Sistema: data ${titulo.pago_em ? new Date(titulo.pago_em).toLocaleDateString("pt-BR") : "—"}, valor pago ${titulo.valor_total ?? "—"} | PDF: data ${cob.data_pagamento}, valor pago ${cob.valor_pago}`;
+      return { cobranca: cob, titulo, status: "corrigir", cliente: clienteEncontrado, divergencia };
     }
 
     titulosUsados.add(titulo.id);
-    return { cobranca: cob, titulo, status: "conciliado" };
+    return { cobranca: cob, titulo, status: "conciliado", cliente: clienteEncontrado };
   });
 }
 

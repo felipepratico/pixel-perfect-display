@@ -1102,8 +1102,10 @@ function Painel() {
       />
       <ConciliacaoPdfDialog
         open={conciliacaoPdfOpen}
+        titulos={todos}
         titulosAbertos={titulosAbertos}
         clientesCadastrados={clientesCadastrados}
+        configFinanceira={config}
         initialCobrancas={pdfCobrancasPendentes}
         onOpenChange={(o) => {
           setConciliacaoPdfOpen(o);
