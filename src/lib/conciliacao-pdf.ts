@@ -67,8 +67,18 @@ function parseValorMonetario(valor: string | null | undefined): number {
   return isNaN(num) ? 0 : num;
 }
 
+function normalizarNome(str: string): string {
+  return (str || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function parseCobrancasPdf(texto: string): PdfCobrancaEfi[] {
-  const normalized = String(texto || "").replace(/\r/g, "\n");
+  const normalized = String(texto || "").replace(/\r/g, " ");
   const markerRegex = /N[°º]\s*Cob\.?\s*:/gi;
   const positions: number[] = [];
   let m: RegExpExecArray | null;
@@ -81,35 +91,36 @@ export function parseCobrancasPdf(texto: string): PdfCobrancaEfi[] {
   for (let i = 0; i < positions.length - 1; i++) {
     const bloco = normalized.slice(positions[i], positions[i + 1]);
 
-    const numMatch = bloco.match(/N[°º]\s*Cob\.?\s*:\s*(\S+)/i);
-    const valorOrigMatch = bloco.match(/Valor:\s*\(R\$\)\s*(?:R\$\s*)?([\d.,]+)/i);
-    const statusMatch = bloco.match(/Status:\s*(.+?)(?:\n|$)/i);
-    const nomeMatch = bloco.match(/Nome:\s*(.+?)(?:\n|$)/i);
-    const docMatch = bloco.match(/Documento\s*:?\s*(.+?)(?:\n|$)/i);
+    const numMatch = bloco.match(/N[°º]\s*Cob\.?\s*:\s*(\d+)/i);
+    const statusMatch = bloco.match(/Status:\s*(.+?)(?=Nome:|Telefone:|Documento|Data de Vencimento|Valor:|Pago Em:|Identificador|$)/i);
+    const nomeMatch = bloco.match(/Nome:\s*(.+?)(?=Telefone:|Documento|Data de Vencimento|Valor:|Pago Em:|Identificador|$)/i);
+    const docMatch = bloco.match(/Documento\s*:?\s*([0-9.\-\/]+)/i);
     const vencMatch = bloco.match(/Data de Vencimento:\s*(\d{2}\/\d{2}\/\d{4})/i);
+    const valorOrigMatch = bloco.match(/Valor:\s*\(R\$\)\s*(?:R\$\s*)?([\d.,]+)/i);
     const valorPagoMatch = bloco.match(/Valor Pago:\s*(?:R\$\s*)?([\d.,]+)/i);
     const pagoEmMatch = bloco.match(/Pago Em:\s*(\d{2}\/\d{2}\/\d{4})/i);
-    const identMatch = bloco.match(/Identificador da Assinatura:\s*(.+?)(?:\n|$)/i);
+    const identMatch = bloco.match(/Identificador da Assinatura:\s*(.+?)(?=N[°º]\s*Cob|Status:|Nome:|Telefone:|Documento|$)/i);
 
     const numero_cobranca = numMatch && numMatch[1] ? numMatch[1].trim() : "";
     if (!numero_cobranca) continue;
 
-    const documento = docMatch && docMatch[1] ? docMatch[1].trim() : "";
+    const statusRaw = statusMatch && statusMatch[1] ? statusMatch[1].trim() : "";
+    const nomeRaw = nomeMatch && nomeMatch[1] ? nomeMatch[1].trim() : "";
+    const docRaw = docMatch && docMatch[1] ? docMatch[1].trim() : "";
+    const docDigits = somenteDigitos(docRaw);
     const identRaw = identMatch && identMatch[1] ? identMatch[1].trim() : "";
-    const identificador_assinatura =
-      identRaw && identRaw !== "-" ? identRaw : null;
 
     cobrancas.push({
       numero_cobranca,
       valor_original: parseValorMonetario(valorOrigMatch && valorOrigMatch[1] ? valorOrigMatch[1] : ""),
-      status: statusMatch && statusMatch[1] ? statusMatch[1].trim() : "",
-      nome_cliente: nomeMatch && nomeMatch[1] ? nomeMatch[1].trim() : "",
-      documento,
-      documento_digits: somenteDigitos(documento),
+      status: statusRaw,
+      nome_cliente: normalizarNome(nomeRaw) ? nomeRaw.trim() : nomeRaw.trim(),
+      documento: docRaw,
+      documento_digits: docDigits,
       data_vencimento: vencMatch && vencMatch[1] ? vencMatch[1].trim() : "",
       valor_pago: parseValorMonetario(valorPagoMatch && valorPagoMatch[1] ? valorPagoMatch[1] : ""),
       data_pagamento: pagoEmMatch && pagoEmMatch[1] ? pagoEmMatch[1].trim() : "",
-      identificador_assinatura,
+      identificador_assinatura: identRaw && identRaw !== "-" ? identRaw : null,
     });
   }
 
@@ -132,25 +143,58 @@ export function conciliarCobrancasPdf({
       return { cobranca: cob, titulo: null, status: "ignorado" };
     }
 
-    const { dia: vencDia, mesAno: vencMesAno } = parseDataBr(cob.data_vencimento);
+    const { mesAno: vencMesAno } = parseDataBr(cob.data_vencimento);
+    const cobNomeNorm = normalizarNome(cob.nome_cliente);
 
+    // 1) Match prioritário por CNPJ/CPF + Mês/Ano do vencimento
     let candidatos = titulosAbertos.filter((t) => {
       if (titulosUsados.has(t.id)) return false;
-      // vencimento
-      if (vencDia && t.vencimento !== vencDia) return false;
       if (vencMesAno && t.mes_ano !== vencMesAno) return false;
-      // documento
       if (cob.documento_digits) {
         const tDoc = somenteDigitos(t.cnpj);
-        if (tDoc && tDoc !== cob.documento_digits) return false;
-        // se título sem cnpj, tenta por cliente cadastrado
+        let docOk = false;
+        if (tDoc && tDoc === cob.documento_digits) docOk = true;
         if (!tDoc && t.cliente_id) {
           const cliente = clientesCadastrados.find((c) => c.id === t.cliente_id);
-          if (cliente && somenteDigitos(cliente.cnpj) !== cob.documento_digits) return false;
+          if (cliente && somenteDigitos(cliente.cnpj) === cob.documento_digits) docOk = true;
         }
+        if (!docOk) return false;
       }
       return true;
     });
+
+    // 2) Fallback: nome normalizado + valor original + mês/ano
+    if (candidatos.length === 0) {
+      candidatos = titulosAbertos.filter((t) => {
+        if (titulosUsados.has(t.id)) return false;
+        if (vencMesAno && t.mes_ano !== vencMesAno) return false;
+        const tNomeNorm = normalizarNome(t.cliente);
+        if (cobNomeNorm && tNomeNorm && tNomeNorm === cobNomeNorm) {
+          // valor original
+          if (Math.abs(parseNumber(t.mensal_site) - cob.valor_original) < 0.05) return true;
+        }
+        // também tenta por cliente cadastrado
+        if (t.cliente_id) {
+          const cliente = clientesCadastrados.find((c) => c.id === t.cliente_id);
+          if (cliente && normalizarNome(cliente.razao_social) === cobNomeNorm) {
+            if (Math.abs(parseNumber(t.mensal_site) - cob.valor_original) < 0.05) return true;
+          }
+        }
+        return false;
+      });
+    }
+
+    // 3) Se ainda sem doc, tenta só por nome+valor+mes (fallback broader)
+    if (candidatos.length === 0 && cob.documento_digits === "") {
+      candidatos = titulosAbertos.filter((t) => {
+        if (titulosUsados.has(t.id)) return false;
+        if (vencMesAno && t.mes_ano !== vencMesAno) return false;
+        if (Math.abs(parseNumber(t.mensal_site) - cob.valor_original) >= 0.05) return false;
+        const tNomeNorm = normalizarNome(t.cliente);
+        if (cobNomeNorm && tNomeNorm && (tNomeNorm.includes(cobNomeNorm) || cobNomeNorm.includes(tNomeNorm))) return true;
+        return false;
+      });
+    }
 
     // desempate por valor original
     if (candidatos.length > 1) {

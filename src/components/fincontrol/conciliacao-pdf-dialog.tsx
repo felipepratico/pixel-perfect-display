@@ -4,6 +4,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -68,6 +75,38 @@ export function ConciliacaoPdfDialog({
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      return next;
+    });
+  }
+
+  function vincularManualmente(idCobranca: string, tituloId: string) {
+    const tituloAlvo = titulosAbertos.find((t: any) => t.id === tituloId);
+    if (!tituloAlvo) return;
+    setMatches((prev) =>
+      prev.map((m) =>
+        m.cobranca.numero_cobranca === idCobranca
+          ? { ...m, titulo: tituloAlvo, status: "conciliado" }
+          : m,
+      ),
+    );
+    setSelecionados((prev) => {
+      const next = new Set(prev);
+      next.add(idCobranca);
+      return next;
+    });
+  }
+
+  function desvincular(idCobranca: string) {
+    setMatches((prev) =>
+      prev.map((m) =>
+        m.cobranca.numero_cobranca === idCobranca
+          ? { ...m, titulo: null, status: "nao_encontrado" }
+          : m,
+      ),
+    );
+    setSelecionados((prev) => {
+      const next = new Set(prev);
+      next.delete(idCobranca);
       return next;
     });
   }
@@ -191,8 +230,13 @@ export function ConciliacaoPdfDialog({
               <p className="text-xs font-semibold text-amber-700">Não encontradas (conferência manual):</p>
               {naoEncontrados.map((m) => {
                 const cob = m.cobranca;
+                const titulosOrdenados = [...titulosAbertos].sort((a: any, b: any) => {
+                  const diffA = Math.abs(parseNumber(a.mensal_site) - cob.valor_original);
+                  const diffB = Math.abs(parseNumber(b.mensal_site) - cob.valor_original);
+                  return diffA - diffB;
+                });
                 return (
-                  <div key={cob.numero_cobranca} className="p-3 rounded-xl border bg-amber-50/40">
+                  <div key={cob.numero_cobranca} className="p-3 rounded-xl border bg-amber-50/40 space-y-2">
                     <p className="text-xs font-bold text-slate-800">
                       {cob.nome_cliente} • Doc {cob.documento}
                     </p>
@@ -200,6 +244,20 @@ export function ConciliacaoPdfDialog({
                       Venc. {cob.data_vencimento} • Original {formatCurrency(cob.valor_original)} •
                       Pago {formatCurrency(cob.valor_pago)}
                     </p>
+                    <Select
+                      onValueChange={(tituloId) => vincularManualmente(cob.numero_cobranca, tituloId)}
+                    >
+                      <SelectTrigger className="w-full text-xs h-9 bg-white border-slate-200 font-medium">
+                        <SelectValue placeholder="Vincular manualmente a um lançamento em aberto..." />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {titulosOrdenados.map((t: any) => (
+                          <SelectItem key={t.id} value={t.id} className="text-xs py-2">
+                            {t.cliente} ({t.mes_ano}) - {formatCurrency(parseNumber(t.mensal_site))}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 );
               })}
