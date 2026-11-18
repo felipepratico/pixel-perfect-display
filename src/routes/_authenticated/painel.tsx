@@ -433,8 +433,22 @@ function Painel() {
     pagoEm: string;
     formaPagamento: FormaPagamento | null;
     diasAtraso: number;
+    valorPago: number | null;
   }) {
     try {
+      const extra: Partial<Pick<Titulo, "valor_nominal" | "valor_juros" | "valor_multa" | "valor_total" | "percentual_francisco_aplicado" | "valor_repasse_francisco" | "lucro_liquido_felipe">> = {};
+      const alvo = values.ids.length === 1 ? marcarPagoTitulos.find((t) => t.id === values.ids[0]) : undefined;
+      if (alvo && values.valorPago != null) {
+        const c = computeRow({ ...alvo, valor_juros: null, valor_multa: null, valor_total: null });
+        // Repasse do Francisco só sobre o valor sem juros; juros/multa ficam com o Felipe.
+        extra.valor_nominal = c.mensalSite;
+        extra.valor_juros = Math.max(0, values.valorPago - c.mensalSite);
+        extra.valor_multa = 0;
+        extra.valor_total = values.valorPago;
+        extra.percentual_francisco_aplicado = c.franciscoPct;
+        extra.valor_repasse_francisco = c.lucroFrancisco;
+        extra.lucro_liquido_felipe = values.valorPago - c.lucroFrancisco - c.custoBoleto;
+      }
       await patchMany.mutateAsync({
         ids: values.ids,
         values: {
@@ -442,6 +456,7 @@ function Painel() {
           pago_em: values.pagoEm,
           forma_pagamento: values.formaPagamento,
           dias_atraso: values.diasAtraso,
+          ...extra,
         },
       });
       toast.success(

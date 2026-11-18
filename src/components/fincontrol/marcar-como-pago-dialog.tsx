@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { getVencimentoDate, type Titulo } from "@/lib/fincontrol";
+import { computeRow, formatCurrency, getVencimentoDate, parseNumber, type Titulo } from "@/lib/fincontrol";
 
 type FormaPagamento = "pix" | "boleto" | "cartao" | "dinheiro" | "transferencia";
 
@@ -63,10 +63,12 @@ export function MarcarComoPagoDialog({
     pagoEm: string;
     formaPagamento: FormaPagamento | null;
     diasAtraso: number;
+    valorPago: number | null;
   }) => void | Promise<void>;
 }) {
   const [pagoEm, setPagoEm] = useState("");
   const [horaPago, setHoraPago] = useState("");
+  const [valorPagoTxt, setValorPagoTxt] = useState("");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | null>(null);
 
   const tituloUm = titulos[0];
@@ -85,7 +87,10 @@ export function MarcarComoPagoDialog({
       setPagoEm(hoje);
       const d = new Date();
       setHoraPago(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+      const t = titulos[0];
+      setValorPagoTxt(t && titulos.length === 1 ? computeRow(t).valorTotal.toFixed(2).replace(".", ",") : "");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, hoje]);
 
   const vencimentoRef = tituloUm ? getVencimentoDate(tituloUm) : null;
@@ -100,6 +105,10 @@ export function MarcarComoPagoDialog({
   }, [vencimentoRef, pagoEm]);
 
   const modoUnico = titulos.length === 1;
+  const calcUm = tituloUm ? computeRow(tituloUm) : null;
+  const valorPago = valorPagoTxt.trim() ? parseNumber(valorPagoTxt) : null;
+  const jurosRecebidos = calcUm && valorPago != null ? Math.max(0, valorPago - calcUm.mensalSite) : 0;
+  const lucroFelipePrev = calcUm && valorPago != null ? valorPago - calcUm.lucroFrancisco - calcUm.custoBoleto : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -126,6 +135,39 @@ export function MarcarComoPagoDialog({
         </DialogHeader>
 
         <div className="space-y-3 p-4">
+          {modoUnico && calcUm && (
+            <div className="rounded-lg border p-2.5 text-sm space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Valor do título</span>
+                <span className="font-semibold">{formatCurrency(calcUm.mensalSite)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Vencimento do boleto</span>
+                <Badge variant="secondary">
+                  {vencimentoRef ? vencimentoRef.toLocaleDateString("pt-BR") : `Dia ${tituloUm?.vencimento}`}
+                </Badge>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="marcarPagoValor">Valor pago (com juros/multa)</Label>
+                <Input
+                  id="marcarPagoValor"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={valorPagoTxt}
+                  onChange={(e) => setValorPagoTxt(e.target.value)}
+                />
+              </div>
+              {valorPago != null && (
+                <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                  <span>Juros/multa recebidos</span><span className="text-right">{formatCurrency(jurosRecebidos)}</span>
+                  <span>Repasse Francisco (sem juros)</span><span className="text-right">{formatCurrency(calcUm.lucroFrancisco)}</span>
+                  <span>Taxa do boleto</span><span className="text-right">{formatCurrency(calcUm.custoBoleto)}</span>
+                  <span className="font-semibold text-foreground">Lucro Felipe</span><span className="text-right font-semibold text-foreground">{formatCurrency(lucroFelipePrev ?? 0)}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label htmlFor="marcarPagoData">Data do pagamento</Label>
             <Input
@@ -221,6 +263,7 @@ export function MarcarComoPagoDialog({
                 })(),
                 formaPagamento,
                 diasAtraso: preview?.diasAtraso ?? 0,
+                valorPago: modoUnico ? valorPago : null,
               });
             }}
           >

@@ -335,6 +335,14 @@ export function TitulosTable({
                         Pago em: {new Date(titulo.pago_em).toLocaleDateString("pt-BR")}
                       </span>
                     )}
+                    {titulo.situacao === "PAGO" && (() => {
+                      const d = getDiasAtrasoEncargos(titulo);
+                      return d > 0 ? (
+                        <span className="inline-block mt-1 rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                          Pago com {d} dia{d === 1 ? "" : "s"} de atraso
+                        </span>
+                      ) : null;
+                    })()}
                   </td>
                   <td className="px-4 py-3.5 text-center">
                     <p
