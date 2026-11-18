@@ -19,6 +19,9 @@ import {
   Trash2,
   Upload,
   Clock,
+  ChevronDown,
+  FileCode,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -46,6 +49,7 @@ import {
 } from "@/components/ui/accordion";
 import { Graficos } from "@/components/fincontrol/graficos";
 import { ImportDialog } from "@/components/fincontrol/import-dialog";
+import { ConciliacaoEfiDialog } from "@/components/fincontrol/conciliacao-efi-dialog";
 import { AreaImpressao } from "@/components/fincontrol/impressao";
 import { KpiCards } from "@/components/fincontrol/kpi-cards";
 import { CardAdimplencia } from "@/components/fincontrol/card-adimplencia";
@@ -98,6 +102,11 @@ import {
   buscarConfiguracaoFinanceira,
   type ConfiguracoesFinanceiras,
 } from "@/lib/configuracoes-financeiras";
+import {
+  buscarAliasesBancarios,
+  type ClienteAliasBancario,
+  type ItemExtratoEfi,
+} from "@/lib/conciliacao-efi";
 import { useClienteMutations, useClientes } from "@/lib/use-clientes";
 import { useTituloMutations, useTitulos } from "@/lib/use-titulos";
 
@@ -157,6 +166,9 @@ function Painel() {
   const [novaAssClienteInicial, setNovaAssClienteInicial] = useState<Cliente | null>(null);
   const [recOpen, setRecOpen] = useState(false);
   const [impOpen, setImpOpen] = useState(false);
+  const [conciliacaoOpen, setConciliacaoOpen] = useState(false);
+  const [extratoJsonPendente, setExtratoJsonPendente] = useState<ItemExtratoEfi[] | null>(null);
+  const [aliasesBancarios, setAliasesBancarios] = useState<ClienteAliasBancario[]>([]);
   const [relOpen, setRelOpen] = useState(false);
   const [relCliente, setRelCliente] = useState<string | null>(null);
   const [loteOpen, setLoteOpen] = useState(false);
@@ -173,7 +185,13 @@ function Painel() {
 
   useEffect(() => {
     buscarConfiguracaoFinanceira().then(setConfig);
+    buscarAliasesBancarios().then(setAliasesBancarios);
   }, []);
+
+  const titulosAbertos = useMemo(
+    () => todos.filter((t) => t.situacao === "ABERTO" && !t.deleted_at),
+    [todos],
+  );
 
   function imprimir(lista: Titulo[], subtitulo: string) {
     if (!lista.length) {
@@ -281,6 +299,8 @@ function Painel() {
       setRecOpen(true);
     } else if (acao === "importar") {
       setImpOpen(true);
+    } else if (acao === "conciliar-efi") {
+      setConciliacaoOpen(true);
     } else if (acao === "relatorios") {
       setRelCliente(null);
       setRelOpen(true);
@@ -1029,6 +1049,33 @@ function Painel() {
             onError: erro,
           })
         }
+        onOpenConciliacao={() => setConciliacaoOpen(true)}
+        onExtratoJson={(jsonData: any) => {
+          const arr = Array.isArray(jsonData)
+            ? jsonData
+            : Array.isArray(jsonData?.data)
+              ? jsonData.data
+              : Array.isArray(jsonData?.items)
+                ? jsonData.items
+                : [jsonData];
+          setExtratoJsonPendente(arr);
+          setConciliacaoOpen(true);
+        }}
+      />
+      <ConciliacaoEfiDialog
+        open={conciliacaoOpen}
+        titulosAbertos={titulosAbertos}
+        clientesCadastrados={clientesCadastrados}
+        aliasesBancarios={aliasesBancarios}
+        configFinanceira={config}
+        initialJsonData={extratoJsonPendente}
+        onOpenChange={(o) => {
+          setConciliacaoOpen(o);
+          if (!o) setExtratoJsonPendente(null);
+        }}
+        onSuccess={() => {
+          buscarAliasesBancarios().then(setAliasesBancarios);
+        }}
       />
       <RelatorioDialog
         open={relOpen}

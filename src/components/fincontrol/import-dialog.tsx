@@ -1,4 +1,4 @@
-import { CircleCheck, FileSpreadsheet, UploadCloud } from "lucide-react";
+import { CircleCheck, FileCode, FileSpreadsheet, Sparkles, UploadCloud } from "lucide-react";
 import { useState } from "react";
 import type * as XLSX from "xlsx";
 
@@ -41,11 +41,15 @@ export function ImportDialog({
   importando,
   onOpenChange,
   onImportar,
+  onExtratoJson,
+  onOpenConciliacao,
 }: {
   open: boolean;
   importando: boolean;
   onOpenChange: (open: boolean) => void;
   onImportar: (rows: TituloInput[]) => void;
+  onExtratoJson?: (jsonData: any) => void;
+  onOpenConciliacao?: () => void;
 }) {
   const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
   const [sheetName, setSheetName] = useState("");
@@ -68,6 +72,23 @@ export function ImportDialog({
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
+
+    // Se for arquivo JSON da Efí, redireciona para a conciliação
+    if (file.name.toLowerCase().endsWith(".json")) {
+      try {
+        const text = await file.text();
+        const json = JSON.parse(text);
+        if (onExtratoJson) {
+          onExtratoJson(json);
+          onOpenChange(false);
+          return;
+        }
+      } catch {
+        setErro("Não foi possível ler este arquivo JSON da Efí. Verifique o formato.");
+        return;
+      }
+    }
+
     try {
       const buffer = await file.arrayBuffer();
       const book = readWorkbook(buffer);
@@ -75,7 +96,7 @@ export function ImportDialog({
       const first = book.SheetNames.find((name) => sheetToRows(book, name).length > 0);
       carregarAba(book, first ?? book.SheetNames[0] ?? "");
     } catch {
-      setErro("Não conseguimos ler este arquivo. Use .xlsx, .xls ou .csv.");
+      setErro("Não conseguimos ler este arquivo. Use .xlsx, .xls, .csv ou .json.");
     }
   }
 
@@ -101,26 +122,54 @@ export function ImportDialog({
     >
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Importar planilha Excel</DialogTitle>
+          <DialogTitle>Importar lançamentos ou extrato</DialogTitle>
           <DialogDescription>
-            Reconhecemos automaticamente colunas como cliente, CNPJ, mensal site, vencimento e
-            situação.
+            Importe planilhas de contas a receber ou extratos JSON da Efí para conciliação automática.
           </DialogDescription>
         </DialogHeader>
+
+        {onOpenConciliacao && (
+          <div className="flex items-center justify-between p-3 rounded-xl border border-orange-200 bg-orange-50/70 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="grid size-7 place-items-center rounded-lg bg-orange-100 text-orange-600">
+                <FileCode className="size-4" />
+              </span>
+              <div>
+                <span className="font-bold text-slate-800">Possui extrato JSON da Efí?</span>
+                <span className="block text-[11px] text-slate-500">
+                  Dê baixa em lote nos recebimentos com juros/multa calculados automaticamente.
+                </span>
+              </div>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                onOpenChange(false);
+                onOpenConciliacao();
+              }}
+              className="border-orange-300 text-orange-700 hover:bg-orange-100/60 font-semibold gap-1.5 shrink-0"
+            >
+              <Sparkles className="size-3.5" />
+              Conciliar Extrato Efí
+            </Button>
+          </div>
+        )}
 
         <label className="group flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-input bg-muted/40 p-6 text-center transition hover:border-brand">
           <span className="flex size-12 items-center justify-center rounded-2xl bg-brand-soft text-brand">
             <UploadCloud className="size-6" />
           </span>
           <span className="text-sm font-bold">
-            Clique para selecionar o arquivo (.XLSX / .XLS / .CSV)
+            Clique para selecionar o arquivo (.XLSX / .XLS / .CSV / .JSON)
           </span>
           <span className="text-xs text-muted-foreground">
-            Sua planilha de contas a receber funciona direto, sem ajustes.
+            Sua planilha de contas a receber ou arquivo JSON da Efí funcionam direto.
           </span>
           <input
             type="file"
-            accept=".xlsx,.xls,.csv"
+            accept=".xlsx,.xls,.csv,.json"
             className="hidden"
             onChange={(event) => void handleFile(event.target.files?.[0])}
           />
