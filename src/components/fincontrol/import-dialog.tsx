@@ -1,6 +1,7 @@
 import { CircleCheck, FileCode, FileSpreadsheet, Sparkles, UploadCloud } from "lucide-react";
 import { useState } from "react";
 import type * as XLSX from "xlsx";
+import { extrairTextoPdf, parseCobrancasPdf } from "@/lib/conciliacao-pdf";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,7 @@ export function ImportDialog({
   onImportar,
   onExtratoJson,
   onOpenConciliacao,
+  onExtratoPdf,
 }: {
   open: boolean;
   importando: boolean;
@@ -50,12 +52,14 @@ export function ImportDialog({
   onImportar: (rows: TituloInput[]) => void;
   onExtratoJson?: (jsonData: any) => void;
   onOpenConciliacao?: () => void;
+  onExtratoPdf?: (cobrancas: any[]) => void;
 }) {
   const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
   const [sheetName, setSheetName] = useState("");
   const [rows, setRows] = useState<SheetRow[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Mapping>(emptyMapping);
+  const [processandoPdf, setProcessandoPdf] = useState(false);
   const [mesAno, setMesAno] = useState(currentMesAno());
   const [erro, setErro] = useState("");
 
@@ -72,6 +76,30 @@ export function ImportDialog({
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
+
+    // Se for arquivo PDF do Relatório Expresso Efí, extrai e concilia
+    if (file.name.toLowerCase().endsWith(".pdf")) {
+      setProcessandoPdf(true);
+      try {
+        const texto = await extrairTextoPdf(file);
+        const cobrancas = parseCobrancasPdf(texto);
+        if (!cobrancas.length) {
+          setErro("Não foi possível extrair cobranças deste PDF. Verifique o formato Relatório Expresso da Efí.");
+          setProcessandoPdf(false);
+          return;
+        }
+        if (onExtratoPdf) {
+          onExtratoPdf(cobrancas);
+          onOpenChange(false);
+        }
+      } catch (err) {
+        console.error(err);
+        setErro("Não foi possível ler este arquivo PDF.");
+      } finally {
+        setProcessandoPdf(false);
+      }
+      return;
+    }
 
     // Se for arquivo JSON da Efí, redireciona para a conciliação
     if (file.name.toLowerCase().endsWith(".json")) {
@@ -162,14 +190,14 @@ export function ImportDialog({
             <UploadCloud className="size-6" />
           </span>
           <span className="text-sm font-bold">
-            Clique para selecionar o arquivo (.XLSX / .XLS / .CSV / .JSON)
+            Clique para selecionar o arquivo (.XLSX / .XLS / .CSV / .JSON / .PDF)
           </span>
           <span className="text-xs text-muted-foreground">
             Sua planilha de contas a receber ou arquivo JSON da Efí funcionam direto.
           </span>
           <input
             type="file"
-            accept=".xlsx,.xls,.csv,.json"
+            accept=".xlsx,.xls,.csv,.json,.pdf"
             className="hidden"
             onChange={(event) => void handleFile(event.target.files?.[0])}
           />

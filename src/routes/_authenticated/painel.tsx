@@ -50,6 +50,7 @@ import {
 import { Graficos } from "@/components/fincontrol/graficos";
 import { ImportDialog } from "@/components/fincontrol/import-dialog";
 import { ConciliacaoEfiDialog } from "@/components/fincontrol/conciliacao-efi-dialog";
+import { ConciliacaoPdfDialog } from "@/components/fincontrol/conciliacao-pdf-dialog";
 import { AreaImpressao } from "@/components/fincontrol/impressao";
 import { KpiCards } from "@/components/fincontrol/kpi-cards";
 import { CardAdimplencia } from "@/components/fincontrol/card-adimplencia";
@@ -107,6 +108,7 @@ import {
   type ClienteAliasBancario,
   type ItemExtratoEfi,
 } from "@/lib/conciliacao-efi";
+import type { PdfCobrancaEfi } from "@/lib/conciliacao-pdf";
 import { useClienteMutations, useClientes } from "@/lib/use-clientes";
 import { useTituloMutations, useTitulos } from "@/lib/use-titulos";
 
@@ -167,7 +169,9 @@ function Painel() {
   const [recOpen, setRecOpen] = useState(false);
   const [impOpen, setImpOpen] = useState(false);
   const [conciliacaoOpen, setConciliacaoOpen] = useState(false);
+  const [conciliacaoPdfOpen, setConciliacaoPdfOpen] = useState(false);
   const [extratoJsonPendente, setExtratoJsonPendente] = useState<ItemExtratoEfi[] | null>(null);
+  const [pdfCobrancasPendentes, setPdfCobrancasPendentes] = useState<PdfCobrancaEfi[] | null>(null);
   const [aliasesBancarios, setAliasesBancarios] = useState<ClienteAliasBancario[]>([]);
   const [relOpen, setRelOpen] = useState(false);
   const [relCliente, setRelCliente] = useState<string | null>(null);
@@ -1076,6 +1080,10 @@ function Painel() {
           setExtratoJsonPendente(arr);
           setConciliacaoOpen(true);
         }}
+        onExtratoPdf={(cobrancas) => {
+          setPdfCobrancasPendentes(cobrancas);
+          setConciliacaoPdfOpen(true);
+        }}
       />
       <ConciliacaoEfiDialog
         open={conciliacaoOpen}
@@ -1087,6 +1095,19 @@ function Painel() {
         onOpenChange={(o) => {
           setConciliacaoOpen(o);
           if (!o) setExtratoJsonPendente(null);
+        }}
+        onSuccess={() => {
+          buscarAliasesBancarios().then(setAliasesBancarios);
+        }}
+      />
+      <ConciliacaoPdfDialog
+        open={conciliacaoPdfOpen}
+        titulosAbertos={titulosAbertos}
+        clientesCadastrados={clientesCadastrados}
+        initialCobrancas={pdfCobrancasPendentes}
+        onOpenChange={(o) => {
+          setConciliacaoPdfOpen(o);
+          if (!o) setPdfCobrancasPendentes(null);
         }}
         onSuccess={() => {
           buscarAliasesBancarios().then(setAliasesBancarios);
