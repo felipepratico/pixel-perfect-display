@@ -190,8 +190,8 @@ export function CnpjAliasesManager({
   }
 
   function dadosCliente(alias: ClienteAliasCnpj): Cliente | undefined {
-    const porId = clientesCadastrados.find((c) => c.id === alias.cliente_id);
-    if (porId) return porId;
+    // O alias.cliente_id é o cadastro PRINCIPAL (o cliente em edição).
+    // Os dados exibidos devem ser do cliente cujo CNPJ é o vinculado.
     return clientesCadastrados.find(
       (c) => onlyDigits(c.cnpj || "") === onlyDigits(alias.cnpj),
     );
