@@ -494,6 +494,12 @@ function Painel() {
     const base = new Map<string, Titulo>();
     for (const t of todos) {
       if (!isActiveSubscription(t)) continue;
+      const clienteTitulo = clientesCadastrados.find(
+        (c) =>
+          c.id === t.cliente_id ||
+          (t.cnpj || "").replace(/\D/g, "") === (c.cnpj || "").replace(/\D/g, ""),
+      );
+      if (clienteTitulo?.nao_gerar_assinatura) continue;
       const chave = chaveClienteDoTitulo(t, clientesCadastrados, aliasesCnpj);
       const atual = base.get(chave);
       // Usa a assinatura mais recente como referência de valor e vencimento.
@@ -515,10 +521,18 @@ function Painel() {
     const chavesComTitulo = new Set(
       todos
         .filter((t) => t.tipo_cobranca === "RECORRENTE")
+        .filter((t) => {
+          const clienteTitulo = clientesCadastrados.find(
+            (c) =>
+              c.id === t.cliente_id ||
+              (t.cnpj || "").replace(/\D/g, "") === (c.cnpj || "").replace(/\D/g, ""),
+          );
+          return !clienteTitulo?.nao_gerar_assinatura;
+        })
         .map((t) => chaveClienteDoTitulo(t, clientesCadastrados, aliasesCnpj)),
     );
     const linhasVirtuais = clientesCadastrados.filter(
-      (c) => c.status === "ATIVO" && !chavesComTitulo.has(chaveDoCliente(c)),
+      (c) => c.status === "ATIVO" && !c.nao_gerar_assinatura && !chavesComTitulo.has(chaveDoCliente(c)),
     );
     const rows: TituloInput[] = [];
 

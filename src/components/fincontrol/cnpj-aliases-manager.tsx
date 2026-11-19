@@ -134,6 +134,20 @@ export function CnpjAliasesManager({
       }
       setBuscaCliente("");
       setNovoCnpj("");
+      // Marca o cliente secundário como "não gerar assinatura/cobrança".
+      const secundario =
+        clienteSelecionado ||
+        clientesCadastrados.find((c) => onlyDigits(c.cnpj || "") === digitos);
+      if (secundario) {
+        try {
+          await supabase
+            .from("clientes")
+            .update({ nao_gerar_assinatura: true })
+            .eq("id", secundario.id);
+        } catch {
+          // não bloqueia o vínculo
+        }
+      }
       setClienteSelecionado(null);
       toast.success("CNPJ vinculado ao cadastro principal.");
       await carregar();
@@ -145,9 +159,30 @@ export function CnpjAliasesManager({
   }
 
   async function remover(id: string) {
+    const alias = aliases.find((a) => a.id === id);
+    const confirmar = window.confirm("Remover este vínculo de CNPJ?");
+    if (!confirmar) return;
     try {
       await excluirAliasCnpj(id);
       setAliases((prev) => prev.filter((a) => a.id !== id));
+
+      // Reativa a geração de assinatura no cliente secundário, se existir.
+      if (alias) {
+        const secundario = clientesCadastrados.find(
+          (c) => onlyDigits(c.cnpj || "") === onlyDigits(alias.cnpj),
+        );
+        if (secundario) {
+          try {
+            await supabase
+              .from("clientes")
+              .update({ nao_gerar_assinatura: false })
+              .eq("id", secundario.id);
+          } catch {
+            // ignora
+          }
+        }
+      }
+
       toast.success("Vínculo removido.");
     } catch {
       toast.error("Não foi possível remover o vínculo.");

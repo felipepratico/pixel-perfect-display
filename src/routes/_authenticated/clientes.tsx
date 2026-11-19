@@ -102,7 +102,7 @@ function ClientesPage() {
   const ativos = clientes.filter((cliente) => cliente.status === "ATIVO").length;
   const incompletosCnpj = clientes.filter((cliente) => (cliente.cnpj || "").replace(/\D/g, "").length < 14).length;
   const receita = clientes
-    .filter((cliente) => cliente.status === "ATIVO")
+    .filter((cliente) => cliente.status === "ATIVO" && !cliente.nao_gerar_assinatura)
     .reduce((total, cliente) => total + valorContrato(cliente), 0);
   const erro = (error: unknown) =>
     toast.error(error instanceof Error ? error.message : "Não foi possível concluir.");
@@ -268,7 +268,12 @@ function ClientesPage() {
                           return d.length > 0 && d.length < 14
                             ? ` • ${d.length} dígitos • falta zero à esquerda?`
                             : "";
-                        })()} ·{" "}
+                        })()}
+                        {cliente.nao_gerar_assinatura ? (
+                          <Badge variant="secondary" className="ml-1 bg-slate-200 text-slate-700">
+                            Sem cobrança
+                          </Badge>
+                        ) : null}{" "}
                         {cliente.codigo_site && `Cód. Site: ${cliente.codigo_site}`}
                       </p>
                     </td>

@@ -43,6 +43,7 @@ export type Cliente = {
   quantidade_computadores: number;
   valor_computador_adicional: number;
   modulos: string[];
+  nao_gerar_assinatura?: boolean;
   vencimento: number;
   rede_vpn: string;
   ultimo_backup: string | null;
@@ -117,6 +118,7 @@ export const clienteSchema = z.object({
   quantidade_computadores: z.coerce.number().int().min(1).max(999).default(1),
   valor_computador_adicional: z.coerce.number().min(0).default(0),
   modulos: z.array(z.string()).default(["PRÁTICO"]),
+  nao_gerar_assinatura: z.boolean().default(false),
   vencimento: z.coerce.number().int().min(1).max(31).default(5),
   rede_vpn: z.string().trim().max(160).default(""),
   ultimo_backup: z.string().nullable().default(null),
@@ -164,6 +166,7 @@ export const emptyCliente = (): ClienteInput => ({
   quantidade_computadores: 1,
   valor_computador_adicional: 0,
   modulos: ["PRÁTICO"],
+  nao_gerar_assinatura: false,
   vencimento: 5,
   rede_vpn: "",
   ultimo_backup: null,
@@ -191,7 +194,7 @@ export function valorContrato(cliente: Pick<ClienteInput, "valor_base" | "quanti
 }
 
 export function ticketMedio(clientes: Cliente[]): number {
-  const ativos = clientes.filter((cliente) => cliente.status === "ATIVO" && !cliente.deleted_at);
+  const ativos = clientes.filter((cliente) => cliente.status === "ATIVO" && !cliente.deleted_at && !cliente.nao_gerar_assinatura);
   return ativos.length ? ativos.reduce((total, cliente) => total + valorContrato(cliente), 0) / ativos.length : 0;
 }
 

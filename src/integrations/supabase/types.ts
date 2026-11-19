@@ -155,6 +155,7 @@ export type Database = {
           id: string
           mensagem_sistema: string
           modulos: string[]
+          nao_gerar_assinatura: boolean
           nome_contato: string | null
           nome_fantasia: string
           numero_endereco: string
@@ -192,6 +193,7 @@ export type Database = {
           id?: string
           mensagem_sistema?: string
           modulos?: string[]
+          nao_gerar_assinatura?: boolean
           nome_contato?: string | null
           nome_fantasia?: string
           numero_endereco?: string
@@ -229,6 +231,7 @@ export type Database = {
           id?: string
           mensagem_sistema?: string
           modulos?: string[]
+          nao_gerar_assinatura?: boolean
           nome_contato?: string | null
           nome_fantasia?: string
           numero_endereco?: string

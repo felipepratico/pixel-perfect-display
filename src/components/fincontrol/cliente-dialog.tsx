@@ -160,7 +160,16 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
             <Field label="Computadores"><Input type="number" min="1" value={form.quantidade_computadores} onChange={(e) => update("quantidade_computadores", Number(e.target.value))} /></Field>
             <Field label="Valor por adicional"><Input type="number" min="0" step="0.01" value={form.valor_computador_adicional} onChange={(e) => update("valor_computador_adicional", Number(e.target.value))} /></Field>
             <Field label="Dia de vencimento mensal *"><Input required type="number" min="1" max="31" value={form.vencimento} onChange={(e) => update("vencimento", Number(e.target.value))} placeholder="Ex: 5" /></Field>
-          </div><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{MODULOS.map((modulo) => <label key={modulo} className="flex items-center gap-2 rounded-md border p-2 text-sm font-semibold"><Checkbox checked={form.modulos.includes(modulo)} onCheckedChange={(checked) => update("modulos", checked ? [...form.modulos, modulo] : form.modulos.filter((item) => item !== modulo))} />{modulo}</label>)}</div></section>
+          </div>
+          <label className="flex items-center gap-2 rounded-md border p-2 text-sm font-semibold">
+            <Checkbox checked={Boolean(form.nao_gerar_assinatura)} onCheckedChange={(checked) => update("nao_gerar_assinatura", Boolean(checked))} />
+            Não gerar assinatura / cobrança (cadastro vinculado ou isento)
+          </label>
+          {form.nao_gerar_assinatura ? (
+            <p className="text-xs text-muted-foreground">
+              Este cadastro não gera títulos/mensalidades e é excluído da receita contratada e do ticket médio.
+            </p>
+          ) : null}<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{MODULOS.map((modulo) => <label key={modulo} className="flex items-center gap-2 rounded-md border p-2 text-sm font-semibold"><Checkbox checked={form.modulos.includes(modulo)} onCheckedChange={(checked) => update("modulos", checked ? [...form.modulos, modulo] : form.modulos.filter((item) => item !== modulo))} />{modulo}</label>)}</div></section>
 
           <section className="space-y-3 border-t pt-4"><h3 className="text-sm font-bold">Operação técnica</h3><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Field label="Nome da rede VPN"><Input value={form.rede_vpn} onChange={(e) => update("rede_vpn", e.target.value)} /></Field>
