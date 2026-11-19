@@ -94,10 +94,12 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
     () => valorPrincipalProprio + valorVinculados,
     [valorPrincipalProprio, valorVinculados],
   );
-  const valorPraticoTotal = useMemo(
-    () => Number(form.valor_base || 0) + clientesVinculados.reduce((total, item) => total + Number(item.valor_base || 0), 0),
-    [form.valor_base, clientesVinculados],
-  );
+  const valorPraticoTotal = useMemo(() => {
+    const manual = Number(form.valor_pratico || 0);
+    if (manual > 0) return manual;
+    const basePrincipal = form.plano === "COMPLETO" ? 100 : 80;
+    return basePrincipal + clientesVinculados.reduce((total, item) => total + Number(item.valor_base || 0), 0);
+  }, [form.valor_pratico, form.plano, clientesVinculados]);
 
   const update = <K extends keyof ClienteInput>(key: K, value: ClienteInput[K]) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -256,10 +258,21 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
                 <span>Valor UpSystem (Total do Boleto)</span>
                 <span className="text-brand">{formatCurrency(valorBoletoTotal)}</span>
               </div>
-              <div className="flex items-center justify-between font-bold text-emerald-600">
-                <span>Valor Prático</span>
-                <span>{formatCurrency(valorPraticoTotal)}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-bold text-emerald-600">Valor Prático</span>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="h-8 w-32 text-right"
+                  value={form.valor_pratico ?? 0}
+                  onChange={(e) => update("valor_pratico", Number(e.target.value))}
+                  placeholder="Ex: 240,00"
+                />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Se deixado em 0, o Valor Prático é estimado pela base de repasse da matriz e dos vinculados.
+              </p>
             </div>
             <p className="text-xs text-muted-foreground">
               O Valor UpSystem (boleto) soma o valor próprio do CNPJ principal com todos os CNPJs vinculados.

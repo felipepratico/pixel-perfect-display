@@ -102,7 +102,7 @@ export function useClienteMutations() {
     mutationFn: async ({ id, values }: { id?: string; values: ClienteInput }): Promise<string> => {
       if (id) {
         const { error } = await supabase.from("clientes").update(values).eq("id", id);
-        if (error) throw error;
+        if (error) throw new Error(error.message || "Não foi possível salvar o cliente.");
         return id;
       }
       const user_id = await currentUserId();
@@ -111,7 +111,7 @@ export function useClienteMutations() {
         .insert({ ...values, user_id })
         .select("id")
         .single();
-      if (error) throw error;
+      if (error) throw new Error(error.message || "Não foi possível salvar o cliente.");
       return (data as { id: string }).id;
     },
     onSuccess: refresh,
