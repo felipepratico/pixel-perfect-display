@@ -8,7 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { emptyCliente, MODULOS, valorContrato, type Cliente, type ClienteInput, type GrupoCliente } from "@/lib/clientes";
+import { emptyCliente, MODULOS, valorContrato, valorBoletoCliente, valorPraticoCliente, type Cliente, type ClienteInput, type GrupoCliente } from "@/lib/clientes";
+import { buscarAliasesCnpj, type ClienteAliasCnpj } from "@/lib/conciliacao-efi";
+import { useClientes } from "@/lib/use-clientes";
 import {
   CnpjError,
   consultarCnpj as consultarCnpjApi,
@@ -31,11 +33,32 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
   onSave: (values: ClienteInput, id?: string) => void;
   onAbrirCliente?: (cliente: Cliente) => void;
 }) {
+  const { data: clientesCadastrados = [] } = useClientes();
   const [form, setForm] = useState<ClienteInput>(emptyCliente());
+  const [aliases, setAliases] = useState<ClienteAliasCnpj[]>([]);
   const [novoGrupo, setNovoGrupo] = useState("");
   const [consultandoCnpj, setConsultandoCnpj] = useState(false);
   const [tipoPessoa, setTipoPessoa] = useState<"FISICA" | "JURIDICA">("JURIDICA");
   const ultimoCnpjConsultado = useRef("");
+
+  useEffect(() => {
+    if (!open || !cliente?.id) {
+      setAliases([]);
+      return;
+    }
+    let ativo = true;
+    buscarAliasesCnpj()
+      .then((todos) => {
+        if (!ativo) return;
+        setAliases(todos.filter((a) => a.cliente_id === cliente.id));
+      })
+      .catch(() => {
+        if (ativo) setAliases([]);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [open, cliente?.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -53,6 +76,29 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
   }, [open, cliente]);
 
   const mensalidade = useMemo(() => valorContrato(form), [form]);
+
+  const clientesVinculados = useMemo(() => {
+    return aliases
+      .map((alias) =>
+        clientesCadastrados.find((c) => onlyDigits(c.cnpj || "") === onlyDigits(alias.cnpj)),
+      )
+      .filter((c): c is Cliente => Boolean(c));
+  }, [aliases, clientesCadastrados]);
+
+  const valorPrincipalProprio = useMemo(() => valorContrato(form), [form]);
+  const valorVinculados = useMemo(
+    () => clientesVinculados.reduce((total, item) => total + valorContrato(item), 0),
+    [clientesVinculados],
+  );
+  const valorBoletoTotal = useMemo(
+    () => valorPrincipalProprio + valorVinculados,
+    [valorPrincipalProprio, valorVinculados],
+  );
+  const valorPraticoTotal = useMemo(
+    () => Number(form.valor_base || 0) + clientesVinculados.reduce((total, item) => total + Number(item.valor_base || 0), 0),
+    [form.valor_base, clientesVinculados],
+  );
+
   const update = <K extends keyof ClienteInput>(key: K, value: ClienteInput[K]) => setForm((current) => ({ ...current, [key]: value }));
 
   async function criarGrupo() {
@@ -125,6 +171,9 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
       vencimento: Math.min(31, Math.max(1, Number(form.vencimento) || 5)),
       valor_base: Math.max(0, Number(form.valor_base) || 0),
       valor_computador_adicional: Math.max(0, Number(form.valor_computador_adicional) || 0),
+      valor_proprio: valorPrincipalProprio,
+      valor_boleto: valorBoletoTotal,
+      valor_pratico: valorPraticoTotal,
     }, cliente?.id);
   }
 
@@ -182,10 +231,41 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
             <Field label="Observações" className="sm:col-span-2 lg:col-span-4"><Textarea rows={3} value={form.observacoes} onChange={(e) => update("observacoes", e.target.value)} /></Field>
           </div></section>
           <section className="space-y-3 border-t pt-4"><h3 className="text-sm font-bold">CNPJs vinculados (cadastro principal)</h3>{onAbrirCliente ? (
-  <CnpjAliasesManager clienteId={cliente?.id ?? null} onAbrirCliente={onAbrirCliente} />
+  <CnpjAliasesManager clienteId={cliente?.id ?? null} onAbrirCliente={onAbrirCliente} onAliasesChange={setAliases} />
 ) : (
-  <CnpjAliasesManager clienteId={cliente?.id ?? null} />
+  <CnpjAliasesManager clienteId={cliente?.id ?? null} onAliasesChange={setAliases} />
 )}</section>
+
+          <section className="space-y-3 border-t pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-bold">Composição da mensalidade</h3>
+              <strong className="text-lg text-brand">{formatCurrency(valorBoletoTotal)}</strong>
+            </div>
+            <div className="space-y-2 rounded-md border bg-muted/30 p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span>Principal (parte própria)</span>
+                <span className="font-semibold">{formatCurrency(valorPrincipalProprio)}</span>
+              </div>
+              {clientesVinculados.map((vinculado) => (
+                <div key={vinculado.id} className="flex items-center justify-between text-muted-foreground">
+                  <span>Vinculado · {vinculado.razao_social}</span>
+                  <span className="font-semibold">{formatCurrency(valorContrato(vinculado))}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between border-t pt-2 font-bold">
+                <span>Valor UpSystem (Total do Boleto)</span>
+                <span className="text-brand">{formatCurrency(valorBoletoTotal)}</span>
+              </div>
+              <div className="flex items-center justify-between font-bold text-emerald-600">
+                <span>Valor Prático</span>
+                <span>{formatCurrency(valorPraticoTotal)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O Valor UpSystem (boleto) soma o valor próprio do CNPJ principal com todos os CNPJs vinculados.
+              O Valor Prático é o valor considerado/repassado para o sistema Prático, independente da margem cobrada no boleto.
+            </p>
+          </section>
           <DialogFooter><Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar cliente"}</Button></DialogFooter>
         </form>
       </DialogContent>

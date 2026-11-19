@@ -1,4 +1,4 @@
-import { valorContrato, type Cliente } from "@/lib/clientes";
+import { valorContrato, valorBoletoCliente as valorBoleto, valorBoletoConsolidadoCliente as valorBoletoConsolidado, type Cliente } from "@/lib/clientes";
 import {
   calcularEncargosTitulo,
   type ConfiguracoesFinanceiras,
@@ -37,6 +37,7 @@ export function calcularTotais(
   todos: Titulo[],
   clientes: Cliente[] = [],
   config: ConfiguracoesFinanceiras | null = null,
+  aliasesCnpj: Array<{ cliente_id?: string | null; cnpj: string }> = [],
 ): Totais {
   const totais: Totais = {
     quantidade: titulos.length,
@@ -132,7 +133,7 @@ export function calcularTotais(
     if (cliente.status !== "ATIVO" || cliente.deleted_at) continue;
     const chave = chaveDoCliente(cliente);
     if (chavesComTituloRecorrente.has(chave) || porCliente.has(chave)) continue;
-    porCliente.set(chave, valorContrato(cliente));
+    porCliente.set(chave, valorBoletoConsolidado(cliente, aliasesCnpj, clientes));
   }
 
   totais.assinaturasAtivas = porCliente.size;

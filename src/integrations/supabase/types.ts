@@ -173,7 +173,10 @@ export type Database = {
           user_id: string
           validade_certificado: string | null
           valor_base: number
+          valor_boleto: number
           valor_computador_adicional: number
+          valor_proprio: number
+          valor_pratico: number
           vencimento: number
           versao_instalada: string
         }
@@ -211,7 +214,10 @@ export type Database = {
           user_id: string
           validade_certificado?: string | null
           valor_base?: number
+          valor_boleto?: number
           valor_computador_adicional?: number
+          valor_proprio?: number
+          valor_pratico?: number
           vencimento?: number
           versao_instalada?: string
         }
@@ -249,7 +255,10 @@ export type Database = {
           user_id?: string
           validade_certificado?: string | null
           valor_base?: number
+          valor_boleto?: number
           valor_computador_adicional?: number
+          valor_proprio?: number
+          valor_pratico?: number
           vencimento?: number
           versao_instalada?: string
         }

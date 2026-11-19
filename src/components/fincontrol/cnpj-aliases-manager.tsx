@@ -17,9 +17,11 @@ import { supabase } from "@/integrations/supabase/client";
 export function CnpjAliasesManager({
   clienteId,
   onAbrirCliente,
+  onAliasesChange,
 }: {
   clienteId: string | null;
   onAbrirCliente?: (cliente: Cliente) => void;
+  onAliasesChange?: (aliases: ClienteAliasCnpj[]) => void;
 }) {
   const { data: clientesCadastrados = [] } = useClientes();
   const { data: titulos = [] } = useTitulos();
@@ -30,6 +32,10 @@ export function CnpjAliasesManager({
   const [novoCnpj, setNovoCnpj] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    onAliasesChange?.(aliases);
+  }, [aliases, onAliasesChange]);
 
   async function carregar() {
     if (!clienteId) return;

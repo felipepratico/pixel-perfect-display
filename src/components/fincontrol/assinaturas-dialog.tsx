@@ -19,7 +19,7 @@ import {
   mesAnoRank,
   type Titulo,
 } from "@/lib/fincontrol";
-import { valorContrato, type Cliente } from "@/lib/clientes";
+import { valorContrato, valorBoletoCliente as valorBoleto, type Cliente } from "@/lib/clientes";
 
 type Linha = {
   chave: string;
@@ -101,7 +101,7 @@ export function AssinaturasDialog({
     porCliente.set(chave, {
       chave,
       cliente: cliente.razao_social,
-      valor: valorContrato(cliente),
+      valor: valorBoleto(cliente),
       vencimento: cliente.vencimento,
       ativa: true,
       rank: -1,

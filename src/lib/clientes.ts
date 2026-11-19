@@ -25,6 +25,10 @@ export type GrupoCliente = {
 export type Cliente = {
   id: string;
   grupo_id: string | null;
+  // Valores separados da composição da mensalidade (boleto vs. Prático).
+  valor_proprio?: number;
+  valor_boleto?: number;
+  valor_pratico?: number;
   razao_social: string;
   nome_fantasia: string;
   codigo_site: string;
@@ -100,6 +104,9 @@ export type AtendimentoInput = {
 // Zod validation schemas
 export const clienteSchema = z.object({
   grupo_id: z.string().uuid().nullable().optional(),
+  valor_proprio: z.coerce.number().min(0).default(0),
+  valor_boleto: z.coerce.number().min(0).default(0),
+  valor_pratico: z.coerce.number().min(0).default(0),
   razao_social: z.string().trim().min(1, "Razão social / Nome é obrigatório.").max(160),
   nome_fantasia: z.string().trim().max(160).default(""),
   codigo_site: z.string().trim().max(100).default(""),
@@ -148,6 +155,9 @@ export const grupoClienteSchema = z.object({
 
 export const emptyCliente = (): ClienteInput => ({
   grupo_id: null,
+  valor_proprio: 0,
+  valor_boleto: 0,
+  valor_pratico: 0,
   razao_social: "",
   nome_fantasia: "",
   codigo_site: "",
@@ -213,3 +223,82 @@ export function diasAte(data: string | null): number | null {
 export function resumoContrato(cliente: Cliente): string {
   return `${cliente.plano} · ${cliente.quantidade_computadores} computador(es) · ${formatCurrency(valorContrato(cliente))}`;
 }
+
+/** Valor próprio do CNPJ principal (parte própria), sem vinculados. */
+export function valorProprioCliente(
+  cliente: Pick<ClienteInput, "valor_base" | "quantidade_computadores" | "valor_computador_adicional">,
+): number {
+  return valorContrato(cliente);
+}
+
+/** Valor consolidado do boleto (Meu Valor): próprio + todos os vinculados. */
+export function valorBoletoCliente(
+  cliente: (Pick<ClienteInput, "valor_base" | "quantidade_computadores" | "valor_computador_adicional"> & {
+    valor_boleto?: number | null;
+  }),
+  vinculados: Array<Pick<ClienteInput, "valor_base" | "quantidade_computadores" | "valor_computador_adicional">> = [],
+): number {
+  if (cliente.valor_boleto && Number(cliente.valor_boleto) > 0) return Number(cliente.valor_boleto);
+  return valorContrato(cliente) + vinculados.reduce((total, item) => total + valorContrato(item), 0);
+}
+
+/** Valor informado/repassado para o Prático (controle), separado do boleto. */
+export function valorPraticoCliente(
+  cliente: (Pick<ClienteInput, "valor_base"> & { valor_pratico?: number | null }),
+  vinculados: Array<Pick<ClienteInput, "valor_base">> = [],
+): number {
+  if (cliente.valor_pratico && Number(cliente.valor_pratico) > 0) return Number(cliente.valor_pratico);
+  return Number(cliente.valor_base || 0) + vinculados.reduce((total, item) => total + Number(item.valor_base || 0), 0);
+}
+
+/** Versão consolidada do boleto (Valor UpSystem) considerando CNPJs vinculados existentes. */
+export function valorBoletoConsolidadoCliente(
+  cliente: Pick<Cliente, "id" | "cnpj" | "valor_base" | "quantidade_computadores" | "valor_computador_adicional" | "valor_boleto">,
+  aliasesCnpj: Array<{ cliente_id?: string | null; cnpj: string }> = [],
+  clientesCadastrados: Array<Pick<Cliente, "id" | "cnpj" | "valor_base" | "quantidade_computadores" | "valor_computador_adicional">> = [],
+): number {
+  const vinculados = aliasesCnpj
+    .filter((alias) => alias.cliente_id === cliente.id)
+    .map((alias) => {
+      const digitos = (alias.cnpj || "").replace(/\D/g, "");
+      return clientesCadastrados.find((c) => (c.cnpj || "").replace(/\D/g, "") === digitos);
+    })
+    .filter(Boolean) as Array<Pick<Cliente, "id" | "cnpj" | "valor_base" | "quantidade_computadores" | "valor_computador_adicional">>;
+
+  const consolidado =
+    valorContrato(cliente) + vinculados.reduce((total, item) => total + valorContrato(item), 0);
+
+  if (consolidado > 0) return consolidado;
+  if (cliente.valor_boleto && Number(cliente.valor_boleto) > 0) return Number(cliente.valor_boleto);
+  return valorContrato(cliente);
+}
+
+/** Versão consolidada do Valor Prático considerando CNPJs vinculados existentes. */
+export function valorPraticoConsolidadoCliente(
+  cliente: Pick<Cliente, "id" | "cnpj" | "valor_base" | "valor_pratico">,
+  aliasesCnpj: Array<{ cliente_id?: string | null; cnpj: string }> = [],
+  clientesCadastrados: Array<Pick<Cliente, "id" | "cnpj" | "valor_base">> = [],
+): number {
+  const vinculados = aliasesCnpj
+    .filter((alias) => alias.cliente_id === cliente.id)
+    .map((alias) => {
+      const digitos = (alias.cnpj || "").replace(/\D/g, "");
+      return clientesCadastrados.find((c) => (c.cnpj || "").replace(/\D/g, "") === digitos);
+    })
+    .filter(Boolean) as Array<Pick<Cliente, "id" | "cnpj" | "valor_base">>;
+
+  const consolidado =
+    Number(cliente.valor_base || 0) +
+    vinculados.reduce((total, item) => total + Number(item.valor_base || 0), 0);
+
+  if (consolidado > 0) return consolidado;
+  if (cliente.valor_pratico && Number(cliente.valor_pratico) > 0) return Number(cliente.valor_pratico);
+  return Number(cliente.valor_base || 0);
+}
+
+// Aliases de nomes para compatibilidade com diferentes chamadas.
+export const valorProprio = valorProprioCliente;
+export const valorPartePropria = valorProprioCliente;
+export const valorBoleto = valorBoletoCliente;
+export const valorMeuValor = valorBoletoCliente;
+export const valorPratico = valorPraticoCliente;

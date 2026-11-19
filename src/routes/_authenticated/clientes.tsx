@@ -25,7 +25,7 @@ import { formatCurrency } from "@/lib/fincontrol";
 import { BadgePerfilPagamento } from "@/components/fincontrol/badge-perfil-pagamento";
 import { CardAdimplencia } from "@/components/fincontrol/card-adimplencia";
 import { calcularHistoricoClientes } from "@/lib/adimplencia";
-import { ticketMedio, valorContrato, type Cliente, type ClienteInput } from "@/lib/clientes";
+import { ticketMedio, valorContrato, valorBoletoCliente as valorBoleto, valorBoletoConsolidadoCliente as valorBoletoConsolidado, type Cliente, type ClienteInput } from "@/lib/clientes";
 import { useClienteMutations, useClientes, useGrupos } from "@/lib/use-clientes";
 import { buscarAliasesCnpj, type ClienteAliasCnpj } from "@/lib/conciliacao-efi";
 import { useTitulos } from "@/lib/use-titulos";
@@ -103,7 +103,7 @@ function ClientesPage() {
   const incompletosCnpj = clientes.filter((cliente) => (cliente.cnpj || "").replace(/\D/g, "").length < 14).length;
   const receita = clientes
     .filter((cliente) => cliente.status === "ATIVO" && !cliente.nao_gerar_assinatura)
-    .reduce((total, cliente) => total + valorContrato(cliente), 0);
+    .reduce((total, cliente) => total + valorBoletoConsolidado(cliente, aliasesCnpj, clientes), 0);
   const erro = (error: unknown) =>
     toast.error(error instanceof Error ? error.message : "Não foi possível concluir.");
 
@@ -285,7 +285,7 @@ function ClientesPage() {
                     </td>
                     <td className="p-2 text-center">{cliente.quantidade_computadores}</td>
                     <td className="p-2 text-right font-bold text-brand">
-                      {valoresVisiveis ? formatCurrency(valorContrato(cliente)) : "R$ ••••••"}
+                      {valoresVisiveis ? formatCurrency(valorBoletoConsolidado(cliente, aliasesCnpj, clientes)) : "R$ ••••••"}
                     </td>
                     <td className="p-2 text-center">
                       <Badge variant={cliente.status === "ATIVO" ? "default" : "secondary"}>

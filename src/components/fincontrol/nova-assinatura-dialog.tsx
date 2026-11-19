@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { valorContrato, type Cliente } from "@/lib/clientes";
+import { valorContrato, valorBoletoCliente as valorBoleto, type Cliente } from "@/lib/clientes";
 import { onlyDigits } from "@/lib/cnpj";
 import {
   chaveClienteDoTitulo,
@@ -84,7 +84,7 @@ export function NovaAssinaturaDialog({
         cliente: clienteInicial.razao_social,
         cnpj: clienteInicial.cnpj,
         telefone: clienteInicial.telefone,
-        valor: valorContrato(clienteInicial),
+        valor: valorBoleto(clienteInicial),
         vencimento: clienteInicial.vencimento,
       });
     } else {
@@ -193,7 +193,7 @@ export function NovaAssinaturaDialog({
         cliente: encontrado.razao_social,
         cnpj: encontrado.cnpj,
         telefone: encontrado.telefone,
-        valor: valorContrato(encontrado),
+        valor: valorBoleto(encontrado),
         vencimento: encontrado.vencimento,
       };
     });

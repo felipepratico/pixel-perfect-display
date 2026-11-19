@@ -96,7 +96,7 @@ import {
   type Titulo,
   type TituloInput,
 } from "@/lib/fincontrol";
-import { valorContrato } from "@/lib/clientes";
+import { valorContrato, valorBoletoCliente as valorBoleto, valorBoletoConsolidadoCliente as valorBoletoConsolidado } from "@/lib/clientes";
 import { calcularTotais } from "@/lib/totais";
 import { calcularEncargosTitulo } from "@/lib/configuracoes-financeiras";
 import {
@@ -318,7 +318,7 @@ function Painel() {
   }, [acao, isLoading]);
 
   const totais = useMemo(
-    () => calcularTotais(clientesVisiveis, todos, clientesCadastrados, config),
+    () => calcularTotais(clientesVisiveis, todos, clientesCadastrados, config, aliasesCnpj),
     [clientesVisiveis, todos, clientesCadastrados, config],
   );
 
@@ -560,7 +560,7 @@ function Painel() {
       for (const cliente of linhasVirtuais) {
         const chave = chaveDoCliente(cliente);
         if (existentes.has(`${chave}|${mes}`)) continue;
-        rows.push(tituloDeClienteAtivo(cliente, valorContrato(cliente), mes));
+        rows.push(tituloDeClienteAtivo(cliente, valorBoletoConsolidado(cliente, aliasesCnpj, clientesCadastrados), mes));
       }
     }
     if (!rows.length) {
@@ -586,7 +586,7 @@ function Painel() {
       toast.error("Cliente não encontrado no cadastro.");
       return;
     }
-    const titulo = tituloDeClienteAtivo(cliente, valorContrato(cliente), mesReferencia);
+    const titulo = tituloDeClienteAtivo(cliente, valorBoletoConsolidado(cliente, aliasesCnpj, clientesCadastrados), mesReferencia);
     insertMany.mutate([titulo], {
       onSuccess: () =>
         toast.success(`Título de ${mesReferencia} gerado para ${cliente.razao_social}.`),

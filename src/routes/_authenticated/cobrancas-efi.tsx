@@ -37,7 +37,7 @@ import {
   EfiCredenciaisDialog,
   type CredenciaisEfiValues,
 } from "@/components/fincontrol/efi-credenciais-dialog";
-import { valorContrato } from "@/lib/clientes";
+import { valorContrato, valorBoletoCliente as valorBoleto } from "@/lib/clientes";
 import {
   CnpjError,
   consultarCnpj as consultarCnpjApi,
@@ -152,7 +152,7 @@ function CobrancasEfi() {
     setCep(selected.cep);
     setCidade(selected.cidade);
     setUf(selected.uf);
-    setValor(valorContrato(selected).toFixed(2));
+    setValor(valorBoleto(selected).toFixed(2));
     setVencimento(proximoVencimento(selected.vencimento));
   }
 
