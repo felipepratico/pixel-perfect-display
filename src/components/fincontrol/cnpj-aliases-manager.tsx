@@ -21,7 +21,7 @@ export function CnpjAliasesManager({
   onAjustarValorBase,
 }: {
   clienteId: string | null;
-  onAbrirCliente?: (cliente: Cliente) => void;
+  onAbrirCliente?: ((cliente: Cliente) => void) | undefined;
   valorTotal?: number;
   onAjustarValorBase?: (delta: number) => void;
 }) {
