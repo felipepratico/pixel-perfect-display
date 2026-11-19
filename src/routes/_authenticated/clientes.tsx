@@ -12,7 +12,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { ClienteDialog } from "@/components/fincontrol/cliente-dialog";
@@ -27,6 +27,7 @@ import { CardAdimplencia } from "@/components/fincontrol/card-adimplencia";
 import { calcularHistoricoClientes } from "@/lib/adimplencia";
 import { ticketMedio, valorContrato, type Cliente, type ClienteInput } from "@/lib/clientes";
 import { useClienteMutations, useClientes, useGrupos } from "@/lib/use-clientes";
+import { buscarAliasesCnpj, type ClienteAliasCnpj } from "@/lib/conciliacao-efi";
 import { useTitulos } from "@/lib/use-titulos";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
@@ -51,6 +52,10 @@ export const Route = createFileRoute("/_authenticated/clientes")({
 
 function ClientesPage() {
   const { data: clientes = [], isLoading } = useClientes();
+  const [aliasesCnpj, setAliasesCnpj] = useState<ClienteAliasCnpj[]>([]);
+  useEffect(() => {
+    buscarAliasesCnpj().then(setAliasesCnpj);
+  }, []);
   const { data: grupos = [] } = useGrupos();
   const { data: titulos = [] } = useTitulos();
   const { saveCliente, softDeleteCliente, createGrupo } = useClienteMutations();
@@ -82,13 +87,13 @@ function ClientesPage() {
       }
       return (
         !termo ||
-        `${cliente.razao_social} ${cliente.nome_fantasia} ${cliente.cnpj} ${cliente.codigo_site}`
+        `${cliente.razao_social} ${cliente.nome_fantasia} ${cliente.cnpj} ${cliente.codigo_site} ${aliasesCnpj.filter((a) => a.cliente_id === cliente.id).map((a) => a.cnpj).join(" ")}`
           .toLocaleUpperCase("pt-BR")
           .includes(termo)
       );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientes, titulos, busca, grupo, statusFiltro, adimplenciaFiltro]);
+  }, [clientes, titulos, busca, grupo, statusFiltro, adimplenciaFiltro, aliasesCnpj]);
 
   const ativos = clientes.filter((cliente) => cliente.status === "ATIVO").length;
   const receita = clientes
