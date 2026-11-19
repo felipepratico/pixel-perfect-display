@@ -305,6 +305,24 @@ export const salvarAliasCNPJ = salvarAliasCnpj;
 export const salvarCnpjAlias = salvarAliasCnpj;
 export const salvarVinculoCnpj = salvarAliasCnpj;
 
+export async function excluirAliasCnpj(id: string): Promise<boolean> {
+  if (!id) return false;
+  let ok = false;
+  for (const tabela of TABELAS_CNPJ_ALIAS) {
+    try {
+      const { error } = await supabase.from(tabela as any).delete().eq("id", id);
+      if (!error) ok = true;
+    } catch {
+      // Tenta próxima tabela.
+    }
+  }
+  return ok;
+}
+
+export const excluirAliasCNPJ = excluirAliasCnpj;
+export const excluirCnpjAlias = excluirAliasCnpj;
+export const removerVinculoCnpj = excluirAliasCnpj;
+
 export function resolverClientePrincipalPorCnpj(
   cnpj: string,
   aliasesCnpj: Array<{ cliente_id?: string | null; cnpj: string }> = [],
