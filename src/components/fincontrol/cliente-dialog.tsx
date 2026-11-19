@@ -181,11 +181,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
             <Field label="Chave Pix" className="sm:col-span-2"><Input value={form.chave_pix} onChange={(e) => update("chave_pix", e.target.value)} /></Field>
             <Field label="Observações" className="sm:col-span-2 lg:col-span-4"><Textarea rows={3} value={form.observacoes} onChange={(e) => update("observacoes", e.target.value)} /></Field>
           </div></section>
-          <section className="space-y-3 border-t pt-4"><h3 className="text-sm font-bold">CNPJs vinculados (cadastro principal)</h3>{onAbrirCliente ? (
-  <CnpjAliasesManager clienteId={cliente?.id ?? null} onAbrirCliente={onAbrirCliente} />
-) : (
-  <CnpjAliasesManager clienteId={cliente?.id ?? null} />
-)}</section>
+          <section className="space-y-3 border-t pt-4"><h3 className="text-sm font-bold">CNPJs vinculados (cadastro principal)</h3><CnpjAliasesManager clienteId={cliente?.id ?? null} onAbrirCliente={onAbrirCliente} valorTotal={mensalidade} onAjustarValorBase={(delta) => setForm((current) => ({ ...current, valor_base: Math.max(0, Math.round((Number(current.valor_base || 0) + delta) * 100) / 100) }))} /></section>
           <DialogFooter><Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar cliente"}</Button></DialogFooter>
         </form>
       </DialogContent>

@@ -17,9 +17,13 @@ import { supabase } from "@/integrations/supabase/client";
 export function CnpjAliasesManager({
   clienteId,
   onAbrirCliente,
+  valorTotal,
+  onAjustarValorBase,
 }: {
   clienteId: string | null;
   onAbrirCliente?: (cliente: Cliente) => void;
+  valorTotal?: number;
+  onAjustarValorBase?: (delta: number) => void;
 }) {
   const { data: clientesCadastrados = [] } = useClientes();
   const { data: titulos = [] } = useTitulos();
@@ -147,6 +151,7 @@ export function CnpjAliasesManager({
         } catch {
           // não bloqueia o vínculo
         }
+        await ajustarValorPrincipal(valorContrato(secundario));
       }
       setClienteSelecionado(null);
       toast.success("CNPJ vinculado ao cadastro principal.");
@@ -156,6 +161,20 @@ export function CnpjAliasesManager({
     } finally {
       setSalvando(false);
     }
+  }
+
+  async function ajustarValorPrincipal(delta: number) {
+    if (!clienteId || !delta) return;
+    const principal = clientesCadastrados.find((c) => c.id === clienteId);
+    const atual = Number(principal?.valor_base || 0);
+    const novo = Math.max(0, Math.round((atual + delta) * 100) / 100);
+    try {
+      await supabase.from("clientes").update({ valor_base: novo }).eq("id", clienteId);
+    } catch {
+      // ignora
+    }
+    onAjustarValorBase?.(delta);
+    toast.info(`Valor base ${delta > 0 ? "somado" : "reduzido"} em ${formatCurrency(Math.abs(delta))}.`);
   }
 
   async function remover(id: string) {
@@ -180,6 +199,7 @@ export function CnpjAliasesManager({
           } catch {
             // ignora
           }
+          await ajustarValorPrincipal(-valorContrato(secundario));
         }
       }
 
@@ -368,6 +388,22 @@ export function CnpjAliasesManager({
           })}
         </ul>
       )}
+      {aliases.length > 0 && valorTotal !== undefined ? (() => {
+        const vinculados = aliases
+          .map((a) => dadosCliente(a))
+          .filter((c): c is Cliente => Boolean(c));
+        const somaVinculados = vinculados.reduce((t, c) => t + valorContrato(c), 0);
+        return (
+          <div className="space-y-1 rounded-md border bg-muted/40 p-3 text-sm">
+            <p className="font-bold">Composição da mensalidade</p>
+            <div className="flex justify-between"><span>Principal (parte própria)</span><span>{formatCurrency(Math.max(0, valorTotal - somaVinculados))}</span></div>
+            {vinculados.map((c) => (
+              <div key={c.id} className="flex justify-between text-muted-foreground"><span>(+) {c.razao_social}</span><span>{formatCurrency(valorContrato(c))}</span></div>
+            ))}
+            <div className="flex justify-between border-t pt-1 font-bold"><span>= Total da mensalidade</span><span>{formatCurrency(valorTotal)}</span></div>
+          </div>
+        );
+      })() : null}
     </div>
   );
 }
