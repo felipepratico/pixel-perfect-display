@@ -332,6 +332,7 @@ function ClientesPage() {
         onOpenChange={setOpen}
         onCreateGrupo={(nome) => createGrupo.mutateAsync(nome)}
         onSave={salvar}
+        onAbrirCliente={(c) => setEditando(c)}
       />
       <ContratoModal open={contratoOpen} cliente={clienteContrato} onOpenChange={setContratoOpen} />
       <ReciboModal open={reciboOpen} cliente={clienteRecibo} onOpenChange={setReciboOpen} />
