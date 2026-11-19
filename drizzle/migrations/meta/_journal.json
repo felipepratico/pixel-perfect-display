@@ -57,6 +57,13 @@
       "when": 1794551518060,
       "tag": "0007_configuracoes_financeiras_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795091442200,
+      "tag": "0008_clientes_nao_gerar_assinatura_apply",
+      "breakpoints": true
     }
   ]
 }
