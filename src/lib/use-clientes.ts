@@ -100,19 +100,38 @@ export function useClienteMutations() {
 
   const saveCliente = useMutation({
     mutationFn: async ({ id, values }: { id?: string; values: ClienteInput }): Promise<string> => {
-      if (id) {
-        const { error } = await supabase.from("clientes").update(values).eq("id", id);
-        if (error) throw new Error(error.message || "Não foi possível salvar o cliente.");
-        return id;
+      const colunasComposicao = ["valor_proprio", "valor_boleto", "valor_pratico"] as const;
+      const tentar = async (payload: ClienteInput) => {
+        if (id) {
+          const { error } = await supabase.from("clientes").update(payload).eq("id", id);
+          if (error) throw error;
+          return id;
+        }
+        const user_id = await currentUserId();
+        const { data, error } = await supabase
+          .from("clientes")
+          .insert({ ...payload, user_id })
+          .select("id")
+          .single();
+        if (error) throw error;
+        return (data as { id: string }).id;
+      };
+
+      try {
+        return await tentar(values);
+      } catch (error) {
+        const mensagem = (error as { message?: string })?.message || "";
+        const colunaAusente = colunasComposicao.find((coluna) =>
+          mensagem.toLowerCase().includes(coluna),
+        );
+        if (colunaAusente) {
+          // Fallback de segurança: salva sem as colunas ainda não existentes no banco.
+          const { valor_proprio: _vp, valor_boleto: _vb, valor_pratico: _vpr, ...resto } =
+            values as ClienteInput & Record<string, unknown>;
+          return await tentar(resto as ClienteInput);
+        }
+        throw new Error(mensagem || "Não foi possível salvar o cliente.");
       }
-      const user_id = await currentUserId();
-      const { data, error } = await supabase
-        .from("clientes")
-        .insert({ ...values, user_id })
-        .select("id")
-        .single();
-      if (error) throw new Error(error.message || "Não foi possível salvar o cliente.");
-      return (data as { id: string }).id;
     },
     onSuccess: refresh,
   });
