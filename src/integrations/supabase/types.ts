@@ -103,34 +103,133 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_aliases_bancarios: {
+        Row: {
+          cliente_id: string | null
+          created_at: string | null
+          id: string
+          nome_extrato: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string | null
+          id?: string
+          nome_extrato: string
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string | null
+          id?: string
+          nome_extrato?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_aliases_bancarios_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cliente_aliases_cnpj: {
         Row: {
-          id: string
-          user_id: string
           cliente_id: string
           cnpj: string
           created_at: string
+          id: string
           updated_at: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id?: string
           cliente_id: string
           cnpj: string
           created_at?: string
+          id?: string
           updated_at?: string
+          user_id?: string
         }
         Update: {
-          id?: string
-          user_id?: string
           cliente_id?: string
           cnpj?: string
           created_at?: string
+          id?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "cliente_aliases_cnpj_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cliente_cnpj_aliases: {
+        Row: {
+          cliente_id: string
+          cnpj: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_id: string
+          cnpj: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          cliente_id?: string
+          cnpj?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_cnpj_aliases_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cliente_vinculos_cnpj: {
+        Row: {
+          cliente_id: string
+          cnpj: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_id: string
+          cnpj: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          cliente_id?: string
+          cnpj?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_vinculos_cnpj_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
