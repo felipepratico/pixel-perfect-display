@@ -58,11 +58,12 @@ function ClientesPage() {
   }, []);
   const { data: grupos = [] } = useGrupos();
   const { data: titulos = [] } = useTitulos();
-  const { saveCliente, softDeleteCliente, createGrupo } = useClienteMutations();
+  const { saveCliente, softDeleteCliente, createGrupo, patchCliente } = useClienteMutations();
   const [busca, setBusca] = useState("");
   const [grupo, setGrupo] = useState("all");
   const [statusFiltro, setStatusFiltro] = useState("all");
   const [adimplenciaFiltro, setAdimplenciaFiltro] = useState("all");
+  const [filtroCnpj, setFiltroCnpj] = useState("all");
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState<Cliente | null>(null);
   const [valoresVisiveis, setValoresVisiveis] = useState(false);
@@ -80,6 +81,9 @@ function ClientesPage() {
     return clientes.filter((cliente) => {
       if (grupo !== "all" && cliente.grupo_id !== grupo) return false;
       if (statusFiltro !== "all" && cliente.status !== statusFiltro) return false;
+      const digitosCnpj = (cliente.cnpj || "").replace(/\D/g, "");
+      if (filtroCnpj === "incompleto" && digitosCnpj.length >= 14) return false;
+      if (filtroCnpj === "completo" && digitosCnpj.length !== 14) return false;
       if (adimplenciaFiltro !== "all") {
         const perfil = historicoPorCliente.get(cliente.id)?.perfil;
         if (adimplenciaFiltro === "INADIMPLENTE" ? perfil !== "INADIMPLENTE" : perfil !== "ADIMPLENTE")
@@ -93,9 +97,10 @@ function ClientesPage() {
       );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientes, titulos, busca, grupo, statusFiltro, adimplenciaFiltro, aliasesCnpj]);
+  }, [clientes, titulos, busca, grupo, statusFiltro, adimplenciaFiltro, aliasesCnpj, filtroCnpj]);
 
   const ativos = clientes.filter((cliente) => cliente.status === "ATIVO").length;
+  const incompletosCnpj = clientes.filter((cliente) => (cliente.cnpj || "").replace(/\D/g, "").length < 14).length;
   const receita = clientes
     .filter((cliente) => cliente.status === "ATIVO")
     .reduce((total, cliente) => total + valorContrato(cliente), 0);
@@ -206,6 +211,35 @@ function ClientesPage() {
               </option>
             ))}
           </select>
+          <select
+            aria-label="Filtrar por CNPJ"
+            className="h-10 rounded-md border border-input bg-card px-3 text-sm"
+            value={filtroCnpj}
+            onChange={(e) => setFiltroCnpj(e.target.value)}
+          >
+            <option value="all">Todos os documentos</option>
+            <option value="incompleto">CNPJ incompleto ({incompletosCnpj})</option>
+            <option value="completo">CNPJ completo</option>
+          </select>
+          {filtroCnpj === "incompleto" && incompletosCnpj > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={async () => {
+                const alvos = clientes.filter((c) => {
+                  const d = (c.cnpj || "").replace(/\D/g, "");
+                  return d.length > 0 && d.length < 14;
+                });
+                for (const c of alvos) {
+                  const d = (c.cnpj || "").replace(/\D/g, "");
+                  await patchCliente.mutateAsync({ id: c.id, values: { cnpj: d.padStart(14, "0") } as any });
+                }
+                toast.success(`${alvos.length} CNPJ(s) completado(s) com zeros à esquerda.`);
+              }}
+            >
+              Completar zeros à esquerda
+            </Button>
+          ) : null}
         </section>
         <div className="overflow-hidden rounded-md border bg-card">
           <div className="scroll-slim overflow-x-auto">
@@ -228,7 +262,13 @@ function ClientesPage() {
                       <strong>{cliente.razao_social}</strong>
                       <p className="text-xs text-muted-foreground">
                         {grupos.find((item) => item.id === cliente.grupo_id)?.nome ?? "Sem grupo"} ·{" "}
-                        {cliente.cnpj || "CNPJ não informado"} ·{" "}
+                        {cliente.cnpj || "CNPJ não informado"}
+                        {(() => {
+                          const d = (cliente.cnpj || "").replace(/\D/g, "");
+                          return d.length > 0 && d.length < 14
+                            ? ` • ${d.length} dígitos • falta zero à esquerda?`
+                            : "";
+                        })()} ·{" "}
                         {cliente.codigo_site && `Cód. Site: ${cliente.codigo_site}`}
                       </p>
                     </td>
