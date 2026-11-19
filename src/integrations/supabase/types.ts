@@ -103,6 +103,41 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_aliases_cnpj: {
+        Row: {
+          id: string
+          user_id: string
+          cliente_id: string
+          cnpj: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string
+          cliente_id: string
+          cnpj: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          cliente_id?: string
+          cnpj?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_aliases_cnpj_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           bairro: string

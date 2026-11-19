@@ -57,6 +57,7 @@ export function ConciliacaoEfiDialog({
   titulosAbertos,
   clientesCadastrados,
   aliasesBancarios,
+  aliasesCnpj,
   configFinanceira,
   initialJsonData,
   onOpenChange,
@@ -66,6 +67,7 @@ export function ConciliacaoEfiDialog({
   titulosAbertos: Titulo[];
   clientesCadastrados: ClienteRef[];
   aliasesBancarios: ClienteAliasBancario[];
+  aliasesCnpj?: any[];
   configFinanceira: ConfiguracoesFinanceiras | null;
   initialJsonData?: ItemExtratoEfi[] | null;
   onOpenChange: (open: boolean) => void;
@@ -117,6 +119,7 @@ export function ConciliacaoEfiDialog({
         itens: itensProcessados,
         titulosAbertos,
         aliases: aliasesBancarios,
+        aliasesCnpj: aliasesCnpj ?? [],
         clientesCadastrados,
       });
 
@@ -155,6 +158,7 @@ export function ConciliacaoEfiDialog({
         itens,
         titulosAbertos,
         aliases: aliasesBancarios,
+        aliasesCnpj: aliasesCnpj ?? [],
         clientesCadastrados,
       });
       setMatches(res);

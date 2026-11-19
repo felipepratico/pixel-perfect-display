@@ -139,12 +139,27 @@ export function conciliarCobrancasPdf({
   cobrancas,
   titulos,
   clientesCadastrados = [],
+  aliasesCnpj = [],
+  cnpjAliases = [],
+  aliasesCNPJ = [],
+  vinculosCnpj = [],
 }: {
   cobrancas: PdfCobrancaEfi[];
   titulos: Titulo[];
   clientesCadastrados?: ClienteRef[];
+  aliasesCnpj?: Array<{ cliente_id?: string | null; cnpj: string }>;
+  cnpjAliases?: Array<{ cliente_id?: string | null; cnpj: string }>;
+  aliasesCNPJ?: Array<{ cliente_id?: string | null; cnpj: string }>;
+  vinculosCnpj?: Array<{ cliente_id?: string | null; cnpj: string }>;
 }): PdfMatch[] {
   const titulosUsados = new Set<string>();
+
+  const cnpjAliasesMesclados = [
+    ...aliasesCnpj,
+    ...cnpjAliases,
+    ...aliasesCNPJ,
+    ...vinculosCnpj,
+  ].filter(Boolean);
 
   return cobrancas.map((cob) => {
     if (!isStatusPago(cob.status)) {
@@ -159,6 +174,14 @@ export function conciliarCobrancasPdf({
       clienteEncontrado = clientesCadastrados.find(
         (c: any) => somenteDigitos(c.cnpj) === cob.documento_digits,
       );
+      if (!clienteEncontrado) {
+        const alias = cnpjAliasesMesclados.find(
+          (a: any) => somenteDigitos(a.cnpj) === cob.documento_digits,
+        );
+        if (alias?.cliente_id) {
+          clienteEncontrado = clientesCadastrados.find((c: any) => c.id === alias.cliente_id);
+        }
+      }
     }
     if (!clienteEncontrado && cobNomeNorm) {
       clienteEncontrado = clientesCadastrados.find(
@@ -173,9 +196,38 @@ export function conciliarCobrancasPdf({
         const tDoc = somenteDigitos(t.cnpj);
         let docOk = false;
         if (tDoc && tDoc === cob.documento_digits) docOk = true;
+
+        // CNPJ secundário (alias) mapeado para o mesmo cadastro principal.
+        if (!docOk && tDoc) {
+          const aliasTitulo = cnpjAliasesMesclados.find(
+            (a: any) => somenteDigitos(a.cnpj) === tDoc,
+          );
+          const aliasCob = cnpjAliasesMesclados.find(
+            (a: any) => somenteDigitos(a.cnpj) === cob.documento_digits,
+          );
+          if (
+            aliasTitulo?.cliente_id &&
+            aliasCob?.cliente_id &&
+            aliasTitulo.cliente_id === aliasCob.cliente_id
+          ) {
+            docOk = true;
+          }
+        }
+
         if (!tDoc && t.cliente_id) {
           const cliente = clientesCadastrados.find((c: any) => c.id === t.cliente_id);
-          if (cliente && somenteDigitos(cliente.cnpj) === cob.documento_digits) docOk = true;
+          if (cliente) {
+            if (somenteDigitos(cliente.cnpj) === cob.documento_digits) docOk = true;
+            if (
+              cnpjAliasesMesclados.some(
+                (a: any) =>
+                  a.cliente_id === cliente.id &&
+                  somenteDigitos(a.cnpj) === cob.documento_digits,
+              )
+            ) {
+              docOk = true;
+            }
+          }
         }
         if (!docOk) return false;
       } else if (cobNomeNorm) {

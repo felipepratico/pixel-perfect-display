@@ -179,28 +179,60 @@ function apenasDigitos(valor: string | null | undefined): string {
 export function clienteIdDoTitulo(
   t: Pick<Titulo, "cliente_id" | "cliente" | "cnpj">,
   clientes: ClienteRef[] = [],
+  cnpjAliases: Array<{ cliente_id?: string | null; cnpj: string }> = [],
 ): string | null {
   if (t.cliente_id) return t.cliente_id;
   const cnpj = apenasDigitos(t.cnpj);
   const nome = normalizarNome(t.cliente);
   if (!cnpj && !nome) return null;
+
+  // Vínculo por alias de CNPJ: um CNPJ secundário aponta para o cadastro principal.
+  if (cnpj) {
+    const alias = cnpjAliases.find((a) => apenasDigitos(a.cnpj) === cnpj);
+    if (alias?.cliente_id) return alias.cliente_id;
+  }
+
   const match = clientes.find(
     (c) =>
       (cnpj !== "" && apenasDigitos(c.cnpj) === cnpj) ||
       (nome !== "" && normalizarNome(c.razao_social) === nome),
   );
-  return match?.id ?? null;
+  if (match) return match.id;
+
+  // Fallback: alias de CNPJ pode referenciar um cliente cujo CNPJ principal
+  // também consta nos cadastros, mas o título traz apenas o CNPJ secundário.
+  if (cnpj) {
+    const alias = cnpjAliases.find((a) => apenasDigitos(a.cnpj) === cnpj);
+    if (alias?.cliente_id) {
+      const cliente = clientes.find((c) => c.id === alias.cliente_id);
+      if (cliente) return cliente.id;
+    }
+  }
+
+  return null;
 }
 
 /** Stable key per customer: linked customer id when known, otherwise the normalized name. */
 export function chaveClienteDoTitulo(
   t: Pick<Titulo, "cliente_id" | "cliente" | "cnpj">,
   clientes: ClienteRef[] = [],
+  cnpjAliases: Array<{ cliente_id?: string | null; cnpj: string }> = [],
 ): string {
-  return clienteIdDoTitulo(t, clientes) ?? chavePorNome(t.cliente);
+  return clienteIdDoTitulo(t, clientes, cnpjAliases) ?? chavePorNome(t.cliente);
 }
 
 /** Chave estável de um cliente (cadastro) para uso em mapas de assinatura. */
+export function resolverClientePrincipalPorCnpj(
+  cnpj: string,
+  clientes: ClienteRef[] = [],
+  cnpjAliases: Array<{ cliente_id?: string | null; cnpj: string }> = [],
+): string | null {
+  return clienteIdDoTitulo({ cliente_id: null, cliente: "", cnpj }, clientes, cnpjAliases);
+}
+
+export const clientePrincipalPorCnpj = resolverClientePrincipalPorCnpj;
+export const obterClientePrincipalPorCnpj = resolverClientePrincipalPorCnpj;
+
 export function chaveDoCliente(cliente: Pick<ClienteRef, "id" | "cnpj" | "razao_social">): string {
   // id é sempre string quando vindo do cadastro; fallback sintético garante
   // estabilidade quando um registro vier sem id.

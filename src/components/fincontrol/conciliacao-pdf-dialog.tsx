@@ -34,6 +34,7 @@ export function ConciliacaoPdfDialog({
   titulos,
   titulosAbertos,
   clientesCadastrados,
+  aliasesCnpj,
   configFinanceira,
   initialCobrancas,
   onOpenChange,
@@ -43,6 +44,7 @@ export function ConciliacaoPdfDialog({
   titulos: any[];
   titulosAbertos: any[];
   clientesCadastrados: any[];
+  aliasesCnpj?: any[];
   configFinanceira?: any;
   initialCobrancas?: PdfCobrancaEfi[] | null;
   onOpenChange: (open: boolean) => void;
@@ -59,6 +61,7 @@ export function ConciliacaoPdfDialog({
         cobrancas: initialCobrancas,
         titulos,
         clientesCadastrados,
+        aliasesCnpj: aliasesCnpj ?? [],
       });
       setMatches(res);
       const selecionar = res

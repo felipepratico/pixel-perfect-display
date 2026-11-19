@@ -105,7 +105,9 @@ import {
 } from "@/lib/configuracoes-financeiras";
 import {
   buscarAliasesBancarios,
+  buscarAliasesCnpj,
   type ClienteAliasBancario,
+  type ClienteAliasCnpj,
   type ItemExtratoEfi,
 } from "@/lib/conciliacao-efi";
 import type { PdfCobrancaEfi } from "@/lib/conciliacao-pdf";
@@ -173,6 +175,7 @@ function Painel() {
   const [extratoJsonPendente, setExtratoJsonPendente] = useState<ItemExtratoEfi[] | null>(null);
   const [pdfCobrancasPendentes, setPdfCobrancasPendentes] = useState<PdfCobrancaEfi[] | null>(null);
   const [aliasesBancarios, setAliasesBancarios] = useState<ClienteAliasBancario[]>([]);
+  const [aliasesCnpj, setAliasesCnpj] = useState<ClienteAliasCnpj[]>([]);
   const [relOpen, setRelOpen] = useState(false);
   const [relCliente, setRelCliente] = useState<string | null>(null);
   const [loteOpen, setLoteOpen] = useState(false);
@@ -190,6 +193,7 @@ function Painel() {
   useEffect(() => {
     buscarConfiguracaoFinanceira().then(setConfig);
     buscarAliasesBancarios().then(setAliasesBancarios);
+    buscarAliasesCnpj().then(setAliasesCnpj);
   }, []);
 
   const titulosAbertos = useMemo(
@@ -490,7 +494,7 @@ function Painel() {
     const base = new Map<string, Titulo>();
     for (const t of todos) {
       if (!isActiveSubscription(t)) continue;
-      const chave = chaveClienteDoTitulo(t, clientesCadastrados);
+      const chave = chaveClienteDoTitulo(t, clientesCadastrados, aliasesCnpj);
       const atual = base.get(chave);
       // Usa a assinatura mais recente como referência de valor e vencimento.
       if (!atual || (mesAnoRank(t.mes_ano) ?? 0) > (mesAnoRank(atual.mes_ano) ?? 0)) {
@@ -500,7 +504,7 @@ function Painel() {
     const existentes = new Set(
       todos.map((t) => {
         const mes = normalizeMesAno(t.mes_ano) ?? t.mes_ano;
-        return `${chaveClienteDoTitulo(t, clientesCadastrados)}|${mes}`;
+        return `${chaveClienteDoTitulo(t, clientesCadastrados, aliasesCnpj)}|${mes}`;
       }),
     );
     // Sincronização automática: clientes ATIVOS do cadastro sem nenhum título
@@ -511,7 +515,7 @@ function Painel() {
     const chavesComTitulo = new Set(
       todos
         .filter((t) => t.tipo_cobranca === "RECORRENTE")
-        .map((t) => chaveClienteDoTitulo(t, clientesCadastrados)),
+        .map((t) => chaveClienteDoTitulo(t, clientesCadastrados, aliasesCnpj)),
     );
     const linhasVirtuais = clientesCadastrados.filter(
       (c) => c.status === "ATIVO" && !chavesComTitulo.has(chaveDoCliente(c)),
@@ -522,7 +526,7 @@ function Painel() {
       const mes = shiftMesAno(mesBase, i);
       if (!mes) continue;
       for (const t of base.values()) {
-        if (existentes.has(`${chaveClienteDoTitulo(t, clientesCadastrados)}|${mes}`)) continue;
+        if (existentes.has(`${chaveClienteDoTitulo(t, clientesCadastrados, aliasesCnpj)}|${mes}`)) continue;
         const {
           id: _id,
           deleted_at: _deletedAt,
@@ -534,7 +538,7 @@ function Painel() {
 
         rows.push({
           ...rest,
-          cliente_id: clienteIdDoTitulo(rest, clientesCadastrados),
+          cliente_id: clienteIdDoTitulo(rest, clientesCadastrados, aliasesCnpj),
           mes_ano: mes,
           situacao: "ABERTO",
         });
@@ -1090,6 +1094,7 @@ function Painel() {
         titulosAbertos={titulosAbertos}
         clientesCadastrados={clientesCadastrados}
         aliasesBancarios={aliasesBancarios}
+        aliasesCnpj={aliasesCnpj}
         configFinanceira={config}
         initialJsonData={extratoJsonPendente}
         onOpenChange={(o) => {
@@ -1098,6 +1103,7 @@ function Painel() {
         }}
         onSuccess={() => {
           buscarAliasesBancarios().then(setAliasesBancarios);
+          buscarAliasesCnpj().then(setAliasesCnpj);
         }}
       />
       <ConciliacaoPdfDialog
@@ -1105,6 +1111,7 @@ function Painel() {
         titulos={todos}
         titulosAbertos={titulosAbertos}
         clientesCadastrados={clientesCadastrados}
+        aliasesCnpj={aliasesCnpj}
         configFinanceira={config}
         initialCobrancas={pdfCobrancasPendentes}
         onOpenChange={(o) => {
@@ -1113,6 +1120,7 @@ function Painel() {
         }}
         onSuccess={() => {
           buscarAliasesBancarios().then(setAliasesBancarios);
+          buscarAliasesCnpj().then(setAliasesCnpj);
         }}
       />
       <RelatorioDialog

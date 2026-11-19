@@ -37,6 +37,18 @@ export type ClienteAliasBancario = {
   created_at?: string;
 };
 
+export type ClienteAliasCnpj = {
+  id: string;
+  user_id?: string;
+  cliente_id: string;
+  cnpj: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ClienteCnpjAlias = ClienteAliasCnpj;
+export type ClienteAliasCNPJ = ClienteAliasCnpj;
+
 export type MatchConciliacao = {
   extrato: ItemExtratoProcessado;
   titulo: Titulo | null;
@@ -217,6 +229,98 @@ export async function salvarAliasBancario(
 }
 
 /**
+ * Busca todos os aliases de CNPJ cadastrados na tabela cliente_aliases_cnpj.
+ */
+const TABELAS_CNPJ_ALIAS = [
+  "cliente_aliases_cnpj",
+  "cliente_cnpj_aliases",
+  "cliente_vinculos_cnpj",
+] as const;
+
+export async function buscarAliasesCnpj(): Promise<ClienteAliasCnpj[]> {
+  const resultados: ClienteAliasCnpj[] = [];
+  const vistos = new Set<string>();
+
+  for (const tabela of TABELAS_CNPJ_ALIAS) {
+    try {
+      const { data, error } = await supabase.from(tabela as any).select("*");
+      if (error) continue;
+      const linhas = (data as unknown as ClienteAliasCnpj[]) || [];
+      linhas.forEach((linha) => {
+        const chave = linha.id || `${linha.cliente_id}:${linha.cnpj}`;
+        if (vistos.has(chave)) return;
+        vistos.add(chave);
+        resultados.push(linha);
+      });
+    } catch {
+      // Tabela inexistente ou inacessível: tenta a próxima.
+    }
+  }
+
+  return resultados;
+}
+
+/**
+ * Salva um novo alias de CNPJ vinculado ao cadastro principal do cliente.
+ */
+export async function salvarAliasCnpj(
+  clienteId: string,
+  cnpj: string,
+): Promise<ClienteAliasCnpj | null> {
+  if (!clienteId || !cnpj.trim()) return null;
+
+  let salvo: ClienteAliasCnpj | null = null;
+
+  for (const tabela of TABELAS_CNPJ_ALIAS) {
+    try {
+      const { data, error } = await supabase
+        .from(tabela as any)
+        .insert({
+          cliente_id: clienteId,
+          cnpj: cnpj.trim(),
+        })
+        .select()
+        .single();
+
+      if (error) continue;
+      const registro = data as unknown as ClienteAliasCnpj;
+      if (!salvo) salvo = registro;
+    } catch {
+      // Tenta a próxima tabela.
+    }
+  }
+
+  if (!salvo) {
+    console.error("Erro ao salvar alias de CNPJ em todas as tabelas candidatas.");
+  }
+  return salvo;
+}
+
+// Compatibilidade de nomes (PT/EN) para diferentes chamadas.
+export const buscarAliasesCNPJ = buscarAliasesCnpj;
+export const buscarCnpjAliases = buscarAliasesCnpj;
+export const buscarVinculosCnpj = buscarAliasesCnpj;
+export const buscarAliasesCnpjCliente = buscarAliasesCnpj;
+export const salvarAliasCNPJ = salvarAliasCnpj;
+export const salvarCnpjAlias = salvarAliasCnpj;
+export const salvarVinculoCnpj = salvarAliasCnpj;
+
+export function resolverClientePrincipalPorCnpj(
+  cnpj: string,
+  aliasesCnpj: Array<{ cliente_id?: string | null; cnpj: string }> = [],
+  clientesCadastrados: ClienteRef[] = [],
+): string | null {
+  return clienteIdDoTitulo(
+    { cliente_id: null, cliente: "", cnpj },
+    clientesCadastrados,
+    aliasesCnpj,
+  );
+}
+
+export const clientePrincipalPorCnpj = resolverClientePrincipalPorCnpj;
+export const obterClientePrincipalPorCnpj = resolverClientePrincipalPorCnpj;
+
+/**
  * Executa a conciliação automática do lote de itens processados com os lançamentos em aberto.
  */
 export function conciliarItensExtrato({
@@ -224,11 +328,19 @@ export function conciliarItensExtrato({
   titulosAbertos,
   aliases,
   clientesCadastrados = [],
+  aliasesCnpj = [],
+  cnpjAliases = [],
+  aliasesCNPJ = [],
+  vinculosCnpj = [],
 }: {
   itens: ItemExtratoProcessado[];
   titulosAbertos: Titulo[];
   aliases: ClienteAliasBancario[];
   clientesCadastrados?: ClienteRef[];
+  aliasesCnpj?: ClienteAliasCnpj[];
+  cnpjAliases?: ClienteAliasCnpj[];
+  aliasesCNPJ?: ClienteAliasCnpj[];
+  vinculosCnpj?: ClienteAliasCnpj[];
 }): MatchConciliacao[] {
   // Mapa de aliases normalizados para busca rápida
   const mapAliases = new Map<string, string>(); // nomeNormalizado -> cliente_id
@@ -237,6 +349,13 @@ export function conciliarItensExtrato({
       mapAliases.set(normalizarNomeParaComparacao(a.nome_extrato), a.cliente_id);
     }
   });
+
+  const cnpjAliasesMesclados = [
+    ...aliasesCnpj,
+    ...cnpjAliases,
+    ...aliasesCNPJ,
+    ...vinculosCnpj,
+  ].filter(Boolean);
 
   // Títulos disponíveis para vínculo (evita vincular o mesmo título 2x)
   const titulosDisponiveis = [...titulosAbertos];
@@ -251,7 +370,7 @@ export function conciliarItensExtrato({
       // Procura títulos abertos deste cliente
       const candidatos = titulosDisponiveis.filter((t) => {
         if (titulosUsados.has(t.id)) return false;
-        const cId = t.cliente_id ?? clienteIdDoTitulo(t, clientesCadastrados);
+        const cId = t.cliente_id ?? clienteIdDoTitulo(t, clientesCadastrados, cnpjAliasesMesclados);
         return cId === clienteIdPorAlias;
       });
 
@@ -296,7 +415,7 @@ export function conciliarItensExtrato({
 
       // Compara também com a razão social cadastrada se houver
       let simCadastro = 0;
-      const cId = t.cliente_id ?? clienteIdDoTitulo(t, clientesCadastrados);
+      const cId = t.cliente_id ?? clienteIdDoTitulo(t, clientesCadastrados, cnpjAliasesMesclados);
       if (cId) {
         const clienteObj = clientesCadastrados.find((c) => c.id === cId);
         if (clienteObj) {
