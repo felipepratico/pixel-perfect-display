@@ -12,6 +12,7 @@ import {
   type ClienteAliasCnpj,
 } from "@/lib/conciliacao-efi";
 import { onlyDigits } from "@/lib/cnpj";
+import { supabase } from "@/integrations/supabase/client";
 
 export function CnpjAliasesManager({ clienteId }: { clienteId: string | null }) {
   const [aliases, setAliases] = useState<ClienteAliasCnpj[]>([]);
@@ -44,15 +45,61 @@ export function CnpjAliasesManager({ clienteId }: { clienteId: string | null }) 
       toast.warning("Informe um CNPJ com 14 dígitos.");
       return;
     }
+
+    // Verifica se o CNPJ já pertence a outro cadastro de cliente.
+    try {
+      const { data: clientesExistentes } = await supabase
+        .from("clientes")
+        .select("id, razao_social, cnpj")
+        .is("deleted_at", null);
+      const clienteExistente = (clientesExistentes || []).find(
+        (c: any) => onlyDigits(c.cnpj) === digitos,
+      );
+      if (clienteExistente) {
+        if (clienteExistente.id === clienteId) {
+          toast.info("Este CNPJ já é o principal deste cliente.");
+        } else {
+          toast.error(
+            `Este CNPJ já está cadastrado no cliente ${clienteExistente.razao_social}.`,
+          );
+        }
+        return;
+      }
+
+      const aliasesExistentes = await buscarAliasesCnpj();
+      const aliasExistente = aliasesExistentes.find(
+        (a) => onlyDigits(a.cnpj) === digitos,
+      );
+      if (aliasExistente) {
+        if (aliasExistente.cliente_id === clienteId) {
+          toast.info("Este CNPJ já está vinculado a este cliente.");
+        } else {
+          const clientePrincipal = (clientesExistentes || []).find(
+            (c: any) => c.id === aliasExistente.cliente_id,
+          );
+          toast.error(
+            `Este CNPJ já está vinculado ao cliente ${
+              clientePrincipal?.razao_social || "principal"
+            }.`,
+          );
+        }
+        return;
+      }
+    } catch (error) {
+      // Se a verificação falhar, segue para tentar o vínculo normalmente.
+    }
+
     setSalvando(true);
     try {
       const salvo = await salvarAliasCnpj(clienteId, novoCnpj);
-      if (!salvo) throw new Error("Falha ao salvar");
+      if (!salvo) throw new Error("Não foi possível vincular o CNPJ.");
       setNovoCnpj("");
       toast.success("CNPJ vinculado ao cadastro principal.");
       await carregar();
-    } catch {
-      toast.error("Não foi possível vincular o CNPJ.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível vincular o CNPJ.",
+      );
     } finally {
       setSalvando(false);
     }
