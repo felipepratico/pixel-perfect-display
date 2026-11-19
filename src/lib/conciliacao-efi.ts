@@ -263,37 +263,72 @@ export async function buscarAliasesCnpj(): Promise<ClienteAliasCnpj[]> {
 /**
  * Salva um novo alias de CNPJ vinculado ao cadastro principal do cliente.
  */
+export type ResultadoSalvarAliasCnpj = {
+  registro: ClienteAliasCnpj | null;
+  erro: { message: string; details?: string; code?: string } | null;
+};
+
+export async function salvarAliasCnpjDetalhado(
+  clienteId: string,
+  cnpj: string,
+): Promise<ResultadoSalvarAliasCnpj> {
+  if (!clienteId || !cnpj.trim()) {
+    return { registro: null, erro: { message: "Cliente ou CNPJ inválido." } };
+  }
+
+  // Obtém o usuário autenticado para respeitar RLS (user_id).
+  let userId: string | null = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    userId = data?.user?.id ?? null;
+  } catch {
+    userId = null;
+  }
+
+  let ultimoErro: { message: string; details?: string; code?: string } | null = null;
+
+  for (const tabela of TABELAS_CNPJ_ALIAS) {
+    try {
+      const payload: Record<string, unknown> = {
+        cliente_id: clienteId,
+        cnpj: cnpj.trim(),
+      };
+      if (userId) payload["user_id"] = userId;
+
+      const { data, error } = await supabase
+        .from(tabela as any)
+        .insert(payload)
+        .select()
+        .single();
+
+      if (error) {
+        ultimoErro = {
+          message: error.message || "Erro ao vincular CNPJ.",
+          details: (error as any).details,
+          code: (error as any).code,
+        };
+        continue;
+      }
+      return { registro: data as unknown as ClienteAliasCnpj, erro: null };
+    } catch (err) {
+      ultimoErro = {
+        message: err instanceof Error ? err.message : "Erro inesperado ao vincular CNPJ.",
+      };
+    }
+  }
+
+  if (!ultimoErro) {
+    ultimoErro = { message: "Não foi possível vincular o CNPJ em nenhuma tabela." };
+  }
+  return { registro: null, erro: ultimoErro };
+}
+
 export async function salvarAliasCnpj(
   clienteId: string,
   cnpj: string,
 ): Promise<ClienteAliasCnpj | null> {
-  if (!clienteId || !cnpj.trim()) return null;
-
-  let salvo: ClienteAliasCnpj | null = null;
-
-  for (const tabela of TABELAS_CNPJ_ALIAS) {
-    try {
-      const { data, error } = await supabase
-        .from(tabela as any)
-        .insert({
-          cliente_id: clienteId,
-          cnpj: cnpj.trim(),
-        })
-        .select()
-        .single();
-
-      if (error) continue;
-      const registro = data as unknown as ClienteAliasCnpj;
-      if (!salvo) salvo = registro;
-    } catch {
-      // Tenta a próxima tabela.
-    }
-  }
-
-  if (!salvo) {
-    console.error("Erro ao salvar alias de CNPJ em todas as tabelas candidatas.");
-  }
-  return salvo;
+  const resultado = await salvarAliasCnpjDetalhado(clienteId, cnpj);
+  return resultado.registro;
 }
 
 // Compatibilidade de nomes (PT/EN) para diferentes chamadas.

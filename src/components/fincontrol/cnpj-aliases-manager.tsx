@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { buscarAliasesCnpj, excluirAliasCnpj, salvarAliasCnpj, type ClienteAliasCnpj } from "@/lib/conciliacao-efi";
+import { buscarAliasesCnpj, excluirAliasCnpj, salvarAliasCnpjDetalhado, type ClienteAliasCnpj } from "@/lib/conciliacao-efi";
 import { useClientes } from "@/lib/use-clientes";
 import type { Cliente } from "@/lib/clientes";
 import { onlyDigits } from "@/lib/cnpj";
@@ -113,8 +113,17 @@ export function CnpjAliasesManager({ clienteId }: { clienteId: string | null }) 
 
     setSalvando(true);
     try {
-      const salvo = await salvarAliasCnpj(clienteId, (novoCnpj || buscaCliente).trim());
-      if (!salvo) throw new Error("Não foi possível vincular o CNPJ.");
+      const resultado = await salvarAliasCnpjDetalhado(
+        clienteId,
+        (novoCnpj || buscaCliente).trim(),
+      );
+      if (!resultado.registro) {
+        const erro = resultado.erro;
+        const mensagem = erro?.details
+          ? `${erro.message} (${erro.details})`
+          : erro?.message || "Não foi possível vincular o CNPJ.";
+        throw new Error(mensagem);
+      }
       setBuscaCliente("");
       setNovoCnpj("");
       setClienteSelecionado(null);
