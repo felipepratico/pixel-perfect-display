@@ -29,6 +29,8 @@ export function RecorrenciaDialog({
   open,
   titulos,
   clientes,
+  aliasesCnpj = [],
+  mesReferencia,
   gerando,
   onOpenChange,
   onGerar,
@@ -36,30 +38,37 @@ export function RecorrenciaDialog({
   open: boolean;
   titulos: Titulo[];
   clientes: Cliente[];
+  aliasesCnpj?: Array<{ cliente_id?: string | null; cnpj: string }>;
+  mesReferencia?: string;
   gerando: boolean;
   onOpenChange: (open: boolean) => void;
-  onGerar: (mesAnoInicial: string, quantidade: number) => void;
+  onGerar: (mesAnoInicial: string, quantidade: number, chavesSelecionadas?: string[]) => void;
 }) {
-  const [mesAno, setMesAno] = useState(nextMesAno());
+  const mesInicialPadrao = mesReferencia
+    ? normalizeMesAno(mesReferencia) || nextMesAno()
+    : nextMesAno();
+  const [mesAno, setMesAno] = useState(mesInicialPadrao);
   const [quantidade, setQuantidade] = useState(1);
   const [mostrarFaltantes, setMostrarFaltantes] = useState(false);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (open) {
-      setMesAno(nextMesAno());
+      setMesAno(mesInicialPadrao);
       setMostrarFaltantes(false);
+      setSelecionados(new Set());
     }
-  }, [open]);
+  }, [open, mesInicialPadrao]);
 
   // Mesma regra do painel de assinaturas: cliente ATIVO sem nenhum título
   // recorrente conta como ativo (ele será gerado no clique em gerar).
   const chavesComTitulo = new Set(
     titulos
       .filter((t) => t.tipo_cobranca === "RECORRENTE")
-      .map((t) => chaveClienteDoTitulo(t, clientes)),
+      .map((t) => chaveClienteDoTitulo(t, clientes, aliasesCnpj)),
   );
 
-  type AssinaturaAtiva = { chave: string; nome: string; cnpj: string; valor: number };
+  type AssinaturaAtiva = { chave: string; nome: string; cnpj: string; valor: number; diaVencimento: number };
   const assinaturasAtivas = useMemo<AssinaturaAtiva[]>(() => {
     const mapa = new Map<string, AssinaturaAtiva>();
 
@@ -72,13 +81,14 @@ export function RecorrenciaDialog({
             (t.cnpj || "").replace(/\D/g, "") === (c.cnpj || "").replace(/\D/g, ""),
         );
         if (clienteTitulo?.nao_gerar_assinatura) return;
-        const chave = chaveClienteDoTitulo(t, clientes);
+        const chave = chaveClienteDoTitulo(t, clientes, aliasesCnpj);
         if (mapa.has(chave)) return;
         mapa.set(chave, {
           chave,
           nome: clienteTitulo?.razao_social || t.cliente,
           cnpj: clienteTitulo?.cnpj || t.cnpj,
           valor: parseNumber(t.mensal_site),
+          diaVencimento: t.vencimento,
         });
       });
 
@@ -97,6 +107,7 @@ export function RecorrenciaDialog({
           nome: c.razao_social,
           cnpj: c.cnpj,
           valor: valorContrato(c),
+          diaVencimento: c.vencimento,
         });
       });
 
@@ -112,16 +123,20 @@ export function RecorrenciaDialog({
     const conjunto = new Set<string>();
     titulos.forEach((t) => {
       if (normalizeMesAno(t.mes_ano) !== mesAnoNormalizado) return;
-      conjunto.add(chaveClienteDoTitulo(t, clientes));
+      conjunto.add(chaveClienteDoTitulo(t, clientes, aliasesCnpj));
     });
     return conjunto;
-  }, [titulos, clientes, mesAnoNormalizado]);
+  }, [titulos, clientes, aliasesCnpj, mesAnoNormalizado]);
 
   const faltantes = useMemo(
     () => assinaturasAtivas.filter((a) => !existentesNoMes.has(a.chave)),
     [assinaturasAtivas, existentesNoMes],
   );
   const jaLancadas = assinaturasAtivas.length - faltantes.length;
+
+  useEffect(() => {
+    setSelecionados(new Set(faltantes.map((a) => a.chave)));
+  }, [faltantes]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -210,11 +225,25 @@ export function RecorrenciaDialog({
                   {mostrarFaltantes ? "Ocultar clientes faltantes" : "Ver clientes faltantes"}
                 </button>
                 {mostrarFaltantes ? (
-                  <ul className="max-h-40 space-y-1 overflow-y-auto rounded-md border border-partner-border/60 bg-background/60 p-2">
+                  <ul className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-partner-border/60 bg-background/60 p-2">
                     {faltantes.map((a) => (
                       <li key={a.chave} className="flex items-center justify-between gap-2">
-                        <span className="truncate">{a.nome}</span>
+                        <input
+                          type="checkbox"
+                          className="size-3.5 shrink-0"
+                          checked={selecionados.has(a.chave)}
+                          onChange={(e) => {
+                            setSelecionados((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(a.chave);
+                              else next.delete(a.chave);
+                              return next;
+                            });
+                          }}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{a.nome}</span>
                         <span className="shrink-0 font-mono text-[10px]">{a.cnpj || "—"}</span>
+                        <span className="shrink-0 text-[10px]">Dia {a.diaVencimento}</span>
                         <span className="shrink-0 font-bold">{formatCurrency(a.valor)}</span>
                       </li>
                     ))}
@@ -233,7 +262,7 @@ export function RecorrenciaDialog({
             type="button"
             disabled={gerando || !mesAnoNormalizado}
             onClick={() => {
-              if (mesAnoNormalizado) onGerar(mesAnoNormalizado, quantidade);
+              if (mesAnoNormalizado) onGerar(mesAnoNormalizado, quantidade, [...selecionados]);
             }}
           >
             Gerar novas mensalidades

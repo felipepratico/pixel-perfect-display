@@ -484,7 +484,7 @@ function Painel() {
     }
   }
 
-  function onGerar(mesAnoInicial: string, quantidade: number) {
+  function onGerar(mesAnoInicial: string, quantidade: number, chavesSelecionadas?: string[]) {
     const mesBase = normalizeMesAno(mesAnoInicial);
     if (!mesBase) {
       toast.error("Informe o mês/ano no formato MM/AAAA.");
@@ -501,6 +501,7 @@ function Painel() {
       );
       if (clienteTitulo?.nao_gerar_assinatura) continue;
       const chave = chaveClienteDoTitulo(t, clientesCadastrados, aliasesCnpj);
+      if (chavesSelecionadas && !chavesSelecionadas.includes(chave)) continue;
       const atual = base.get(chave);
       // Usa a assinatura mais recente como referência de valor e vencimento.
       if (!atual || (mesAnoRank(t.mes_ano) ?? 0) > (mesAnoRank(atual.mes_ano) ?? 0)) {
@@ -532,7 +533,11 @@ function Painel() {
         .map((t) => chaveClienteDoTitulo(t, clientesCadastrados, aliasesCnpj)),
     );
     const linhasVirtuais = clientesCadastrados.filter(
-      (c) => c.status === "ATIVO" && !c.nao_gerar_assinatura && !chavesComTitulo.has(chaveDoCliente(c)),
+      (c) =>
+        c.status === "ATIVO" &&
+        !c.nao_gerar_assinatura &&
+        !chavesComTitulo.has(chaveDoCliente(c)) &&
+        (!chavesSelecionadas || chavesSelecionadas.includes(chaveDoCliente(c))),
     );
     const rows: TituloInput[] = [];
 
@@ -1068,6 +1073,8 @@ function Painel() {
         open={recOpen}
         titulos={todos}
         clientes={clientesCadastrados}
+        aliasesCnpj={aliasesCnpj}
+        mesReferencia={mesReferencia}
         gerando={insertMany.isPending}
         onOpenChange={setRecOpen}
         onGerar={onGerar}
