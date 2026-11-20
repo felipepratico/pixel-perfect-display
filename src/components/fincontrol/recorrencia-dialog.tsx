@@ -62,10 +62,14 @@ export function RecorrenciaDialog({
 
   // Mesma regra do painel de assinaturas: cliente ATIVO sem nenhum título
   // recorrente conta como ativo (ele será gerado no clique em gerar).
-  const chavesComTitulo = new Set(
-    titulos
-      .filter((t) => t.tipo_cobranca === "RECORRENTE")
-      .map((t) => chaveClienteDoTitulo(t, clientes, aliasesCnpj)),
+  const chavesComTitulo = useMemo(
+    () =>
+      new Set(
+        titulos
+          .filter((t) => t.tipo_cobranca === "RECORRENTE")
+          .map((t) => chaveClienteDoTitulo(t, clientes, aliasesCnpj)),
+      ),
+    [titulos, clientes, aliasesCnpj],
   );
 
   type AssinaturaAtiva = { chave: string; nome: string; cnpj: string; valor: number; diaVencimento: number };
@@ -134,9 +138,11 @@ export function RecorrenciaDialog({
   );
   const jaLancadas = assinaturasAtivas.length - faltantes.length;
 
+  const faltantesIds = useMemo(() => faltantes.map((a) => a.chave).join("|"), [faltantes]);
   useEffect(() => {
     setSelecionados(new Set(faltantes.map((a) => a.chave)));
-  }, [faltantes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [faltantesIds]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -249,13 +255,26 @@ export function RecorrenciaDialog({
                     </div>
                     <ul className="max-h-72 w-full space-y-1 overflow-y-auto overflow-x-hidden rounded-md border border-partner-border/60 bg-background/60 p-2">
                     {faltantes.map((a) => (
-                      <li key={a.chave} className="flex items-center justify-between gap-3 py-2 text-sm">
+                      <li
+                        key={a.chave}
+                        className="flex cursor-pointer items-center justify-between gap-3 py-2 text-sm"
+                        onClick={() => {
+                          setSelecionados((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(a.chave)) next.delete(a.chave);
+                            else next.add(a.chave);
+                            return next;
+                          });
+                        }}
+                      >
                         <div className="flex min-w-0 flex-1 items-center gap-2">
                           <input
                             type="checkbox"
                             className="size-4 shrink-0"
                             checked={selecionados.has(a.chave)}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
+                              e.stopPropagation();
                               setSelecionados((prev) => {
                                 const next = new Set(prev);
                                 if (e.target.checked) next.add(a.chave);
