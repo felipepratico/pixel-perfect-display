@@ -181,10 +181,14 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[94vh] max-w-4xl overflow-y-auto">
-        <DialogHeader><DialogTitle>{cliente ? "Editar cliente" : "Novo cliente"}</DialogTitle><DialogDescription>Plano, módulos, dados técnicos e cobrança em um só cadastro.</DialogDescription></DialogHeader>
-        <form onSubmit={submit} className="space-y-5">
-          <section className="space-y-3"><h3 className="text-sm font-bold">Identificação e grupo</h3><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <DialogContent className="flex max-h-[94vh] w-[95vw] max-w-5xl flex-col overflow-hidden p-0">
+        <DialogHeader className="sticky top-0 z-20 border-b bg-background px-6 py-4">
+          <DialogTitle>{cliente ? "Editar cliente" : "Novo cliente"}</DialogTitle>
+          <DialogDescription>Plano, módulos, dados técnicos e cobrança em um só cadastro.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-4">
+          <section className="space-y-3"><h3 className="text-sm font-bold">Identificação e grupo</h3><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Field label="Tipo de pessoa"><div className="grid grid-cols-2 gap-1 rounded-md border bg-muted p-1"><Button type="button" size="sm" variant={tipoPessoa === "FISICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("FISICA")}>Pessoa física</Button><Button type="button" size="sm" variant={tipoPessoa === "JURIDICA" ? "default" : "ghost"} onClick={() => setTipoPessoa("JURIDICA")}>Pessoa jurídica</Button></div></Field>
             <Field label={tipoPessoa === "FISICA" ? "Nome completo *" : "Razão social *"} className="lg:col-span-2"><Input required value={form.razao_social} onChange={(e) => update("razao_social", e.target.value)} /></Field>
             {tipoPessoa === "JURIDICA" ? <Field label="Nome fantasia"><Input value={form.nome_fantasia} onChange={(e) => update("nome_fantasia", e.target.value)} /></Field> : null}
@@ -279,7 +283,11 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
               O Valor Prático é o valor considerado/repassado para o sistema Prático, independente da margem cobrada no boleto.
             </p>
           </section>
-          <DialogFooter><Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar cliente"}</Button></DialogFooter>
+          </div>
+          <DialogFooter className="sticky bottom-0 z-20 border-t bg-background px-6 py-4">
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar cliente"}</Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
