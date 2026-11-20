@@ -140,7 +140,7 @@ export function RecorrenciaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md overflow-hidden">
         <DialogHeader>
           <DialogTitle>Gerar mensalidades em lote</DialogTitle>
           <DialogDescription>
@@ -225,7 +225,29 @@ export function RecorrenciaDialog({
                   {mostrarFaltantes ? "Ocultar clientes faltantes" : "Ver clientes faltantes"}
                 </button>
                 {mostrarFaltantes ? (
-                  <ul className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-partner-border/60 bg-background/60 p-2">
+                  <>
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        className="text-[10px] font-semibold underline"
+                        onClick={() => {
+                          const todosMarcados = faltantes.every((a) => selecionados.has(a.chave));
+                          setSelecionados(
+                            todosMarcados
+                              ? new Set()
+                              : new Set(faltantes.map((a) => a.chave)),
+                          );
+                        }}
+                      >
+                        {faltantes.every((a) => selecionados.has(a.chave))
+                          ? "Desmarcar todos"
+                          : "Marcar todos"}
+                      </button>
+                      <span className="text-[10px] text-muted-foreground">
+                        {selecionados.size} selecionado(s)
+                      </span>
+                    </div>
+                    <ul className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-partner-border/60 bg-background/60 p-2">
                     {faltantes.map((a) => (
                       <li key={a.chave} className="flex items-center justify-between gap-2">
                         <input
@@ -248,6 +270,7 @@ export function RecorrenciaDialog({
                       </li>
                     ))}
                   </ul>
+                  </>
                 ) : null}
               </div>
             ) : null}
@@ -265,7 +288,7 @@ export function RecorrenciaDialog({
               if (mesAnoNormalizado) onGerar(mesAnoNormalizado, quantidade, [...selecionados]);
             }}
           >
-            Gerar novas mensalidades
+            Gerar {selecionados.size > 0 ? `${selecionados.size} mensalidade${selecionados.size === 1 ? "" : "s"} selecionada${selecionados.size === 1 ? "" : "s"}` : "novas mensalidades"}
           </Button>
         </DialogFooter>
       </DialogContent>
