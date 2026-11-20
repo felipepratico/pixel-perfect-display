@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   Building2,
   CircleDollarSign,
@@ -33,15 +33,15 @@ import { useTitulos } from "@/lib/use-titulos";
 export const Route = createFileRoute("/_authenticated/clientes")({
   head: () => ({
     meta: [
-      { title: "Clientes e contratos â€” UPSYSTEM FINCONTROL" },
+      { title: "Clientes e contratos — UPSYSTEM FINCONTROL" },
       {
         name: "description",
-        content: "Cadastro de clientes, grupos, planos, mÃ³dulos e contratos.",
+        content: "Cadastro de clientes, grupos, planos, módulos e contratos.",
       },
-      { property: "og:title", content: "Clientes e contratos â€” FinControl Cloud" },
+      { property: "og:title", content: "Clientes e contratos — FinControl Cloud" },
       {
         property: "og:description",
-        content: "Cadastro de clientes, grupos, planos, mÃ³dulos e contratos.",
+        content: "Cadastro de clientes, grupos, planos, módulos e contratos.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -111,7 +111,7 @@ function ClientesPage() {
   );
   const margemValorPratico = receita - totalValorPratico;
   const erro = (error: unknown) =>
-    toast.error(error instanceof Error ? error.message : "NÃ£o foi possÃ­vel concluir.");
+    toast.error(error instanceof Error ? error.message : "Não foi possível concluir.");
 
   function salvar(values: ClienteInput, id?: string) {
     const payload = id ? { id, values } : { values };
@@ -131,7 +131,7 @@ function ClientesPage() {
           <div>
             <h1 className="text-2xl font-extrabold">Clientes e contratos</h1>
             <p className="text-sm text-muted-foreground">
-              Planos, grupos, computadores, mÃ³dulos e dados tÃ©cnicos.
+              Planos, grupos, computadores, módulos e dados técnicos.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -159,12 +159,12 @@ function ClientesPage() {
           <Metric
             icon={CircleDollarSign}
             label="Receita contratada"
-            value={valoresVisiveis ? formatCurrency(receita) : "R$ â€¢â€¢â€¢â€¢â€¢â€¢"}
+            value={valoresVisiveis ? formatCurrency(receita) : "R$ ••••••"}
           />
           <Metric
             icon={Building2}
-            label="Ticket mÃ©dio"
-            value={valoresVisiveis ? formatCurrency(ticketMedio(clientes)) : "R$ â€¢â€¢â€¢â€¢â€¢â€¢"}
+            label="Ticket médio"
+            value={valoresVisiveis ? formatCurrency(ticketMedio(clientes)) : "R$ ••••••"}
           />
           <div className="rounded-md border bg-card p-4">
             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
@@ -172,12 +172,13 @@ function ClientesPage() {
               Total Valor Prático
             </div>
             <p className="text-2xl font-extrabold">
-              {valoresVisiveis ? formatCurrency(totalValorPratico) : "R$ â€¢â€¢â€¢â€¢â€¢â€¢"}
+              {valoresVisiveis ? formatCurrency(totalValorPratico) : "R$ ••••••"}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {valoresVisiveis
                 ? `Margem: ${formatCurrency(margemValorPratico)}`
-                : "Margem: R$ â€¢â€¢â€¢â€¢â€¢â€¢"}
+                : "Margem: R$ ••••••"
+              }
             </p>
           </div>
         </section>
@@ -196,17 +197,17 @@ function ClientesPage() {
               className="pl-9"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por nome, CNPJ ou CÃ³d. Site"
+              placeholder="Buscar por nome, CNPJ ou Cód. Site"
             />
           </div>
           <select
-            aria-label="Filtrar por adimplÃªncia"
+            aria-label="Filtrar por adimplência"
             className="h-10 rounded-md border border-input bg-card px-3 text-sm"
             value={adimplenciaFiltro}
             onChange={(e) => setAdimplenciaFiltro(e.target.value)}
           >
-            <option value="all">Toda adimplÃªncia</option>
-            <option value="ADIMPLENTE">Bom padrÃ£o</option>
+            <option value="all">Toda adimplência</option>
+            <option value="ADIMPLENTE">Bom padrão</option>
             <option value="INADIMPLENTE">Inadimplente</option>
           </select>
           <select
@@ -254,10 +255,10 @@ function ClientesPage() {
                   const d = (c.cnpj || "").replace(/\D/g, "");
                   await patchCliente.mutateAsync({ id: c.id, values: { cnpj: d.padStart(14, "0") } as any });
                 }
-                toast.success(`${alvos.length} CNPJ(s) completado(s) com zeros Ã  esquerda.`);
+                toast.success(`${alvos.length} CNPJ(s) completado(s) com zeros à esquerda.`);
               }}
             >
-              Completar zeros Ã  esquerda
+              Completar zeros à esquerda
             </Button>
           ) : null}
         </section>
@@ -282,31 +283,31 @@ function ClientesPage() {
                     <td className="p-2">
                       <strong>{cliente.razao_social}</strong>
                       <p className="text-xs text-muted-foreground">
-                        {grupos.find((item) => item.id === cliente.grupo_id)?.nome ?? "Sem grupo"} Â·{" "}
-                        {cliente.cnpj || "CNPJ nÃ£o informado"}
+                        {grupos.find((item) => item.id === cliente.grupo_id)?.nome ?? "Sem grupo"} ·{" "}
+                        {cliente.cnpj || "CNPJ não informado"}
                         {(() => {
                           const d = (cliente.cnpj || "").replace(/\D/g, "");
                           return d.length > 0 && d.length < 14
-                            ? ` â€¢ ${d.length} dÃ­gitos â€¢ falta zero Ã  esquerda?`
+                            ? ` ⬢ ${d.length} dígitos ⬢ falta zero à esquerda?`
                             : "";
                         })()}
                         {cliente.nao_gerar_assinatura ? (
                           <Badge variant="secondary" className="ml-1 bg-slate-200 text-slate-700">
-                            Sem cobranÃ§a
+                            Sem cobrança
                           </Badge>
                         ) : null}{" "}
-                        {cliente.codigo_site && `CÃ³d. Site: ${cliente.codigo_site}`}
+                        {cliente.codigo_site && `Cód. Site: ${cliente.codigo_site}`}
                       </p>
                     </td>
                     <td className="p-2">
                       <Badge variant="outline">{cliente.plano}</Badge>
                       <p className="mt-1 max-w-md truncate text-xs text-muted-foreground">
-                        {cliente.modulos.join(" Â· ") || "Sem mÃ³dulos"}
+                        {cliente.modulos.join(" · ") || "Sem módulos"}
                       </p>
                     </td>
                     <td className="p-2 text-center">{cliente.quantidade_computadores}</td>
                     <td className="p-2 text-right font-bold text-brand">
-                      {valoresVisiveis ? formatCurrency(valorBoletoConsolidado(cliente, aliasesCnpj, clientes)) : "R$ â€¢â€¢â€¢â€¢â€¢â€¢"}
+                      {valoresVisiveis ? formatCurrency(valorBoletoConsolidado(cliente, aliasesCnpj, clientes)) : "R$ ••••••"}
                     </td>
                     <td className={`p-2 text-right ${valorPraticoConsolidado(cliente, aliasesCnpj, clientes) > valorBoletoConsolidado(cliente, aliasesCnpj, clientes) ? "text-amber-500" : ""}`}>
                       {valoresVisiveis ? (cliente.nao_gerar_assinatura && valorPraticoConsolidado(cliente, aliasesCnpj, clientes) === 0 ? <span className="text-muted-foreground/50">—</span> : formatCurrency(valorPraticoConsolidado(cliente, aliasesCnpj, clientes))) : "R$ ••••••"}
@@ -322,7 +323,7 @@ function ClientesPage() {
                           perfil={historicoPorCliente.get(cliente.id)!.perfil}
                         />
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">Sem lanÃ§amentos</span>
+                        <span className="text-[10px] text-muted-foreground">Sem lançamentos</span>
                       )}
                     </td>
                     <td className="p-2">
