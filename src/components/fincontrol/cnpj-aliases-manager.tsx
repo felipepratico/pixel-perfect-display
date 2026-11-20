@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { buscarAliasesCnpj, excluirAliasCnpj, salvarAliasCnpjDetalhado, type ClienteAliasCnpj } from "@/lib/conciliacao-efi";
 import { useClientes } from "@/lib/use-clientes";
 import { useTitulos } from "@/lib/use-titulos";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Cliente } from "@/lib/clientes";
 import { valorContrato } from "@/lib/clientes";
 import { formatCurrency, getVencimentoDate, parseNumber, currentMesAno } from "@/lib/fincontrol";
@@ -25,6 +27,7 @@ export function CnpjAliasesManager({
 }) {
   const { data: clientesCadastrados = [] } = useClientes();
   const { data: titulos = [] } = useTitulos();
+  const queryClient = useQueryClient();
   const [aliases, setAliases] = useState<ClienteAliasCnpj[]>([]);
   const [buscaCliente, setBuscaCliente] = useState("");
   const [dropdownAberto, setDropdownAberto] = useState(false);
@@ -192,6 +195,23 @@ export function CnpjAliasesManager({
       toast.success("Vínculo removido.");
     } catch {
       toast.error("Não foi possível remover o vínculo.");
+    }
+  }
+
+  async function alternarCobrancaPropria(cliente: Cliente, cobrancaPropria: boolean) {
+    try {
+      await supabase
+        .from("clientes")
+        .update({ nao_gerar_assinatura: !cobrancaPropria })
+        .eq("id", cliente.id);
+      await queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      toast.success(
+        cobrancaPropria
+          ? "Assinatura própria ativada para este CNPJ."
+          : "CNPJ voltou para o boleto consolidado da matriz.",
+      );
+    } catch {
+      toast.error("Não foi possível alterar a cobrança deste CNPJ.");
     }
   }
 
@@ -365,11 +385,28 @@ export function CnpjAliasesManager({
                     <span className="mr-1">•</span>
                     {pagamento}
                   </Badge>
+                  <Badge
+                    className={
+                      cliente.nao_gerar_assinatura
+                        ? "bg-slate-100 text-slate-700 hover:bg-slate-100"
+                        : "bg-indigo-100 text-indigo-700 hover:bg-indigo-100"
+                    }
+                  >
+                    {cliente.nao_gerar_assinatura ? "Boleto consolidado" : "Assinatura própria"}
+                  </Badge>
                 </div>
 
                 <div className="text-right">
                   <p className="text-sm font-bold">{dataFormatada}</p>
                   <p className="text-xs text-muted-foreground">Dia {diaVencimento}</p>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-muted-foreground">Assinatura própria</span>
+                  <Switch
+                    checked={!cliente.nao_gerar_assinatura}
+                    onCheckedChange={(checked) => alternarCobrancaPropria(cliente, checked)}
+                  />
                 </div>
 
                 <Button type="button" size="icon" variant="ghost" onClick={() => remover(alias.id)}>

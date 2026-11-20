@@ -85,10 +85,15 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
       .filter((c): c is Cliente => Boolean(c));
   }, [aliases, clientesCadastrados]);
 
+  const vinculadosConsolidados = useMemo(
+    () => clientesVinculados.filter((c) => Boolean(c.nao_gerar_assinatura)),
+    [clientesVinculados],
+  );
+
   const valorPrincipalProprio = useMemo(() => valorContrato(form), [form]);
   const valorVinculados = useMemo(
-    () => clientesVinculados.reduce((total, item) => total + valorContrato(item), 0),
-    [clientesVinculados],
+    () => vinculadosConsolidados.reduce((total, item) => total + valorContrato(item), 0),
+    [vinculadosConsolidados],
   );
   const valorBoletoTotal = useMemo(
     () => valorPrincipalProprio + valorVinculados,
@@ -98,7 +103,7 @@ export function ClienteDialog({ open, cliente, grupos, saving, onOpenChange, onC
     const manual = Number(form.valor_pratico || 0);
     if (manual > 0) return manual;
     const basePrincipal = form.plano === "COMPLETO" ? 100 : 80;
-    return basePrincipal + clientesVinculados.reduce((total, item) => total + Number(item.valor_base || 0), 0);
+    return basePrincipal + vinculadosConsolidados.reduce((total, item) => total + Number(item.valor_base || 0), 0);
   }, [form.valor_pratico, form.plano, clientesVinculados]);
 
   const update = <K extends keyof ClienteInput>(key: K, value: ClienteInput[K]) => setForm((current) => ({ ...current, [key]: value }));
