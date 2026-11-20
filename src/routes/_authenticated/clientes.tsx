@@ -310,7 +310,7 @@ function ClientesPage() {
                       {valoresVisiveis ? formatCurrency(valorBoletoConsolidado(cliente, aliasesCnpj, clientes)) : "R$ ••••••"}
                     </td>
                     <td className={`p-2 text-right ${valorPraticoConsolidado(cliente, aliasesCnpj, clientes) > valorBoletoConsolidado(cliente, aliasesCnpj, clientes) ? "text-amber-500" : ""}`}>
-                      {valoresVisiveis ? (cliente.nao_gerar_assinatura && valorPraticoConsolidado(cliente, aliasesCnpj, clientes) === 0 ? <span className="text-muted-foreground/50">—</span> : formatCurrency(valorPraticoConsolidado(cliente, aliasesCnpj, clientes))) : "R$ ••••••"}
+                      {valoresVisiveis ? (cliente.nao_gerar_assinatura ? <span className="text-muted-foreground/50">—</span> : formatCurrency(valorPraticoConsolidado(cliente, aliasesCnpj, clientes))) : "R$ ••••••"}
                     </td>
                     <td className="p-2 text-center">
                       <Badge variant={cliente.status === "ATIVO" ? "default" : "secondary"}>

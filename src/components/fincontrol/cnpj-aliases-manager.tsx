@@ -313,7 +313,8 @@ export function CnpjAliasesManager({
             }
 
             const titulo = tituloDoCliente(cliente);
-            const valor = titulo ? parseNumber(titulo.mensal_site) : valorContrato(cliente);
+            const valorUpSystem = valorContrato(cliente);
+            const valorPraticoVinculado = Number(cliente.valor_pratico || cliente.valor_base || 0);
             const dueDate = titulo
               ? getVencimentoDate(titulo)
               : getVencimentoDate({ vencimento: cliente.vencimento, mes_ano: currentMesAno() });
@@ -331,7 +332,12 @@ export function CnpjAliasesManager({
                   <p className="font-mono text-xs text-muted-foreground">{alias.cnpj}</p>
                   <p className="text-xs text-muted-foreground">
                     {cliente.telefone || "sem telefone"}
-                    <span className="ml-2 font-bold text-foreground">{formatCurrency(valor)}</span>
+                    <span className="ml-2 font-bold text-foreground">
+                      Mensalidade: {formatCurrency(valorUpSystem)}
+                    </span>
+                    <span className="ml-2 text-muted-foreground">
+                      • Prático: {formatCurrency(valorPraticoVinculado)}
+                    </span>
                   </p>
                 </div>
 
