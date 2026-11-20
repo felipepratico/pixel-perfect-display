@@ -52,9 +52,24 @@ export function RecorrenciaDialog({
       .map((t) => chaveClienteDoTitulo(t, clientes)),
   );
   const ativas = new Set<string>([
-    ...titulos.filter(isActiveSubscription).map((t) => chaveClienteDoTitulo(t, clientes)),
+    ...titulos
+      .filter(isActiveSubscription)
+      .filter((t) => {
+        const clienteTitulo = clientes.find(
+          (c) =>
+            c.id === t.cliente_id ||
+            (t.cnpj || "").replace(/\D/g, "") === (c.cnpj || "").replace(/\D/g, ""),
+        );
+        return !clienteTitulo?.nao_gerar_assinatura;
+      })
+      .map((t) => chaveClienteDoTitulo(t, clientes)),
     ...clientes
-      .filter((c) => c.status === "ATIVO" && !chavesComTitulo.has(chaveDoCliente(c)))
+      .filter(
+        (c) =>
+          c.status === "ATIVO" &&
+          !c.nao_gerar_assinatura &&
+          !chavesComTitulo.has(chaveDoCliente(c)),
+      )
       .map((c) => chaveDoCliente(c)),
   ]);
   const mesAnoNormalizado = normalizeMesAno(mesAno);
