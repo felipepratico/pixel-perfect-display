@@ -287,12 +287,13 @@ export function valorPraticoConsolidadoCliente(
     })
     .filter(Boolean) as Array<Pick<Cliente, "id" | "cnpj" | "valor_base">>;
 
+  if (cliente.valor_pratico && Number(cliente.valor_pratico) > 0) return Number(cliente.valor_pratico);
+
   const consolidado =
     Number(cliente.valor_base || 0) +
     vinculados.reduce((total, item) => total + Number(item.valor_base || 0), 0);
 
   if (consolidado > 0) return consolidado;
-  if (cliente.valor_pratico && Number(cliente.valor_pratico) > 0) return Number(cliente.valor_pratico);
   return Number(cliente.valor_base || 0);
 }
 
