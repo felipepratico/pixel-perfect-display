@@ -140,7 +140,7 @@ export function RecorrenciaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md overflow-hidden">
+      <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-3xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Gerar mensalidades em lote</DialogTitle>
           <DialogDescription>
@@ -150,7 +150,7 @@ export function RecorrenciaDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 text-sm">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto text-sm">
           <div className="space-y-1.5">
             <Label htmlFor="mesAnoInicial">Mês/ano inicial</Label>
             <Input
@@ -164,7 +164,7 @@ export function RecorrenciaDialog({
               placeholder="Ex: 11/2026"
               aria-invalid={mesAnoInvalido}
               aria-describedby="mesAnoInicial-ajuda"
-              className={`font-bold ${
+              className={`w-full box-border font-bold ${
                 mesAnoInvalido ? "border-destructive focus-visible:ring-destructive" : ""
               }`}
             />
@@ -199,7 +199,7 @@ export function RecorrenciaDialog({
             </select>
           </div>
 
-          <div className="space-y-2 rounded-xl border border-partner-border bg-partner-soft p-3 text-[11px] text-partner">
+          <div className="w-full box-border space-y-2 rounded-xl border border-partner-border bg-partner-soft p-3 text-sm text-partner">
             <p className="flex items-start gap-2">
               <RotateCw className="mt-0.5 size-3.5 shrink-0" />
               {mesAnoNormalizado ? (
@@ -247,26 +247,30 @@ export function RecorrenciaDialog({
                         {selecionados.size} selecionado(s)
                       </span>
                     </div>
-                    <ul className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-partner-border/60 bg-background/60 p-2">
+                    <ul className="max-h-72 w-full space-y-1 overflow-y-auto overflow-x-hidden rounded-md border border-partner-border/60 bg-background/60 p-2">
                     {faltantes.map((a) => (
-                      <li key={a.chave} className="flex items-center justify-between gap-2">
-                        <input
-                          type="checkbox"
-                          className="size-3.5 shrink-0"
-                          checked={selecionados.has(a.chave)}
-                          onChange={(e) => {
-                            setSelecionados((prev) => {
-                              const next = new Set(prev);
-                              if (e.target.checked) next.add(a.chave);
-                              else next.delete(a.chave);
-                              return next;
-                            });
-                          }}
-                        />
-                        <span className="min-w-0 flex-1 truncate">{a.nome}</span>
-                        <span className="shrink-0 font-mono text-[10px]">{a.cnpj || "—"}</span>
-                        <span className="shrink-0 text-[10px]">Dia {a.diaVencimento}</span>
-                        <span className="shrink-0 font-bold">{formatCurrency(a.valor)}</span>
+                      <li key={a.chave} className="flex items-center justify-between gap-3 py-2 text-sm">
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <input
+                            type="checkbox"
+                            className="size-4 shrink-0"
+                            checked={selecionados.has(a.chave)}
+                            onChange={(e) => {
+                              setSelecionados((prev) => {
+                                const next = new Set(prev);
+                                if (e.target.checked) next.add(a.chave);
+                                else next.delete(a.chave);
+                                return next;
+                              });
+                            }}
+                          />
+                          <span className="min-w-0 truncate">{a.nome}</span>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-3">
+                          <span className="font-mono text-xs">{a.cnpj || "—"}</span>
+                          <span className="text-xs">Dia {a.diaVencimento}</span>
+                          <span className="font-bold">{formatCurrency(a.valor)}</span>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -277,7 +281,7 @@ export function RecorrenciaDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
