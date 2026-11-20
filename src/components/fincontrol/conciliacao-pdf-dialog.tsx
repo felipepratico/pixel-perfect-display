@@ -180,7 +180,7 @@ export function ConciliacaoPdfDialog({
             francisco_pct: franciscoPct,
             vencimento: diaVenc,
             mes_ano: mesAnoFmt,
-            tipo_cobranca: template?.tipo_cobranca ?? "AVULSO",
+            tipo_cobranca: template?.tipo_cobranca ?? "Boleto Efí Bank",
             status_assinatura: template?.status_assinatura ?? "ATIVO",
             situacao: "PAGO",
             pago_em: dataBrParaIso(cob.data_pagamento),

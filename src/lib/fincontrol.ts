@@ -1,5 +1,5 @@
 export type Situacao = "ABERTO" | "PAGO";
-export type TipoCobranca = "RECORRENTE" | "AVULSO";
+export type TipoCobranca = "RECORRENTE" | "AVULSO" | "Boleto Efí Bank";
 export type StatusAssinatura = "ATIVO" | "CANCELADO";
 
 export type Titulo = {

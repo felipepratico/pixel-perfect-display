@@ -278,7 +278,7 @@ export function TitulosTable({
                         >
                           {titulo.tipo_cobranca === "RECORRENTE" && !ativa
                             ? "🔴 cancelada"
-                            : "avulso"}
+                            : "Boleto Efí Bank"}
                         </span>
                       )}
                     </div>
