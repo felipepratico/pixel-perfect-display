@@ -2,6 +2,7 @@ import { CircleCheck, FileCode, FileSpreadsheet, Sparkles, UploadCloud } from "l
 import { useState } from "react";
 import type * as XLSX from "xlsx";
 import { extrairTextoPdf, parseCobrancasPdf } from "@/lib/conciliacao-pdf";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -60,6 +61,13 @@ export function ImportDialog({
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Mapping>(emptyMapping);
   const [processandoPdf, setProcessandoPdf] = useState(false);
+  const [progressoPdf, setProgressoPdf] = useState<{
+    fase: "lendo" | "conciliando";
+    pagina: number;
+    total: number;
+    cobrancas: number;
+    percentual: number;
+  } | null>(null);
   const [mesAno, setMesAno] = useState(currentMesAno());
   const [erro, setErro] = useState("");
 
@@ -80,14 +88,39 @@ export function ImportDialog({
     // Se for arquivo PDF do Relatório Expresso Efí, extrai e concilia
     if (file.name.toLowerCase().endsWith(".pdf")) {
       setProcessandoPdf(true);
+      setProgressoPdf({ fase: "lendo", pagina: 0, total: 0, cobrancas: 0, percentual: 0 });
       try {
-        const texto = await extrairTextoPdf(file);
+        const texto = await extrairTextoPdf(file, (info) => {
+          const percentual = info.total > 0 ? Math.round((info.pagina / info.total) * 80) : 0;
+          setProgressoPdf({
+            fase: "lendo",
+            pagina: info.pagina,
+            total: info.total,
+            cobrancas: info.cobrancas,
+            percentual,
+          });
+        });
+        setProgressoPdf((prev) =>
+          prev ? { ...prev, fase: "conciliando", percentual: 85 } : null,
+        );
         const cobrancas = parseCobrancasPdf(texto);
+        // Validação com o resumo do PDF (primeira página).
+        const resumoMatch = texto.match(/Cobranças encontradas\s*[:：]?\s*(\d+)/i);
+        const totalResumo = resumoMatch ? parseInt(resumoMatch[1] || "0", 10) : 0;
+        if (totalResumo > 0 && cobrancas.length !== totalResumo) {
+          toast.warning(
+            `Foram lidas ${cobrancas.length} de ${totalResumo} cobranças do resumo do PDF. Verifique se o arquivo foi lido por completo.`,
+          );
+        }
         if (!cobrancas.length) {
           setErro("Não foi possível extrair cobranças deste PDF. Verifique o formato Relatório Expresso da Efí.");
           setProcessandoPdf(false);
+          setProgressoPdf(null);
           return;
         }
+        setProgressoPdf((prev) =>
+          prev ? { ...prev, fase: "conciliando", percentual: 100, cobrancas: cobrancas.length } : null,
+        );
         if (onExtratoPdf) {
           onExtratoPdf(cobrancas);
           onOpenChange(false);
@@ -97,6 +130,7 @@ export function ImportDialog({
         setErro("Não foi possível ler este arquivo PDF.");
       } finally {
         setProcessandoPdf(false);
+        setProgressoPdf(null);
       }
       return;
     }
@@ -184,6 +218,25 @@ export function ImportDialog({
             </Button>
           </div>
         )}
+
+        {processandoPdf && progressoPdf ? (
+          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-800">
+              {progressoPdf.fase === "lendo"
+                ? `Lendo relatório PDF... ${progressoPdf.percentual}%`
+                : `Conciliando registros com o sistema... ${progressoPdf.percentual}%`}
+            </p>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full bg-blue-600 transition-all"
+                style={{ width: `${progressoPdf.percentual}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-500">
+              Página {progressoPdf.pagina} de {progressoPdf.total} • {progressoPdf.cobrancas} cobranças encontradas
+            </p>
+          </div>
+        ) : null}
 
         <label className="group flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-input bg-muted/40 p-6 text-center transition hover:border-brand">
           <span className="flex size-12 items-center justify-center rounded-2xl bg-brand-soft text-brand">

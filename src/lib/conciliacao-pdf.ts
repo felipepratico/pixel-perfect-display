@@ -1,6 +1,9 @@
 import { parseNumber, type ClienteRef, type Titulo } from "@/lib/fincontrol";
 
-export async function extrairTextoPdf(file: File): Promise<string> {
+export async function extrairTextoPdf(
+  file: File,
+  onProgress?: (info: { pagina: number; total: number; cobrancas: number }) => void,
+): Promise<string> {
   const pdfjsLib: any = await import("pdfjs-dist");
   const workerMod: any = await import("pdfjs-dist/build/pdf.worker.mjs?url");
   const workerSrc = workerMod?.default ?? workerMod;
@@ -9,12 +12,15 @@ export async function extrairTextoPdf(file: File): Promise<string> {
   }
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const total = pdf.numPages;
   let text = "";
-  for (let i = 1; i <= pdf.numPages; i++) {
+  for (let i = 1; i <= total; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const strings = (content.items || []).map((it: any) => it.str || "");
     text += strings.join(" ") + "\n";
+    const cobrancas = (text.match(/N[°º]\s*Cob\.?\s*:/gi) || []).length;
+    onProgress?.({ pagina: i, total, cobrancas });
   }
   return text;
 }

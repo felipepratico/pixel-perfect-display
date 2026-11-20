@@ -435,7 +435,7 @@ export function ConciliacaoPdfDialog({
 
         <DialogFooter className="p-4 border-t bg-slate-50/50 flex items-center justify-between gap-3">
           <span className="text-xs text-slate-500">
-            {selecionados.size} de {conciliados.length} selecionada(s)
+            {selecionados.size} de {conciliados.length + corrigir.length + novoRetroativo.length} selecionada(s)
           </span>
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="text-xs">
