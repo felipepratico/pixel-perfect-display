@@ -274,8 +274,8 @@ export type Database = {
           valor_base: number
           valor_boleto: number
           valor_computador_adicional: number
-          valor_proprio: number
           valor_pratico: number
+          valor_proprio: number
           vencimento: number
           versao_instalada: string
         }
@@ -315,8 +315,8 @@ export type Database = {
           valor_base?: number
           valor_boleto?: number
           valor_computador_adicional?: number
-          valor_proprio?: number
           valor_pratico?: number
+          valor_proprio?: number
           vencimento?: number
           versao_instalada?: string
         }
@@ -356,8 +356,8 @@ export type Database = {
           valor_base?: number
           valor_boleto?: number
           valor_computador_adicional?: number
-          valor_proprio?: number
           valor_pratico?: number
+          valor_proprio?: number
           vencimento?: number
           versao_instalada?: string
         }
