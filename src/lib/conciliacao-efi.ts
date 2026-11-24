@@ -19,15 +19,45 @@ export type ItemExtratoEfi = {
   Valor: string | number;
 };
 
+/** Item do "Relatório Expresso" de cobranças da Efí (valores em centavos). */
+export type ItemRelatorioCobrancaEfi = {
+  charge_id: number | string;
+  status: string;
+  total?: number | null;
+  paid_value?: number | null;
+  paid_at?: string | null;
+  expire_at?: string | null;
+  created_at?: string | null;
+  charge_method?: string | null;
+  customer?: {
+    name?: string | null;
+    document?: string | null;
+    email?: string | null;
+    phone_number?: string | null;
+  } | null;
+  payment?: {
+    method?: string | null;
+    banking_billet?: { paid_at?: string | null; expire_at?: string | null; paid_value?: number | null } | null;
+  } | null;
+};
+
 export type ItemExtratoProcessado = {
   id: string;
-  raw: ItemExtratoEfi;
+  raw: ItemExtratoEfi | ItemRelatorioCobrancaEfi;
   cobrancaId: string | null;
   nomePagador: string;
   dataOriginal: string;
   dataIso: string;
   valor: number;
   protocolo: string;
+  /** CPF/CNPJ do pagador (apenas dígitos), quando o arquivo informa. */
+  documento: string | null;
+  /** Valor original do boleto, sem juros/multa, quando o arquivo informa. */
+  valorOriginal: number | null;
+  /** Mês de referência do vencimento no formato MM/AAAA, quando o arquivo informa. */
+  mesVencimento: string | null;
+  /** Data de vencimento original (DD/MM/AAAA), quando o arquivo informa. */
+  vencimentoOriginal: string | null;
 };
 
 export type ClienteAliasBancario = {
@@ -53,10 +83,12 @@ export type MatchConciliacao = {
   extrato: ItemExtratoProcessado;
   titulo: Titulo | null;
   clienteNome: string;
-  metodo: "alias" | "nome_exato" | "nome_similar" | "manual" | null;
+  metodo: "cnpj" | "alias" | "nome_exato" | "nome_similar" | "manual" | null;
   confianca: "alta" | "media" | "baixa" | "nenhuma";
   salvarVinculo: boolean;
   selecionadoParaBaixa: boolean;
+  /** Título do mesmo cliente e mês que já está PAGO no sistema (pagamento já baixado). */
+  tituloJaPago: Titulo | null;
 };
 
 /**
@@ -147,7 +179,130 @@ export function parseItemExtratoEfi(item: ItemExtratoEfi, index: number): ItemEx
     dataIso,
     valor,
     protocolo: String(item.Protocolo || ""),
+    documento: null,
+    valorOriginal: null,
+    mesVencimento: null,
+    vencimentoOriginal: null,
   };
+}
+
+/** Status do relatório Efí que representam pagamento confirmado. */
+export const STATUS_EFI_PAGOS = ["paid", "settled"] as const;
+
+/** Rótulos em português para status do relatório Efí. */
+export const ROTULO_STATUS_EFI: Record<string, string> = {
+  paid: "Pagas",
+  settled: "Marcadas como pagas",
+  unpaid: "Em aberto / não pagas",
+  waiting: "Aguardando pagamento",
+  canceled: "Canceladas",
+  identified: "Identificadas (aguardando confirmação)",
+  expired: "Expiradas",
+  link: "Link gerado",
+  new: "Novas",
+  refunded: "Estornadas",
+  contested: "Contestadas",
+};
+
+export function isItemRelatorioCobrancaEfi(item: unknown): item is ItemRelatorioCobrancaEfi {
+  if (!item || typeof item !== "object") return false;
+  const o = item as Record<string, unknown>;
+  return o["charge_id"] !== undefined && typeof o["status"] === "string";
+}
+
+/**
+ * Converte "AAAA-MM-DD HH:MM:SS" (horário de Brasília, como a Efí envia)
+ * em ISO e em texto "DD/MM/AAAA HH:MM".
+ */
+export function parseDataHoraEfi(valor: string | null | undefined): { iso: string; texto: string; data: string } | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(String(valor ?? "").trim());
+  if (!m) return null;
+  const [, ano, mes, dia, hh = "12", mm = "00", ss = "00"] = m;
+  const iso = new Date(`${ano}-${mes}-${dia}T${hh}:${mm}:${ss}-03:00`).toISOString();
+  const data = `${dia}/${mes}/${ano}`;
+  return { iso, texto: m[4] ? `${data} ${hh}:${mm}` : data, data };
+}
+
+/**
+ * Converte um item do Relatório Expresso da Efí em pagamento para conciliar.
+ * Retorna null para cobranças que não estão pagas (abertas, canceladas etc.).
+ */
+export function parseItemRelatorioEfi(
+  item: ItemRelatorioCobrancaEfi,
+  index: number,
+): ItemExtratoProcessado | null {
+  const status = String(item.status || "").toLowerCase();
+  if (!(STATUS_EFI_PAGOS as readonly string[]).includes(status)) return null;
+
+  const boleto = item.payment?.banking_billet ?? null;
+  const centavosPagos = item.paid_value ?? boleto?.paid_value ?? item.total ?? null;
+  if (centavosPagos === null || centavosPagos === undefined) return null;
+
+  const pagoEm = parseDataHoraEfi(item.paid_at ?? boleto?.paid_at ?? null);
+  if (!pagoEm) return null;
+
+  const vencimento = parseDataHoraEfi(item.expire_at ?? boleto?.expire_at ?? null);
+  const documento = String(item.customer?.document ?? "").replace(/\D/g, "") || null;
+  const total = item.total ?? null;
+
+  return {
+    id: `efi-${index}-${item.charge_id}`,
+    raw: item,
+    cobrancaId: String(item.charge_id),
+    nomePagador: String(item.customer?.name ?? "").trim(),
+    dataOriginal: pagoEm.texto,
+    dataIso: pagoEm.iso,
+    valor: Number((Number(centavosPagos) / 100).toFixed(2)),
+    protocolo: String(item.charge_id),
+    documento,
+    valorOriginal: total === null ? null : Number((Number(total) / 100).toFixed(2)),
+    mesVencimento: vencimento ? vencimento.data.slice(3) : null,
+    vencimentoOriginal: vencimento ? vencimento.data : null,
+  };
+}
+
+export type ResultadoLeituraArquivoEfi = {
+  formato: "relatorio" | "extrato";
+  itens: ItemExtratoProcessado[];
+  /** Cobranças não pagas que ficaram fora da baixa, por status. */
+  ignorados: Record<string, number>;
+};
+
+/**
+ * Lê o conteúdo de um arquivo JSON da Efí. Aceita o Relatório Expresso de cobranças
+ * (charge_id, customer, paid_value) e o extrato simples (Tipo, Data, Valor).
+ */
+export function lerArquivoEfi(conteudo: unknown): ResultadoLeituraArquivoEfi {
+  const obj = conteudo as Record<string, unknown> | null;
+  const lista: unknown[] = Array.isArray(conteudo)
+    ? conteudo
+    : obj && Array.isArray(obj["data"])
+      ? (obj["data"] as unknown[])
+      : obj && Array.isArray(obj["items"])
+        ? (obj["items"] as unknown[])
+        : obj
+          ? [obj]
+          : [];
+
+  if (lista.some(isItemRelatorioCobrancaEfi)) {
+    const itens: ItemExtratoProcessado[] = [];
+    const ignorados: Record<string, number> = {};
+    lista.forEach((it, idx) => {
+      if (!isItemRelatorioCobrancaEfi(it)) return;
+      const processado = parseItemRelatorioEfi(it, idx);
+      if (processado) itens.push(processado);
+      else {
+        const st = String(it.status || "desconhecido").toLowerCase();
+        ignorados[st] = (ignorados[st] ?? 0) + 1;
+      }
+    });
+    return { formato: "relatorio", itens, ignorados };
+  }
+
+  const itens = lista
+    .map((it, idx) => parseItemExtratoEfi(it as ItemExtratoEfi, idx))
+    .filter((it): it is ItemExtratoProcessado => it !== null);
+  return { formato: "extrato", itens, ignorados: {} };
 }
 
 /**
@@ -385,9 +540,12 @@ export function conciliarItensExtrato({
   cnpjAliases = [],
   aliasesCNPJ = [],
   vinculosCnpj = [],
+  titulosPagos = [],
 }: {
   itens: ItemExtratoProcessado[];
   titulosAbertos: Titulo[];
+  /** Títulos já pagos, para reconhecer pagamentos que já foram baixados. */
+  titulosPagos?: Titulo[];
   aliases: ClienteAliasBancario[];
   clientesCadastrados?: ClienteRef[];
   aliasesCnpj?: ClienteAliasCnpj[];
@@ -414,8 +572,67 @@ export function conciliarItensExtrato({
   const titulosDisponiveis = [...titulosAbertos];
   const titulosUsados = new Set<string>();
 
-  return itens.map((item) => {
+  const digitos = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "");
+
+  /** Títulos do cliente dono do documento (CNPJ direto ou cadastro principal vinculado). */
+  function titulosDoDocumento(lista: Titulo[], doc: string): Titulo[] {
+    const clientePrincipal = resolverClientePrincipalPorCnpj(doc, cnpjAliasesMesclados, clientesCadastrados);
+    return lista.filter((t) => {
+      if (digitos(t.cnpj) === doc) return true;
+      if (!clientePrincipal) return false;
+      const cId = t.cliente_id ?? clienteIdDoTitulo(t, clientesCadastrados, cnpjAliasesMesclados);
+      return cId === clientePrincipal;
+    });
+  }
+
+  const pagosUsados = new Set<string>();
+  function acharJaPago(item: ItemExtratoProcessado): Titulo | null {
+    if (!item.documento || !item.mesVencimento) return null;
+    const achado = titulosDoDocumento(titulosPagos, item.documento).find(
+      (t) => !pagosUsados.has(t.id) && t.mes_ano === item.mesVencimento && !t.deleted_at,
+    );
+    if (!achado) return null;
+    pagosUsados.add(achado.id);
+    return achado;
+  }
+
+  return itens.map((item): MatchConciliacao => {
+    const base = conciliarItem(item);
+    return { ...base, tituloJaPago: base.titulo ? null : acharJaPago(item) };
+  });
+
+  function conciliarItem(item: ItemExtratoProcessado): Omit<MatchConciliacao, "tituloJaPago"> {
     const nomeNorm = normalizarNomeParaComparacao(item.nomePagador);
+    const valorRef = item.valorOriginal ?? item.valor;
+
+    // 0. Passo: busca pelo CPF/CNPJ do pagador (relatório oficial da Efí)
+    if (item.documento) {
+      const candidatos = titulosDoDocumento(titulosDisponiveis, item.documento).filter(
+        (t) => !titulosUsados.has(t.id),
+      );
+
+      if (candidatos.length > 0) {
+        candidatos.sort((a, b) => {
+          const mesA = item.mesVencimento && a.mes_ano === item.mesVencimento ? 0 : 1;
+          const mesB = item.mesVencimento && b.mes_ano === item.mesVencimento ? 0 : 1;
+          if (mesA !== mesB) return mesA - mesB;
+          const diffA = Math.abs(parseNumber(a.mensal_site) - valorRef);
+          const diffB = Math.abs(parseNumber(b.mensal_site) - valorRef);
+          return diffA - diffB;
+        });
+        const escolhido = candidatos[0]!;
+        titulosUsados.add(escolhido.id);
+        return {
+          extrato: item,
+          titulo: escolhido,
+          clienteNome: escolhido.cliente,
+          metodo: "cnpj",
+          confianca: "alta",
+          salvarVinculo: false,
+          selecionadoParaBaixa: true,
+        };
+      }
+    }
 
     // 1. Passo: busca por alias bancário
     const clienteIdPorAlias = mapAliases.get(nomeNorm);
@@ -430,8 +647,8 @@ export function conciliarItensExtrato({
       if (candidatos.length > 0) {
         // Prioriza o que tem o mesmo valor ou valor mais próximo
         candidatos.sort((a, b) => {
-          const diffA = Math.abs(parseNumber(a.mensal_site) - item.valor);
-          const diffB = Math.abs(parseNumber(b.mensal_site) - item.valor);
+          const diffA = Math.abs(parseNumber(a.mensal_site) - valorRef);
+          const diffB = Math.abs(parseNumber(b.mensal_site) - valorRef);
           return diffA - diffB;
         });
 
@@ -478,7 +695,7 @@ export function conciliarItensExtrato({
 
       const maiorSim = Math.max(sim, simCadastro);
       const valorTitulo = parseNumber(t.mensal_site);
-      const mesmoValor = Math.abs(valorTitulo - item.valor) < 0.05;
+      const mesmoValor = Math.abs(valorTitulo - valorRef) < 0.05;
 
       // Se há alguma similaridade razoável (>= 0.4) ou se os nomes são iguais
       if (maiorSim >= 0.4) {
@@ -523,7 +740,7 @@ export function conciliarItensExtrato({
       salvarVinculo: true,
       selecionadoParaBaixa: false,
     };
-  });
+  }
 }
 
 /**

@@ -17,5 +17,6 @@
 - [x] Add overdue titles detection, badge indicator, and quick filter button
 - [x] Integrate Google Gemini AI financial diagnosis and smart collection copywriter
 - [x] WhatsApp billing send queue ("Enviar próximo", progress, skip)
+- [x] Read the official Efí charge report (JSON) in reconciliation, matching by CPF/CNPJ and flagging already-paid titles
 - [ ] Billing emails per title (blocked: user must set up a sender email domain)
 - [ ] Fully automatic WhatsApp sending (blocked: needs WhatsApp Business connection approved by Meta)

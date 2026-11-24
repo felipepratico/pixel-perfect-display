@@ -16,7 +16,7 @@ import {
   UploadCloud,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -42,10 +42,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   calcularValoresBaixaTitulo,
   conciliarItensExtrato,
-  parseItemExtratoEfi,
+  lerArquivoEfi,
+  ROTULO_STATUS_EFI,
   salvarAliasBancario,
   type ClienteAliasBancario,
-  type ItemExtratoEfi,
   type MatchConciliacao,
 } from "@/lib/conciliacao-efi";
 import type { ConfiguracoesFinanceiras } from "@/lib/configuracoes-financeiras";
@@ -55,6 +55,7 @@ import { useTituloMutations } from "@/lib/use-titulos";
 export function ConciliacaoEfiDialog({
   open,
   titulosAbertos,
+  titulosPagos = [],
   clientesCadastrados,
   aliasesBancarios,
   aliasesCnpj,
@@ -65,78 +66,76 @@ export function ConciliacaoEfiDialog({
 }: {
   open: boolean;
   titulosAbertos: Titulo[];
+  titulosPagos?: Titulo[];
   clientesCadastrados: ClienteRef[];
   aliasesBancarios: ClienteAliasBancario[];
   aliasesCnpj?: any[];
   configFinanceira: ConfiguracoesFinanceiras | null;
-  initialJsonData?: ItemExtratoEfi[] | null;
+  initialJsonData?: unknown[] | null;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }) {
   const { patchMany } = useTituloMutations();
 
   const [matches, setMatches] = useState<MatchConciliacao[]>([]);
-  const [activeTab, setActiveTab] = useState<"encontrados" | "nao-encontrados">("encontrados");
+  const [activeTab, setActiveTab] = useState<"encontrados" | "ja-baixados" | "nao-encontrados">("encontrados");
   const [carregandoArquivo, setCarregandoArquivo] = useState(false);
   const [erroArquivo, setErroArquivo] = useState<string | null>(null);
   const [salvandoBaixa, setSalvandoBaixa] = useState(false);
   const [filtroBusca, setFiltroBusca] = useState("");
 
+  const [ignorados, setIgnorados] = useState<Record<string, number>>({});
+  const [formatoArquivo, setFormatoArquivo] = useState<"relatorio" | "extrato" | null>(null);
+
+  // Lê o conteúdo JSON (relatório de cobranças ou extrato) e concilia com os títulos abertos
+  function conciliarConteudo(conteudo: unknown): boolean {
+    const leitura = lerArquivoEfi(conteudo);
+    setIgnorados(leitura.ignorados);
+    setFormatoArquivo(leitura.formato);
+
+    if (leitura.itens.length === 0) {
+      const totalIgnorados = Object.values(leitura.ignorados).reduce((a, b) => a + b, 0);
+      setErroArquivo(
+        totalIgnorados > 0
+          ? `O arquivo tem ${totalIgnorados} cobrança(s), mas nenhuma está paga.`
+          : "Não encontramos pagamentos neste arquivo. Use o relatório de cobranças ou o extrato JSON da Efí.",
+      );
+      return false;
+    }
+
+    const resultado = conciliarItensExtrato({
+      itens: leitura.itens,
+      titulosAbertos,
+      aliases: aliasesBancarios,
+      aliasesCnpj: aliasesCnpj ?? [],
+      clientesCadastrados,
+      titulosPagos,
+    });
+    setMatches(resultado);
+
+    const encontradosCount = resultado.filter((m) => m.titulo !== null).length;
+    const jaBaixadosCount = resultado.filter((m) => m.titulo === null && m.tituloJaPago).length;
+    const naoEncontradosCount = resultado.length - encontradosCount - jaBaixadosCount;
+    toast.success(
+      `${resultado.length} pagamento(s) lido(s): ${encontradosCount} para baixar, ${jaBaixadosCount} já baixado(s) e ${naoEncontradosCount} não encontrado(s).`,
+    );
+    setActiveTab(
+      encontradosCount > 0
+        ? "encontrados"
+        : naoEncontradosCount > 0
+          ? "nao-encontrados"
+          : "ja-baixados",
+    );
+    return true;
+  }
+
   // Processa arquivo JSON carregado pelo usuário
   async function processarArquivoJson(file: File) {
     setCarregandoArquivo(true);
     setErroArquivo(null);
-
     try {
       const text = await file.text();
-      const json = JSON.parse(text);
-
-      const arrayItens: ItemExtratoEfi[] = Array.isArray(json)
-        ? json
-        : Array.isArray(json.data)
-          ? json.data
-          : Array.isArray(json.items)
-            ? json.items
-            : [json];
-
-      if (arrayItens.length === 0) {
-        setErroArquivo("O arquivo JSON não contém lançamentos de extrato válidos.");
-        setCarregandoArquivo(false);
-        return;
-      }
-
-      const itensProcessados = arrayItens
-        .map((it, idx) => parseItemExtratoEfi(it, idx))
-        .filter((it): it is NonNullable<typeof it> => it !== null);
-
-      if (itensProcessados.length === 0) {
-        setErroArquivo("Nenhum item válido com campo 'Tipo' foi encontrado no JSON.");
-        setCarregandoArquivo(false);
-        return;
-      }
-
-      const resultado = conciliarItensExtrato({
-        itens: itensProcessados,
-        titulosAbertos,
-        aliases: aliasesBancarios,
-        aliasesCnpj: aliasesCnpj ?? [],
-        clientesCadastrados,
-      });
-
-      setMatches(resultado);
-
-      const encontradosCount = resultado.filter((m) => m.titulo !== null).length;
-      const naoEncontradosCount = resultado.length - encontradosCount;
-
-      toast.success(
-        `Extrato lido com sucesso: ${encontradosCount} identificado(s) e ${naoEncontradosCount} pendente(s).`,
-      );
-
-      if (encontradosCount === 0 && naoEncontradosCount > 0) {
-        setActiveTab("nao-encontrados");
-      } else {
-        setActiveTab("encontrados");
-      }
+      conciliarConteudo(JSON.parse(text));
     } catch (err) {
       console.error("Erro ao ler JSON da Efí:", err);
       setErroArquivo(
@@ -147,23 +146,14 @@ export function ConciliacaoEfiDialog({
     }
   }
 
-  // Se já veio com dados iniciais (ex: selecionado pelo dialog principal)
-  useMemo(() => {
-    if (initialJsonData && initialJsonData.length > 0 && matches.length === 0) {
-      const itens = initialJsonData
-        .map((it, idx) => parseItemExtratoEfi(it, idx))
-        .filter((it): it is NonNullable<typeof it> => it !== null);
-
-      const res = conciliarItensExtrato({
-        itens,
-        titulosAbertos,
-        aliases: aliasesBancarios,
-        aliasesCnpj: aliasesCnpj ?? [],
-        clientesCadastrados,
-      });
-      setMatches(res);
+  // Se já veio com dados iniciais (ex: arquivo escolhido na tela de importação)
+  useEffect(() => {
+    if (open && initialJsonData && initialJsonData.length > 0 && matches.length === 0) {
+      setErroArquivo(null);
+      conciliarConteudo(initialJsonData);
     }
-  }, [initialJsonData, titulosAbertos, aliasesBancarios, clientesCadastrados, matches.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialJsonData]);
 
   const encontrados = useMemo(
     () => matches.filter((m) => m.titulo !== null),
@@ -171,7 +161,12 @@ export function ConciliacaoEfiDialog({
   );
 
   const naoEncontrados = useMemo(
-    () => matches.filter((m) => m.titulo === null),
+    () => matches.filter((m) => m.titulo === null && !m.tituloJaPago),
+    [matches],
+  );
+
+  const jaBaixados = useMemo(
+    () => matches.filter((m) => m.titulo === null && m.tituloJaPago),
     [matches],
   );
 
@@ -324,6 +319,13 @@ export function ConciliacaoEfiDialog({
 
   function badgeMetodo(metodo: MatchConciliacao["metodo"]) {
     switch (metodo) {
+      case "cnpj":
+        return (
+          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 gap-1 text-[10px]">
+            <CheckCircle2 className="size-3" />
+            CNPJ/CPF
+          </Badge>
+        );
       case "alias":
         return (
           <Badge className="bg-purple-100 text-purple-800 border-purple-200 gap-1 text-[10px]">
@@ -380,7 +382,11 @@ export function ConciliacaoEfiDialog({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setMatches([])}
+                onClick={() => {
+                  setMatches([]);
+                  setIgnorados({});
+                  setFormatoArquivo(null);
+                }}
                 className="text-xs text-slate-500 hover:text-slate-900"
               >
                 Trocar arquivo
@@ -401,8 +407,8 @@ export function ConciliacaoEfiDialog({
                   Selecione ou arraste seu extrato JSON da Efí
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  Formatos aceitos: arquivos <strong>.json</strong> exportados da Efí Bank (extrato
-                  ou recebimentos de cobrança).
+                  Aceita o <strong>Relatório de cobranças</strong> da Efí (.json) e o extrato JSON
+                  simples.
                 </p>
               </div>
               <input
@@ -438,15 +444,13 @@ export function ConciliacaoEfiDialog({
               </p>
               <ul className="list-disc pl-4 space-y-1 text-slate-500">
                 <li>
-                  Lê pagamentos como:{" "}
-                  <code className="text-slate-800 font-mono text-[11px] bg-slate-100 px-1 rounded">
-                    Recebimento de cobrança • 1080800445 de MINI MERCADO
-                  </code>
+                  Considera só cobranças pagas; abertas e canceladas aparecem apenas no resumo.
                 </li>
                 <li>
-                  Localiza lançamentos em aberto prioritariamente por vínculos bancários salvos e
-                  depois por similaridade de nome e valor.
+                  Encontra o cliente pelo CNPJ/CPF (incluindo CNPJs vinculados à matriz), depois
+                  por vínculos salvos e por nome e valor.
                 </li>
+                <li>Usa a data e o horário exatos do pagamento e o valor pago com juros.</li>
                 <li>
                   Ao confirmar, os juros/multas ficam 100% com você e o repasse é calculado apenas
                   sobre o valor nominal.
@@ -457,15 +461,28 @@ export function ConciliacaoEfiDialog({
         ) : (
           /* Visualizador de Conciliação em 2 Abas */
           <div className="flex-1 overflow-hidden flex flex-col p-6 space-y-4">
+            {formatoArquivo === "relatorio" && Object.keys(ignorados).length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-[11px] text-slate-600">
+                <span className="font-semibold text-slate-800">Fora da baixa:</span>
+                {Object.entries(ignorados).map(([status, qtd]) => (
+                  <Badge key={status} variant="outline" className="text-[10px]">
+                    {ROTULO_STATUS_EFI[status] ?? status}: {qtd}
+                  </Badge>
+                ))}
+              </div>
+            )}
             <Tabs
               value={activeTab}
               onValueChange={(v) => setActiveTab(v as any)}
               className="flex-1 flex flex-col overflow-hidden"
             >
               <div className="flex items-center justify-between pb-2 border-b">
-                <TabsList className="grid grid-cols-2 w-72">
+                <TabsList className="grid grid-cols-3 w-[26rem] max-w-full">
                   <TabsTrigger value="encontrados" className="text-xs font-semibold">
-                    Encontrados ({encontrados.length})
+                    Para baixar ({encontrados.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="ja-baixados" className="text-xs font-semibold">
+                    Já baixados ({jaBaixados.length})
                   </TabsTrigger>
                   <TabsTrigger value="nao-encontrados" className="text-xs font-semibold">
                     Não Encontrados ({naoEncontrados.length})
@@ -505,7 +522,9 @@ export function ConciliacaoEfiDialog({
                 ) : (
                   encontrados.map((m) => {
                     const t = m.titulo!;
-                    const mesmoValor = Math.abs(parseNumber(t.mensal_site) - m.extrato.valor) < 0.05;
+                    const valorOriginal = m.extrato.valorOriginal ?? m.extrato.valor;
+                    const mesmoValor = Math.abs(parseNumber(t.mensal_site) - valorOriginal) < 0.05;
+                    const encargos = Number((m.extrato.valor - valorOriginal).toFixed(2));
 
                     return (
                       <div
@@ -541,6 +560,14 @@ export function ConciliacaoEfiDialog({
                               <span>• Mês {t.mes_ano}</span>
                               <span>• Vencimento dia {t.vencimento}</span>
                             </div>
+                            {(m.extrato.documento || m.extrato.vencimentoOriginal) && (
+                              <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
+                                {m.extrato.documento && <span>Doc. {m.extrato.documento}</span>}
+                                {m.extrato.vencimentoOriginal && (
+                                  <span>• Boleto vencia em {m.extrato.vencimentoOriginal}</span>
+                                )}
+                              </div>
+                            )}
 
                             {m.salvarVinculo && (
                               <label className="flex items-center gap-1.5 text-[11px] text-purple-700 font-medium cursor-pointer pt-0.5 select-none">
@@ -563,6 +590,11 @@ export function ConciliacaoEfiDialog({
                             <div className="text-[11px] text-slate-400">
                               Pago em {m.extrato.dataOriginal}
                             </div>
+                            {encargos > 0.004 && (
+                              <div className="text-[10px] text-amber-600 font-medium">
+                                Boleto {formatCurrency(valorOriginal)} + juros {formatCurrency(encargos)}
+                              </div>
+                            )}
                             {!mesmoValor && (
                               <div className="text-[10px] text-amber-600 font-medium">
                                 Nominal: {formatCurrency(parseNumber(t.mensal_site))}
@@ -586,6 +618,81 @@ export function ConciliacaoEfiDialog({
                 )}
               </TabsContent>
 
+              {/* ABA: JÁ BAIXADOS NO SISTEMA */}
+              <TabsContent
+                value="ja-baixados"
+                className="flex-1 overflow-y-auto scroll-slim space-y-2 mt-3 pr-1"
+              >
+                {jaBaixados.length === 0 ? (
+                  <div className="py-12 text-center text-sm text-slate-500">
+                    Nenhum pagamento deste arquivo já estava baixado no sistema.
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-[11px] text-slate-500">
+                      Estes pagamentos já estão como PAGO no sistema para o mesmo cliente e mês. Nada
+                      será alterado neles.
+                    </p>
+                    {jaBaixados.map((m) => {
+                      const t = m.tituloJaPago!;
+                      const pagoSistema = t.pago_em ? new Date(t.pago_em) : null;
+                      const dataSistema = pagoSistema
+                        ? pagoSistema.toLocaleDateString("pt-BR")
+                        : "sem data";
+                      const horaSistema = pagoSistema
+                        ? pagoSistema.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+                        : "";
+                      const dataEfi = m.extrato.dataOriginal.slice(0, 10);
+                      const valorSistema = parseNumber(t.valor_total ?? t.mensal_site);
+                      const dataDiferente = dataSistema !== dataEfi;
+                      const valorDiferente = Math.abs(valorSistema - m.extrato.valor) >= 0.05;
+                      return (
+                        <div
+                          key={m.extrato.id}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl border border-slate-200 bg-white"
+                        >
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-bold text-sm text-slate-900 truncate">
+                                {t.cliente}
+                              </span>
+                              {dataDiferente || valorDiferente ? (
+                                <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px]">
+                                  {dataDiferente && valorDiferente
+                                    ? "Data e valor diferentes"
+                                    : dataDiferente
+                                      ? "Data diferente"
+                                      : "Valor diferente"}
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 gap-1 text-[10px]">
+                                  <Check className="size-3" />
+                                  Confere
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400">
+                              Mês {t.mes_ano} · Efí: {m.extrato.nomePagador}
+                              {m.extrato.documento ? ` · Doc. ${m.extrato.documento}` : ""}
+                            </p>
+                          </div>
+                          <div className="text-right text-[11px] shrink-0 space-y-0.5">
+                            <div className="text-slate-600">
+                              Efí: <strong className="tabular-nums">{formatCurrency(m.extrato.valor)}</strong>{" "}
+                              em {m.extrato.dataOriginal}
+                            </div>
+                            <div className={dataDiferente || valorDiferente ? "text-amber-600" : "text-slate-400"}>
+                              Sistema: <span className="tabular-nums">{formatCurrency(valorSistema)}</span> em{" "}
+                              {dataSistema} {horaSistema}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              </TabsContent>
+
               {/* ABA 2: NÃO ENCONTRADOS */}
               <TabsContent
                 value="nao-encontrados"
@@ -595,7 +702,7 @@ export function ConciliacaoEfiDialog({
                   <div className="py-12 text-center text-slate-500 space-y-2">
                     <CheckCircle2 className="size-8 mx-auto text-emerald-500" />
                     <p className="text-sm font-semibold">
-                      Todos os pagamentos do extrato foram conciliados!
+                      Nenhum pagamento ficou sem cliente identificado.
                     </p>
                     <p className="text-xs text-slate-400">
                       Volte para a aba <strong>Encontrados</strong> para confirmar a baixa em lote.
@@ -605,8 +712,9 @@ export function ConciliacaoEfiDialog({
                   naoEncontrados.map((m) => {
                     // Ordena títulos abertos destacando os que possuem o mesmo valor do extrato
                     const titulosOrdenados = [...titulosAbertos].sort((a, b) => {
-                      const diffA = Math.abs(parseNumber(a.mensal_site) - m.extrato.valor);
-                      const diffB = Math.abs(parseNumber(b.mensal_site) - m.extrato.valor);
+                      const ref = m.extrato.valorOriginal ?? m.extrato.valor;
+                      const diffA = Math.abs(parseNumber(a.mensal_site) - ref);
+                      const diffB = Math.abs(parseNumber(b.mensal_site) - ref);
                       return diffA - diffB;
                     });
 
@@ -626,8 +734,13 @@ export function ConciliacaoEfiDialog({
                               </Badge>
                             </div>
                             <p className="text-xs text-slate-400 mt-0.5">
-                              {m.extrato.cobrancaId ? `Cobrança • ${m.extrato.cobrancaId} · ` : ""}
-                              Protocolo: {m.extrato.protocolo}
+                              {m.extrato.cobrancaId ? `Cobrança • ${m.extrato.cobrancaId}` : ""}
+                              {m.extrato.documento
+                                ? ` · Doc. ${m.extrato.documento}`
+                                : ` · Protocolo: ${m.extrato.protocolo}`}
+                              {m.extrato.vencimentoOriginal
+                                ? ` · Venc. ${m.extrato.vencimentoOriginal}`
+                                : ""}
                             </p>
                           </div>
                           <div className="text-right">
@@ -660,7 +773,10 @@ export function ConciliacaoEfiDialog({
                             <SelectContent className="max-h-60">
                               {titulosOrdenados.map((t) => {
                                 const mesmoValor =
-                                  Math.abs(parseNumber(t.mensal_site) - m.extrato.valor) < 0.05;
+                                  Math.abs(
+                                    parseNumber(t.mensal_site) -
+                                      (m.extrato.valorOriginal ?? m.extrato.valor),
+                                  ) < 0.05;
 
                                 return (
                                   <SelectItem key={t.id} value={t.id} className="text-xs py-2">

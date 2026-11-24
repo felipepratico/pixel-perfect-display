@@ -200,6 +200,10 @@ function Painel() {
     () => todos.filter((t) => t.situacao === "ABERTO" && !t.deleted_at),
     [todos],
   );
+  const titulosPagos = useMemo(
+    () => todos.filter((t) => t.situacao === "PAGO" && !t.deleted_at),
+    [todos],
+  );
 
   function imprimir(lista: Titulo[], subtitulo: string) {
     if (!lista.length) {
@@ -1113,6 +1117,7 @@ function Painel() {
       <ConciliacaoEfiDialog
         open={conciliacaoOpen}
         titulosAbertos={titulosAbertos}
+        titulosPagos={titulosPagos}
         clientesCadastrados={clientesCadastrados}
         aliasesBancarios={aliasesBancarios}
         aliasesCnpj={aliasesCnpj}

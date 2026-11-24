@@ -3,6 +3,7 @@ import {
   calcularSimilaridadeNomes,
   calcularValoresBaixaTitulo,
   conciliarItensExtrato,
+  lerArquivoEfi,
   normalizarNomeParaComparacao,
   parseItemExtratoEfi,
   type ItemExtratoEfi,
@@ -191,5 +192,95 @@ describe("conciliacao-efi", () => {
     expect(baixaComJuros.valor_total).toBe(84.21);
     expect(baixaComJuros.dias_atraso).toBe(6);
   });
-});
 
+  describe("relatório de cobranças da Efí", () => {
+    const tituloBase: Titulo = {
+      id: "tit-out",
+      cliente_id: "cli-alex",
+      cliente: "ALEXANDRE PINHEIRO DA COSTA",
+      cnpj: "05.043.018/0001-94",
+      telefone: "",
+      nome_contato: null,
+      mensal_site: 70,
+      mensal_real: 70,
+      custo_boleto: 3.45,
+      francisco_pct: 5,
+      vencimento: 5,
+      mes_ano: "10/2026",
+      tipo_cobranca: "RECORRENTE",
+      status_assinatura: "ATIVO",
+      situacao: "ABERTO",
+      deleted_at: null,
+      pago_em: null,
+      forma_pagamento: null,
+      dias_atraso: null,
+      efi_status: "",
+      efi_link_pagamento: "",
+      efi_linha_digitavel: "",
+    };
+
+    const relatorio = [
+      {
+        charge_id: 1080581062,
+        status: "paid",
+        total: 7000,
+        paid_value: 7368,
+        paid_at: "2026-11-13 15:21:58",
+        expire_at: "2026-11-05 12:00:00",
+        customer: { name: "ALEXANDRE PINHEIRO DA COSTA", document: "05043018000194" },
+      },
+      { charge_id: 2, status: "unpaid", total: 20000, paid_value: null, paid_at: null, customer: { name: "X", document: "1" } },
+      { charge_id: 3, status: "canceled", total: 20000, paid_value: null, paid_at: null, customer: { name: "Y", document: "2" } },
+    ];
+
+    it("lê só as cobranças pagas, com valor pago em reais e horário de Brasília", () => {
+      const leitura = lerArquivoEfi(relatorio);
+      expect(leitura.formato).toBe("relatorio");
+      expect(leitura.itens).toHaveLength(1);
+      expect(leitura.ignorados).toEqual({ unpaid: 1, canceled: 1 });
+      const item = leitura.itens[0]!;
+      expect(item.valor).toBe(73.68);
+      expect(item.valorOriginal).toBe(70);
+      expect(item.documento).toBe("05043018000194");
+      expect(item.mesVencimento).toBe("11/2026");
+      expect(item.dataOriginal).toBe("13/11/2026 15:21");
+      expect(item.dataIso).toBe("2026-11-13T18:21:58.000Z");
+    });
+
+    it("encontra o título pelo CNPJ e prefere o mês do vencimento do boleto", () => {
+      const { itens } = lerArquivoEfi(relatorio);
+      const titulos: Titulo[] = [
+        tituloBase,
+        { ...tituloBase, id: "tit-nov", mes_ano: "11/2026" },
+      ];
+      const [match] = conciliarItensExtrato({ itens, titulosAbertos: titulos, aliases: [] });
+      expect(match?.metodo).toBe("cnpj");
+      expect(match?.titulo?.id).toBe("tit-nov");
+    });
+
+    it("encontra o título da matriz quando o boleto sai no CNPJ de uma filial vinculada", () => {
+      const filial = [{ ...relatorio[0]!, customer: { name: "FILIAL", document: "11222333000144" } }];
+      const { itens } = lerArquivoEfi(filial);
+      const [match] = conciliarItensExtrato({
+        itens,
+        titulosAbertos: [{ ...tituloBase, mes_ano: "11/2026" }],
+        aliases: [],
+        aliasesCnpj: [{ id: "a1", cliente_id: "cli-alex", cnpj: "11.222.333/0001-44" }],
+      });
+      expect(match?.metodo).toBe("cnpj");
+      expect(match?.titulo?.id).toBe("tit-out");
+    });
+
+    it("reconhece pagamento já baixado no sistema para o mesmo cliente e mês", () => {
+      const { itens } = lerArquivoEfi(relatorio);
+      const [match] = conciliarItensExtrato({
+        itens,
+        titulosAbertos: [],
+        titulosPagos: [{ ...tituloBase, id: "tit-pago", mes_ano: "11/2026", situacao: "PAGO" }],
+        aliases: [],
+      });
+      expect(match?.titulo).toBeNull();
+      expect(match?.tituloJaPago?.id).toBe("tit-pago");
+    });
+  });
+});
