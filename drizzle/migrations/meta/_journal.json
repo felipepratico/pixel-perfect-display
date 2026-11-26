@@ -64,6 +64,13 @@
       "when": 1795091442200,
       "tag": "0008_clientes_nao_gerar_assinatura_apply",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795663311951,
+      "tag": "0009_aliases_bancarios_rls",
+      "breakpoints": true
     }
   ]
 }

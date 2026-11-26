@@ -1,9 +1,49 @@
-import { AlertTriangle, Clock, MessageCircle, Wallet } from "lucide-react";
+import type { ComponentType } from "react";
+import {
+  Banknote,
+  HandCoins,
+  MessageCircle,
+  PieChart,
+  ShieldAlert,
+  Wallet,
+} from "lucide-react";
 
 import { useCountUp } from "@/hooks/use-count-up";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/fincontrol";
 import type { Totais } from "@/lib/totais";
+
+type IconComponent = ComponentType<{
+  className?: string;
+  fill?: string;
+  strokeWidth?: number;
+  absoluteStrokeWidth?: boolean;
+}>;
+
+// Ícone solid (preenchido) dentro de um pequeno círculo no canto superior direito do card.
+function KpiIcon({
+  icon: Icon,
+  tom,
+}: {
+  icon: IconComponent;
+  tom: "azul" | "cinza";
+}) {
+  return (
+    <span
+      className={`flex size-7 shrink-0 items-center justify-center rounded-full ${
+        tom === "azul" ? "bg-[#0f2a52]/10 text-[#1e3a8a]" : "bg-slate-100 text-slate-600"
+      }`}
+      aria-hidden="true"
+    >
+      <Icon
+        className="size-3.5"
+        fill="currentColor"
+        strokeWidth={1.5}
+        absoluteStrokeWidth
+      />
+    </span>
+  );
+}
 
 export function KpiCards({
   totais,
@@ -38,9 +78,7 @@ export function KpiCards({
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
             MENSAL TOTAL
           </p>
-          <div className="rounded-lg bg-slate-100 p-1.5 text-slate-700">
-            <Wallet className="size-3.5" />
-          </div>
+          <KpiIcon icon={Wallet} tom="azul" />
         </div>
         <div className="my-1.5">
           <h3 className={`text-lg font-black tracking-tight text-slate-900 tabular-nums`}>
@@ -61,9 +99,7 @@ export function KpiCards({
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
             LUCRO FELIPE (LÍQUIDO)
           </p>
-          <div className="rounded-lg bg-slate-100 p-1.5 text-slate-700">
-            <Wallet className="size-3.5" />
-          </div>
+          <KpiIcon icon={Banknote} tom="azul" />
         </div>
         <div className="my-1.5">
           <h3 className={`text-lg font-black tracking-tight text-slate-900 tabular-nums`}>
@@ -85,9 +121,7 @@ export function KpiCards({
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
             LUCRO FRANCISCO
           </p>
-          <div className="rounded-lg bg-slate-100 p-1.5 text-slate-700">
-            <Wallet className="size-3.5" />
-          </div>
+          <KpiIcon icon={HandCoins} tom="azul" />
         </div>
         <div className="my-1.5">
           <h3 className={`text-lg font-black tracking-tight text-slate-900 tabular-nums`}>
@@ -106,9 +140,7 @@ export function KpiCards({
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
             RECEBIDO X EM ABERTO
           </p>
-          <div className="rounded-lg bg-slate-100 p-1.5 text-slate-700">
-            <Clock className="size-3.5" />
-          </div>
+          <KpiIcon icon={PieChart} tom="cinza" />
         </div>
         <div className="my-1.5">
           <h3 className={`text-lg font-black tracking-tight text-slate-900 tabular-nums`}>
@@ -141,9 +173,7 @@ export function KpiCards({
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
             INADIMPLÊNCIA
           </p>
-          <div className="rounded-lg bg-slate-100 p-1.5 text-slate-700">
-            <AlertTriangle className="size-3.5" />
-          </div>
+          <KpiIcon icon={ShieldAlert} tom="cinza" />
         </div>
         <div className="my-1.5">
           <h3 className={`text-lg font-black tracking-tight text-slate-900`}>
